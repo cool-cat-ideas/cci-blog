@@ -1,0 +1,16 @@
+-- CCI Blog – uninstall.sql
+DROP TABLE IF EXISTS `PREFIX_cci_blog_author_lang`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_author`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_slug_redirect`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_product`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_comment`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_image`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_tag`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_tag`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_shop`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_lang`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_category`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_category_shop`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_category_lang`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_category`;

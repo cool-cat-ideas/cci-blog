@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="views/templates/front" source-language="en" target-language="pl" datatype="plaintext">
+    <body>
+      <trans-unit id="aef79a4e0f45c8df2dc6ccc438c161ae" approved="yes">
+        <source>Blog RSS feed</source>
+        <target state="final">Kanał RSS bloga</target>
+      </trans-unit>
+      <trans-unit id="ba35703eaf507ecb4b54386ec9459088" approved="yes">
+        <source>Practical knowledge, inspiration and advice from the world of printing, advertising and large-format materials.</source>
+        <target state="final">Praktyczna wiedza, inspiracje i porady ze świata druku, reklamy i materiałów wielkoformatowych.</target>
+      </trans-unit>
+      <trans-unit id="b9a28efc59033022d24a648b80bd9288" approved="yes">
+        <source>Proven solutions that help you choose the best materials and technologies.</source>
+        <target state="final">Sprawdzone rozwiązania, które pomogą Ci wybrać najlepsze materiały i technologie.</target>
+      </trans-unit>
+      <trans-unit id="cf5fb5d5a5346de58e8d3a30d6b199a9" approved="yes">
+        <source>Search posts</source>
+        <target state="final">Szukaj artykułów</target>
+      </trans-unit>
+      <trans-unit id="43212cb986334b8841e3589bd51e2a52" approved="yes">
+        <source>Search the blog</source>
+        <target state="final">Szukaj na blogu</target>
+      </trans-unit>
+      <trans-unit id="82be9df58039ae37834635e29530c89a" approved="yes">
+        <source>Enter a keyword…</source>
+        <target state="final">Wpisz słowo kluczowe…</target>
+      </trans-unit>
+      <trans-unit id="3e480dfc32f25db062e28fa513003957" approved="yes">
+        <source>Popular categories</source>
+        <target state="final">Popularne kategorie</target>
+      </trans-unit>
+      <trans-unit id="0a4aff6d3f48e4ce67728efa1e00e6a0" approved="yes">
+        <source>Popular tags</source>
+        <target state="final">Popularne tagi</target>
+      </trans-unit>
+      <trans-unit id="8b8bd4081370ef5f615ae96a63d391f7" approved="yes">
+        <source>Featured article</source>
+        <target state="final">Artykuł polecany</target>
+      </trans-unit>
+      <trans-unit id="3f7397b1601a776db24c3dd947b4d58a" approved="yes">
+        <source>Search posts…</source>
+        <target state="final">Szukaj artykułów…</target>
+      </trans-unit>
+      <trans-unit id="13348442cc6a27032d2b4aa28b75a5d3" approved="yes">
+        <source>Search</source>
+        <target state="final">Szukaj</target>
+      </trans-unit>
+      <trans-unit id="43340e6cc4e88197d57f8d6d5ea50a46" approved="yes">
+        <source>Read more</source>
+        <target state="final">Czytaj więcej</target>
+      </trans-unit>
+      <trans-unit id="1ad0f02c66fada7cce032fe8ba02b181" approved="yes">
+        <source>From our blog</source>
+        <target state="final">Z naszego bloga</target>
+      </trans-unit>
+      <trans-unit id="5e78b94e9e140ac79e9f20733ed45641" approved="yes">
+        <source>View all posts</source>
+        <target state="final">Zobacz wszystkie wpisy</target>
+      </trans-unit>
+      <trans-unit id="b81b7a9b46d11ce619ade4fc7a7d56de" approved="yes">
+        <source>Post navigation</source>
+        <target state="final">Nawigacja między wpisami</target>
+      </trans-unit>
+      <trans-unit id="bc9d11ab826dd2152fa5463419c01a64" approved="yes">
+        <source>Previous post</source>
+        <target state="final">Poprzedni wpis</target>
+      </trans-unit>
+      <trans-unit id="ebd8e5c00539f70d95666231fbc997fa" approved="yes">
+        <source>Next post</source>
+        <target state="final">Następny wpis</target>
+      </trans-unit>
+      <trans-unit id="9ef3325f6cfdf9a2b85a1d80a52eae64" approved="yes">
+        <source>In this article</source>
+        <target state="final">W tym artykule</target>
+      </trans-unit>
+      <trans-unit id="a4a7ec22b3851c5d27269f59683e0143" approved="yes">
+        <source>Enable JavaScript to view comments powered by Disqus.</source>
+        <target state="final">Włącz JavaScript, aby zobaczyć komentarze obsługiwane przez Disqus.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

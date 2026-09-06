@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="cci_blog.php" source-language="en" target-language="pl" datatype="plaintext">
+    <body>
+      <trans-unit id="cci_blog_author_profile" approved="yes">
+        <source>CCI Blog author profile</source>
+        <target state="final">Profil autora CCI Blog</target>
+      </trans-unit>
+      <trans-unit id="show_public_author_profile" approved="yes">
+        <source>Show the public author profile</source>
+        <target state="final">Wyświetlaj publiczny profil autora</target>
+      </trans-unit>
+      <trans-unit id="public_author_profile_help" approved="yes">
+        <source>The profile can be displayed below articles assigned to this employee.</source>
+        <target state="final">Profil może być wyświetlany pod artykułami przypisanymi do tego pracownika.</target>
+      </trans-unit>
+      <trans-unit id="public_author_name" approved="yes">
+        <source>Public author name</source>
+        <target state="final">Publiczna nazwa autora</target>
+      </trans-unit>
+      <trans-unit id="public_author_name_help" approved="yes">
+        <source>Leave empty to use the employee first and last name.</source>
+        <target state="final">Pozostaw puste, aby użyć imienia i nazwiska pracownika.</target>
+      </trans-unit>
+      <trans-unit id="author_biography" approved="yes">
+        <source>Author biography</source>
+        <target state="final">Biogram autora</target>
+      </trans-unit>
+      <trans-unit id="author_biography_help_pro" approved="yes">
+        <source>Add a short biography for each shop language in which the author profile should appear.</source>
+        <target state="final">Dodaj krótki biogram w każdym języku sklepu, w którym ma być wyświetlany profil autora.</target>
+      </trans-unit>
+      <trans-unit id="author_biography_help_free" approved="yes">
+        <source>In Free, the biography is saved in the default shop language. PRO adds the other shop languages.</source>
+        <target state="final">W Free biogram jest zapisywany w głównym języku sklepu. PRO dodaje pozostałe języki.</target>
+      </trans-unit>
+      <trans-unit id="public_avatar_url" approved="yes">
+        <source>Public avatar URL</source>
+        <target state="final">Publiczny adres URL awatara</target>
+      </trans-unit>
+      <trans-unit id="public_avatar_url_help" approved="yes">
+        <source>Optional HTTPS image URL used only on the storefront.</source>
+        <target state="final">Opcjonalny adres HTTPS obrazu używanego wyłącznie w sklepie.</target>
+      </trans-unit>
+      <trans-unit id="x_username" approved="yes">
+        <source>Username on X (Twitter)</source>
+        <target state="final">Nazwa użytkownika w serwisie X (Twitter)</target>
+      </trans-unit>
+      <trans-unit id="x_username_help" approved="yes">
+        <source>Enter the username without @.</source>
+        <target state="final">Wpisz nazwę użytkownika bez znaku @.</target>
+      </trans-unit>
+      <trans-unit id="x_username_error" approved="yes">
+        <source>Use only letters, numbers and underscores.</source>
+        <target state="final">Użyj wyłącznie liter, cyfr i znaków podkreślenia.</target>
+      </trans-unit>
+      <trans-unit id="linkedin_profile_url" approved="yes">
+        <source>LinkedIn profile URL</source>
+        <target state="final">Adres URL profilu LinkedIn</target>
+      </trans-unit>
+      <trans-unit id="module_description_publish_blog_posts" approved="yes">
+        <source>Publish articles and buying guides directly in PrestaShop. Add author profiles, tables of contents, comments, search and structured article data without running a separate blog.</source>
+        <target state="final">Publikuj artykuły i poradniki bezpośrednio w PrestaShop. Dodaj profile autorów, spisy treści, komentarze, wyszukiwarkę i dane strukturalne bez prowadzenia osobnego bloga.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
