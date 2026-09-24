@@ -63,12 +63,12 @@ export function DataTable({ columns, rows }) {
                         {normalizedColumns.map((column) => (
                             <th
                                 key={column.id || column.label}
-                                className='tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-px-4 tw-py-3 tw-text-left tw-text-[11px] tw-font-bold tw-uppercase tw-text-cci-blog-muted'
+                                className='tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-px-4 tw-py-3 tw-text-left tw-text-xs tw-font-bold tw-uppercase tw-text-cci-blog-muted'
                             >
                                 {column.sortable ? (
                                     <button
                                         type='button'
-                                        className='tw-inline-flex tw-items-center tw-gap-1.5 tw-border-0 tw-bg-transparent tw-p-0 tw-text-[11px] tw-font-bold tw-uppercase tw-text-cci-blog-muted hover:tw-text-cci-blog-brandStrong'
+                                        className='tw-inline-flex tw-items-center tw-gap-1.5 tw-border-0 tw-bg-transparent tw-p-0 tw-text-xs tw-font-bold tw-uppercase tw-text-cci-blog-muted hover:tw-text-cci-blog-brandStrong'
                                         aria-sort={column.sortDirection || 'none'}
                                         onClick={column.onSort}
                                     >

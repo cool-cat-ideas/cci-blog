@@ -8,9 +8,9 @@
   },
   "scripts": {
     "build:admin:blocknote-css": "./node_modules/.bin/esbuild ./src/admin-v2/blocknote.css --bundle --conditions=style --outfile=./tmp-cci-blog-blocknote.css --minify",
-    "build:admin:tailwind": "npx -y node@23 ./node_modules/tailwindcss/lib/cli.js -c tailwind.config.cjs -i ./src/admin-v2/admin.css -o ./tmp-cci-blog-tailwind.css --minify",
-    "build:admin:css": "npm run build:admin:blocknote-css && npm run build:admin:tailwind && npx -y node@23 -e \"const fs=require('fs');fs.writeFileSync('./views/css/cci_blog_admin.css',fs.readFileSync('./tmp-cci-blog-blocknote.css','utf8')+'\\n'+fs.readFileSync('./tmp-cci-blog-tailwind.css','utf8'));fs.unlinkSync('./tmp-cci-blog-blocknote.css');fs.unlinkSync('./tmp-cci-blog-tailwind.css');\"",
-    "build:admin:js": "./node_modules/.bin/esbuild ./src/admin-v2/index.jsx --bundle --format=esm --target=es2020 --preserve-symlinks --outfile=./views/js/cci-blog-admin.js --minify --alias:@cci/admin-ui/layout=../../cci_admin_framework/packages/admin-ui/src/admin-layout.jsx --alias:@cci/admin-ui/product-panels=../../cci_admin_framework/packages/admin-ui/src/product-panels.jsx --alias:react=./node_modules/react --alias:react-dom=./node_modules/react-dom --alias:@cci/admin-ui/blog=../../cci_admin_framework/packages/admin-ui/src/blog.js --alias:@cci/admin-ui=../../cci_admin_framework/packages/admin-ui/src/index.js",
+    "build:admin:tailwind": "node ./node_modules/tailwindcss/lib/cli.js -c tailwind.config.cjs -i ./src/admin-v2/admin.css -o ./tmp-cci-blog-tailwind.css --minify",
+    "build:admin:css": "npm run build:admin:blocknote-css && npm run build:admin:tailwind && node -e \"const fs=require('fs');fs.writeFileSync('./views/css/cci_blog_admin.css',fs.readFileSync('./tmp-cci-blog-blocknote.css','utf8')+'\\n'+fs.readFileSync('./tmp-cci-blog-tailwind.css','utf8'));fs.unlinkSync('./tmp-cci-blog-blocknote.css');fs.unlinkSync('./tmp-cci-blog-tailwind.css');\"",
+    "build:admin:js": "./node_modules/.bin/esbuild ./src/admin-v2/index.jsx --bundle --format=esm --target=es2020 --preserve-symlinks --outfile=./views/js/cci-blog-admin.js --minify --alias:react=./node_modules/react --alias:react-dom=./node_modules/react-dom",
     "build:admin": "npm run build:admin:css && npm run build:admin:js",
     "package:presta": "node ../../scripts/build-presta-module-release.mjs products/cci_blog"
   },
@@ -18,7 +18,7 @@
     "@blocknote/core": "^0.51.4",
     "@blocknote/mantine": "^0.51.4",
     "@blocknote/react": "^0.51.4",
-    "@cci/admin-ui": "file:../../cci_admin_framework/releases/cci-admin-ui-1.0.0.tgz",
+    "@cci/admin-ui": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.0/cci-admin-ui-1.0.0.tgz",
     "@mantine/core": "^9.4.1",
     "@mantine/hooks": "^9.4.1",
     "@mantine/utils": "^6.0.22",
@@ -35,7 +35,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
-    "@cci/admin-theme": "file:../../cci_admin_framework/releases/cci-admin-theme-1.0.0.tgz",
+    "@cci/admin-theme": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.0/cci-admin-theme-1.0.0.tgz",
     "esbuild": "0.28.2",
     "tailwindcss": "^3.4.17"
   }

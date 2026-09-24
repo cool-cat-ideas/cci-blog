@@ -445,6 +445,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'posts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope),
             'activePosts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope . ' WHERE p.active = 1'),
             'categories' => (int) $db->getValue('SELECT COUNT(DISTINCT c.id_category)' . $categoryScope),
+            'activeCategories' => (int) $db->getValue('SELECT COUNT(DISTINCT c.id_category)' . $categoryScope . ' WHERE c.active = 1'),
             'pendingComments' => (int) $db->getValue(
                 'SELECT COUNT(*)
                  FROM `' . _DB_PREFIX_ . 'cci_blog_comment` c
@@ -1481,15 +1482,19 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                         NULLIF(TRIM(CONCAT(e.firstname, " ", e.lastname)), ""),
                         "-"
                     ) AS author_name,
-                    COUNT(DISTINCT p.id_post) AS post_count
+                    COUNT(DISTINCT pl.id_post) AS post_count
              FROM `' . _DB_PREFIX_ . 'cci_blog_category` c
              INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_category_lang` cl
                 ON cl.id_category = c.id_category AND cl.id_lang = ' . $langId . ' AND cl.id_shop = ' . $shopId . '
+             INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_category_shop` cs
+                ON cs.id_category = c.id_category AND cs.id_shop = ' . $shopId . '
              LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_category_lang` parent_lang
                 ON parent_lang.id_category = c.id_parent AND parent_lang.id_lang = ' . $langId . ' AND parent_lang.id_shop = ' . $shopId . '
              LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON e.id_employee = c.id_author
              LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post_category` pc ON pc.id_category = c.id_category
              LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post` p ON p.id_post = pc.id_post
+             LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post_shop` ps ON ps.id_post = p.id_post AND ps.id_shop = ' . $shopId . '
+             LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post_lang` pl ON pl.id_post = ps.id_post AND pl.id_shop = ' . $shopId . ' AND pl.id_lang = ' . $langId . '
              GROUP BY c.id_category
              ORDER BY c.position ASC, cl.name ASC'
         ) ?: [];
@@ -2142,6 +2147,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 'posts' => (int) $stats['posts'],
                 'activePosts' => (int) $stats['activePosts'],
                 'categories' => (int) $stats['categories'],
+                'activeCategories' => (int) $stats['activeCategories'],
                 'pendingComments' => (int) $stats['pendingComments'],
                 'commentsEnabled' => !empty($stats['commentsEnabled']),
                 'blockReady' => !empty($stats['blockReady']),

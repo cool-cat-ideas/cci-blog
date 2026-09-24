@@ -13,7 +13,7 @@ import SlugRedirectsPanel from './components/SlugRedirectsPanel';
 import { Button } from './components/ui/button';
 import { TooltipProvider } from './components/ui/tooltip';
 import { isCciBlogProLicenseActive, pluginData } from './api';
-import { __, coreString } from './i18n';
+import { __ } from './i18n';
 
 const SIDEBAR_STORAGE_KEY = 'cci_blog_admin_sidebar_collapsed';
 
@@ -186,32 +186,26 @@ export default function App() {
 function getPageHeader(activeSection) {
     const pages = {
         dashboard: {
-            label: __('Posts', 'cci-blog'),
             title: __('Posts', 'cci-blog'),
             description: __('Create, manage and publish content commerce articles.', 'cci-blog'),
         },
         categories: {
-            label: __('Categories', 'cci-blog'),
             title: __('Categories', 'cci-blog'),
             description: __('Organize posts by topic and storefront structure.', 'cci-blog'),
         },
         comments: {
-            label: __('Comments', 'cci-blog'),
             title: __('Comments', 'cci-blog'),
             description: __('Moderate reader feedback from the blog workspace.', 'cci-blog'),
         },
         redirects: {
-            label: __('Slug redirects', 'cci-blog'),
             title: __('Slug redirects', 'cci-blog'),
             description: __('Manage historical post and category URLs and permanent redirects.', 'cci-blog'),
         },
         extensions: {
-            label: __('Extensions', 'cci-blog'),
             title: __('Blog extensions', 'cci-blog'),
             description: __('Manage installed blog extensions and browse add-ons from your store.', 'cci-blog'),
         },
         settings: {
-            label: coreString('settings', 'Settings'),
             title: __('Blog settings', 'cci-blog'),
             description: __('Configure display, SEO, feeds, comments and module diagnostics.', 'cci-blog'),
         },
@@ -230,7 +224,7 @@ function DashboardSection({ activeSection, setNotice, isPro, license, onLicenseC
                     <BlogSettingsPanel setNotice={setNotice} />
                 </div>
                 <aside className='tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start'>
-                    <LicensePanel license={license} onLicenseChange={onLicenseChange} setNotice={setNotice} showManage={false} />
+                    <LicensePanel license={license} />
                     <ReviewPrompt setNotice={setNotice} compact />
                 </aside>
             </AdminColumns>
@@ -263,7 +257,7 @@ function DashboardSection({ activeSection, setNotice, isPro, license, onLicenseC
             </div>
             {!editorActive ? (
                 <aside className='tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start'>
-                    <LicensePanel license={license} onLicenseChange={onLicenseChange} setNotice={setNotice} showManage={false} />
+                    <LicensePanel license={license} />
                     <ProductNewsPanel endpoint={pluginData.newsEndpoint || pluginData.marketplaceFeedEndpoint} />
                 </aside>
             ) : null}

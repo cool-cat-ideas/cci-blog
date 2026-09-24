@@ -1,11 +1,13 @@
+import { pluginData } from './api';
 import { ProductNewsProvider } from '@cci/admin-ui/product-panels';
 import { __ } from './i18n';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { LoadingState, Select, createLocalMediaLibraryUiBridge } from '@cci/admin-ui/blog';
+import { flushSync } from 'react-dom';
+import { Button, Input, InfoCallout, LoadingState, Select, createLocalMediaLibraryUiBridge } from '@cci/admin-ui/blog';
 import App from './App';
 
-window.CCIBlogMediaLibraryUi = createLocalMediaLibraryUiBridge({ createRoot, Select, LoadingState });
+window.CCIBlogMediaLibraryUi = createLocalMediaLibraryUiBridge({ createRoot, flushSync, Button, Input, InfoCallout, Select, LoadingState });
 
 const mount = document.getElementById('cci-blog-admin-root');
 
@@ -19,7 +21,7 @@ if (mount) {
     }
 
     mount.dataset.cciReactMounted = '1';
-    createRoot(mount).render(<ProductNewsProvider t={__}><App /></ProductNewsProvider>);
+    createRoot(mount).render(<ProductNewsProvider t={__} locale={pluginData.adminDate?.locale} adminDate={pluginData.adminDate}><App /></ProductNewsProvider>);
   };
 
   const scheduleMount = () => {

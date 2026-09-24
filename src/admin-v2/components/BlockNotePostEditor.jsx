@@ -972,17 +972,6 @@ function getRegisteredProFieldRenderer(kind) {
 
 function renderRegisteredProField(renderer, args) {
     try {
-        const NestedBlockEditor = ({ blocks, onChange, editorKey }) => (
-            <BlockExtensionsContext.Provider value={args.externalExtensions || []}>
-                <NestedBlockNoteEditor
-                    key={editorKey}
-                    editorKey={editorKey}
-                    blocks={blocks}
-                    onChange={onChange}
-                />
-            </BlockExtensionsContext.Provider>
-        );
-
         const result = renderer({
             ...args,
             React,
@@ -992,7 +981,9 @@ function renderRegisteredProField(renderer, args) {
                 CssLengthInput,
                 Field,
                 Input,
-                NestedBlockEditor,
+                // Keep component identity stable while a parent block updates.
+                // Extensions and feature gates are inherited from the outer editor.
+                NestedBlockEditor: NestedBlockNoteEditor,
                 Select,
                 Textarea,
             },

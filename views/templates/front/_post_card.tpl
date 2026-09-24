@@ -85,8 +85,9 @@
       {/if}
     </div>
 
-    <a class="cci-blog-card-cta btn btn-primary" href="{$ccb_post_url|escape:'html'}">
-      {l s='Read more' mod='cci_blog'}
+    <a class="cci-blog-card-cta btn btn-primary" href="{$ccb_post_url|escape:'html'}" aria-label="{l s='Read more: %s' sprintf=[$post.title|default:''] mod='cci_blog'|escape:'html'}">
+      <span>{l s='Read more' mod='cci_blog'}</span>
+      <svg class="cci-blog-card-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
     </a>
   </div>
 </article>

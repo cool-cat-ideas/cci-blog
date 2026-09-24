@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatAdminDateTime } from '@cci/admin-ui';
 import { apiFetch, pluginData } from '../api';
 import { __, coreString } from '../i18n';
 import { DataTable, EmptyState, RowActions, RowPrimary } from './AdminDataTable';
@@ -127,7 +128,7 @@ export default function SlugRedirectsPanel({ setNotice }) {
                     {redirect.entity_type === 'category' ? __('Category', 'cci-blog') : __('Post', 'cci-blog')} · ID {redirect.target_id}
                 </span>
             </div>,
-            <span className='tw-whitespace-nowrap tw-text-cci-blog-muted'>{redirect.date_add || '-'}</span>,
+            <span className='tw-whitespace-nowrap tw-text-cci-blog-muted'>{formatAdminDateTime(redirect.date_add, pluginData.adminDate) || '—'}</span>,
         ];
     });
 

@@ -1,3 +1,4 @@
+import { createApiError } from '@cci/admin-ui';
 export const pluginData = (() => {
   const cfg = window.CCIBlogConfig || {};
   const initialPayload = cfg.initialPayload || {};
@@ -41,6 +42,7 @@ export const pluginData = (() => {
     features,
     enabledFeatures,
     pluginVersion: cfg.pluginVersion || cfg.moduleVersion || initialPayload.moduleVersion || '1.0.0',
+    adminDate: cfg.adminDate || initialPayload.adminDate || {},
     marketplaceFeedEndpoint: cfg.marketplaceFeedEndpoint || initialPayload.marketplaceFeedEndpoint || '',
     templateStoreEndpoint: cfg.templateStoreEndpoint || cfg.marketplaceTemplatesEndpoint || initialPayload.templateStoreEndpoint || '',
     extensionStoreEndpoint: cfg.extensionStoreEndpoint || cfg.marketplaceExtensionsEndpoint || initialPayload.extensionStoreEndpoint || cfg.integrationStoreEndpoint || initialPayload.integrationStoreEndpoint || cfg.templateStoreEndpoint || cfg.marketplaceTemplatesEndpoint || initialPayload.templateStoreEndpoint || '',
@@ -236,10 +238,7 @@ export function apiFetch(path, options = {}) {
         const normalized = normalizeLicensePayload(payload || {});
 
         if (!response.ok || normalized.success === false) {
-          const error = new Error(normalized.error || normalized.message || `CCI Blog request failed (${response.status}).`);
-          error.details = payload.details || payload.warning || '';
-          error.data = normalized;
-          throw error;
+          throw createApiError(normalized, response.status, `CCI Blog request failed (${response.status}).`);
         }
 
         return normalized;

@@ -1,3 +1,4 @@
+import { formatAdminDateTime, ResourceListHeader } from '@cci/admin-ui';
 import React from 'react';
 import { StatusBadge as SharedStatusBadge } from '@cci/admin-ui';
 import {
@@ -5,6 +6,7 @@ import {
     ChevronDown,
     ChevronRight,
     FilePenLine,
+    FolderTree,
     Layers,
     Link2,
     MessageSquare,
@@ -420,12 +422,12 @@ function BlogList({ posts, postsPagination, categories, comments, stats, isPro, 
     return (
         <div className='tw-grid tw-gap-4'>
             <div className='tw-grid tw-grid-cols-1 tw-gap-3 lg:tw-grid-cols-3'>
-                <MetricCard icon={FilePenLine} label={__('Posts', 'cci-blog')} value={stats.posts || posts.length} description={`${stats.activePosts || 0} ${__('active', 'cci-blog')}`} tone={section === 'dashboard' ? 'primary' : 'default'} />
-                <MetricCard icon={Tags} label={__('Categories', 'cci-blog')} value={stats.categories || categories.length} description={__('Content structure', 'cci-blog')} tone={section === 'categories' ? 'primary' : 'default'} />
+                <MetricCard icon={FilePenLine} label={__('Posts', 'cci-blog')} value={stats.posts ?? postsPagination?.total ?? posts.length} description={`${stats.activePosts ?? 0} ${__('active', 'cci-blog')}`} tone={section === 'dashboard' ? 'primary' : 'default'} />
+                <MetricCard icon={Tags} label={__('Categories', 'cci-blog')} value={stats.categories ?? categories.length} description={`${stats.activeCategories ?? categories.filter((category) => Number(category.active) === 1).length} ${__('active', 'cci-blog')}`} tone={section === 'categories' ? 'primary' : 'default'} />
                 <MetricCard
                     icon={MessageSquare}
                     label={usesDisqus ? __('Comment provider', 'cci-blog') : __('Pending comments', 'cci-blog')}
-                    value={usesDisqus ? 'Disqus' : (stats.pendingComments || 0)}
+                    value={usesDisqus ? 'Disqus' : (stats.pendingComments ?? 0)}
                     description={stats.commentsEnabled ? __('Comments enabled', 'cci-blog') : __('Comments disabled', 'cci-blog')}
                     tone={section === 'comments' ? 'primary' : 'default'}
                 />
@@ -438,16 +440,9 @@ function BlogList({ posts, postsPagination, categories, comments, stats, isPro, 
             <Card>
                 {section === 'dashboard' && (
                     <>
-                    <CardHeader>
-                        <div>
-                            <h2>{__('Posts', 'cci-blog')}</h2>
-                            <p>{__('Manage posts and open the block editor.', 'cci-blog')}</p>
-                        </div>
-                        <Button variant='add' onClick={onCreatePost}>
-                            <Plus aria-hidden='true' />
-                            {__('New post', 'cci-blog')}
-                        </Button>
-                    </CardHeader>
+                    <ResourceListHeader title={__('Posts', 'cci-blog')}
+                        description={__('Manage posts and open the block editor.', 'cci-blog')}
+                        createLabel={__('New post', 'cci-blog')} onCreate={onCreatePost} />
                     <PostsTable
                         posts={posts}
                         pagination={postsPagination}
@@ -565,7 +560,7 @@ function PostEditor({ post, authors, categories, tab, saving, onBack, onSave, on
                         disabled={!translationsEnabled || saving}
                         onChange={onLanguageChange}
                     />
-                    <Button variant='save' type='button' onClick={onSave} disabled={saving}>
+                    <Button variant='save' type='button' onClick={onSave} disabled={saving} aria-busy={saving}>
                         <Save aria-hidden='true' />
                         {saving ? __('Saving...', 'cci-blog') : __('Save', 'cci-blog')}
                     </Button>
@@ -625,7 +620,7 @@ function PostEditor({ post, authors, categories, tab, saving, onBack, onSave, on
                                                 note={post.date_add ? __('Set when the post was first saved.', 'cci-blog') : __('Will be set on first save.', 'cci-blog')}
                                             >
                                                 <Input
-                                                    value={formatAdminDateTime(post.date_add) || __('Not saved yet', 'cci-blog')}
+                                                    value={formatAdminDateTime(post.date_add, pluginData.adminDate) || __('Not saved yet', 'cci-blog')}
                                                     readOnly
                                                 />
                                             </Field>
@@ -1100,6 +1095,7 @@ function SlugPermalink({ slug, title, onChange, baseUrl }) {
                 />
                 <div className='tw-flex tw-flex-wrap tw-gap-1.5'>
                     <Button size='xs' variant='save' onClick={applyDraft}>
+                        <Save aria-hidden='true' />
                         {__('OK', 'cci-blog')}
                     </Button>
                     <Button size='xs' variant='secondary' onClick={cancelDraft}>
@@ -1234,12 +1230,31 @@ function ProFeatureInlineCard({ feature, onClick }) {
 
 function PostCategoryTreeSelector({ categories, isPro, primaryCategoryId, selectedIds, onToggle, onSetPrimary, onProFeatureClick }) {
     const rows = React.useMemo(() => buildCategoryTreeRows(categories), [categories]);
+    const [query, setQuery] = React.useState('');
+    const normalizedQuery = normalizeAdminSlug(query);
     const selectedSet = React.useMemo(() => (
         isPro
             ? new Set(selectedIds.map((id) => Number(id)))
             : new Set(primaryCategoryId > 0 ? [primaryCategoryId] : [])
     ), [isPro, primaryCategoryId, selectedIds]);
     const parentById = React.useMemo(() => new Map(rows.map((row) => [row.id, row.parentId])), [rows]);
+    const matchingIds = React.useMemo(() => {
+        if (!normalizedQuery) return null;
+
+        const matches = new Set();
+        rows.forEach((row) => {
+            if (!normalizeAdminSlug(row.name).includes(normalizedQuery)
+                && !normalizeAdminSlug(row.source.slug).includes(normalizedQuery)) return;
+
+            // Keep a matching category's ancestors visible, including collapsed branches.
+            let id = row.id;
+            while (id > 0 && !matches.has(id)) {
+                matches.add(id);
+                id = parentById.get(id) || 0;
+            }
+        });
+        return matches;
+    }, [normalizedQuery, parentById, rows]);
     const [collapsedIds, setCollapsedIds] = React.useState(() => new Set());
     const toggleCollapsed = (categoryId) => {
         setCollapsedIds((current) => {
@@ -1254,6 +1269,8 @@ function PostCategoryTreeSelector({ categories, isPro, primaryCategoryId, select
         });
     };
     const isVisible = (row) => {
+        if (matchingIds) return matchingIds.has(row.id);
+
         let parentId = row.parentId;
         while (parentId > 0) {
             if (collapsedIds.has(parentId)) {
@@ -1264,6 +1281,7 @@ function PostCategoryTreeSelector({ categories, isPro, primaryCategoryId, select
 
         return true;
     };
+    const visibleRows = rows.filter(isVisible);
     const note = isPro
         ? __('Choose one primary category and optionally assign secondary categories.', 'cci-blog')
         : __('Free version: select one primary category. Additional category assignments are a Pro feature.', 'cci-blog');
@@ -1284,26 +1302,40 @@ function PostCategoryTreeSelector({ categories, isPro, primaryCategoryId, select
                 </button>
             ) : null}
             {rows.length ? (
-                <div data-cci-blog-category-tree='true' className='tw-grid tw-max-h-[340px] tw-gap-1 tw-overflow-auto tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-cci-blog-surfaceSoft tw-p-3'>
-                    {rows.filter(isVisible).map((row) => {
-                        const checked = selectedSet.has(row.id);
-                        const isPrimary = row.id === primaryCategoryId;
-                        const isCollapsed = collapsedIds.has(row.id);
+                <div className='tw-grid tw-gap-3'>
+                    <Input
+                        type='search'
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder={__('Search categories by title or slug', 'cci-blog')}
+                        aria-label={__('Search categories by title or slug', 'cci-blog')}
+                    />
+                    <div data-cci-blog-category-tree='true' className='tw-grid tw-max-h-80 tw-auto-rows-max tw-content-start tw-gap-1 tw-overflow-auto tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-p-1'>
+                        {visibleRows.length ? visibleRows.map((row) => {
+                            const checked = selectedSet.has(row.id);
+                            const isPrimary = row.id === primaryCategoryId;
+                            const isCollapsed = !matchingIds && collapsedIds.has(row.id);
 
-                        return (
-                            <CategoryTreeRow
-                                key={row.id}
-                                row={row}
-                                checked={checked}
-                                isPrimary={isPrimary}
-                                isPro={isPro}
-                                isCollapsed={isCollapsed}
-                                onToggleCollapsed={toggleCollapsed}
-                                onToggle={onToggle}
-                                onSetPrimary={onSetPrimary}
-                            />
-                        );
-                    })}
+                            return (
+                                <CategoryTreeRow
+                                    key={row.id}
+                                    row={row}
+                                    checked={checked}
+                                    isPrimary={isPrimary}
+                                    isPro={isPro}
+                                    isCollapsed={isCollapsed}
+                                    searching={Boolean(matchingIds)}
+                                    onToggleCollapsed={toggleCollapsed}
+                                    onToggle={onToggle}
+                                    onSetPrimary={onSetPrimary}
+                                />
+                            );
+                        }) : (
+                            <span role='status' className='tw-p-2 tw-text-sm tw-text-cci-blog-muted'>
+                                {__('No categories found.', 'cci-blog')}
+                            </span>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div className='tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-cci-blog-surfaceSoft tw-p-3 tw-text-sm tw-text-cci-blog-muted'>
@@ -1314,47 +1346,54 @@ function PostCategoryTreeSelector({ categories, isPro, primaryCategoryId, select
     );
 }
 
-function CategoryTreeRow({ row, checked, isPrimary, isPro, isCollapsed, onToggleCollapsed, onToggle, onSetPrimary }) {
+function CategoryTreeRow({ row, checked, isPrimary, isPro, isCollapsed, searching, onToggleCollapsed, onToggle, onSetPrimary }) {
     const ToggleIcon = isCollapsed ? ChevronRight : ChevronDown;
     const canSetPrimary = isPro && checked && !isPrimary;
 
     return (
         <div
             data-cci-blog-category-row='true'
+            data-cci-blog-category-depth={row.depth}
             className={[
-                'tw-grid tw-min-h-10 tw-grid-cols-[auto_auto_minmax(0,1fr)_auto] tw-items-center tw-gap-2.5 tw-rounded-md tw-border tw-border-solid tw-py-1.5 tw-pr-3 tw-text-sm tw-leading-5 tw-transition-colors',
-                checked ? 'tw-border-cci-blog-brandBorder tw-bg-cci-blog-brandSoft' : 'tw-border-transparent tw-bg-transparent hover:tw-border-cci-blog-border hover:tw-bg-white',
+                'tw-grid tw-min-h-11 tw-grid-cols-[auto_auto_minmax(0,1fr)] sm:tw-grid-cols-[auto_auto_minmax(0,1fr)_auto] tw-items-center tw-gap-2 tw-rounded-md tw-border tw-border-solid tw-py-2 tw-pr-2 tw-text-sm tw-leading-5 tw-transition-colors',
+                checked ? 'tw-border-cci-blog-brandBorder tw-bg-cci-blog-brandSoft' : 'tw-border-transparent tw-bg-transparent hover:tw-border-cci-blog-brandBorder hover:tw-bg-cci-blog-brandSoft',
             ].join(' ')}
-            style={{ paddingLeft: `${10 + row.depth * 20}px` }}
+            style={{ paddingLeft: `${6 + Math.min(row.depth, 4) * 18}px` }}
         >
             <button
                 type='button'
                 className={[
-                    'tw-inline-flex tw-h-7 tw-w-7 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-solid tw-p-0 tw-shadow-none tw-transition-colors',
-                    row.hasChildren ? 'tw-cursor-pointer tw-border-cci-blog-border tw-bg-white tw-text-cci-blog-muted hover:tw-border-cci-blog-brandBorder hover:tw-bg-cci-blog-brandSoft hover:tw-text-cci-blog-brand' : 'tw-cursor-default tw-border-transparent tw-bg-transparent tw-text-transparent',
+                    'tw-inline-flex tw-h-7 tw-w-4 tw-items-center tw-justify-center tw-rounded tw-border-0 tw-p-0 tw-shadow-none tw-transition-colors',
+                    row.hasChildren ? 'tw-cursor-pointer tw-bg-transparent tw-text-cci-blog-muted hover:tw-bg-cci-blog-brandSoft hover:tw-text-cci-blog-brand' : 'tw-cursor-default tw-bg-transparent tw-text-transparent',
                 ].join(' ')}
-                disabled={!row.hasChildren}
-                aria-label={isCollapsed ? __('Expand category', 'cci-blog') : __('Collapse category', 'cci-blog')}
+                disabled={!row.hasChildren || searching}
+                aria-label={`${isCollapsed ? __('Expand category', 'cci-blog') : __('Collapse category', 'cci-blog')}: ${row.name}`}
                 aria-expanded={row.hasChildren ? !isCollapsed : undefined}
                 onClick={() => row.hasChildren && onToggleCollapsed(row.id)}
             >
                 {row.hasChildren ? <ToggleIcon aria-hidden='true' className='tw-h-4 tw-w-4' /> : null}
             </button>
-            <Checkbox checked={checked} onCheckedChange={(value) => onToggle(row.id, value === true)} />
-            <label className='tw-grid tw-min-w-0 tw-cursor-pointer tw-grid-cols-[minmax(0,1fr)_auto_auto] tw-items-center tw-gap-2' onClick={() => onToggle(row.id, !checked)}>
-                <span className={`tw-min-w-0 tw-truncate tw-text-cci-blog-text ${row.hasChildren ? 'tw-font-semibold' : 'tw-font-medium'}`}>{row.name}</span>
+            <Checkbox aria-label={row.name} checked={checked} onCheckedChange={(value) => onToggle(row.id, value === true)} />
+            <button type='button' className='tw-grid tw-min-w-0 tw-cursor-pointer tw-grid-cols-[auto_minmax(0,1fr)] tw-items-center tw-gap-2 tw-border-0 tw-bg-transparent tw-p-0 tw-text-left' onClick={() => onToggle(row.id, !checked)}>
+                <span className='tw-inline-flex tw-h-7 tw-w-7 tw-items-center tw-justify-center tw-rounded-md tw-bg-cci-blog-brandSoft tw-text-cci-blog-brand'>
+                    <FolderTree aria-hidden='true' className='tw-h-4 tw-w-4' />
+                </span>
+                <span className='tw-min-w-0'>
+                    <span title={row.name} className='tw-block tw-truncate tw-text-sm tw-font-semibold tw-leading-5 tw-text-cci-blog-text'>{row.name}</span>
+                    <span title={row.source.slug} className='tw-block tw-truncate tw-text-xs tw-leading-5 tw-text-cci-blog-muted'>{row.source.slug || `#${row.id}`}</span>
+                </span>
                 {isPrimary ? (
-                    <span className='tw-inline-flex tw-shrink-0 tw-rounded-full tw-border tw-border-solid tw-border-cci-blog-brandBorder tw-bg-white tw-px-2 tw-py-0.5 tw-text-[11px] tw-font-bold tw-uppercase tw-leading-none tw-text-cci-blog-brand'>
+                    <span className='tw-col-start-2 tw-justify-self-start tw-inline-flex tw-shrink-0 tw-rounded-full tw-border tw-border-solid tw-border-cci-blog-brandBorder tw-bg-white tw-px-2 tw-py-0.5 tw-text-[11px] tw-font-bold tw-uppercase tw-leading-none tw-text-cci-blog-brand'>
                         {__('Primary', 'cci-blog')}
                     </span>
                 ) : checked ? (
-                    <span className='tw-inline-flex tw-shrink-0 tw-rounded-full tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-px-2 tw-py-0.5 tw-text-[11px] tw-font-bold tw-uppercase tw-leading-none tw-text-cci-blog-muted'>
+                    <span className='tw-col-start-2 tw-justify-self-start tw-inline-flex tw-shrink-0 tw-rounded-full tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-px-2 tw-py-0.5 tw-text-[11px] tw-font-bold tw-uppercase tw-leading-none tw-text-cci-blog-muted'>
                         {__('Additional', 'cci-blog')}
                     </span>
                 ) : null}
-            </label>
+            </button>
             {canSetPrimary ? (
-                <Button variant='secondary' size='xs' type='button' onClick={() => onSetPrimary(row.id)}>
+                <Button variant='secondary' size='xs' type='button' className='tw-col-start-3 tw-justify-self-start sm:tw-col-auto' onClick={() => onSetPrimary(row.id)}>
                     {__('Set primary', 'cci-blog')}
                 </Button>
             ) : null}
@@ -1601,7 +1640,7 @@ function postTableRow(post, columns, onOpenPost, onDeletePost) {
         category: () => post.category_names || post.category_name || '-',
         status: () => <PublicationStatusBadge published={Number(post.active) === 1} />,
         seo: () => <PostSeoStatus post={post} />,
-        updated: () => post.date_upd || post.date_published || '-',
+        updated: () => formatAdminDateTime(post.date_upd || post.date_published, pluginData.adminDate) || '—',
     };
 
     return columns
@@ -1755,16 +1794,13 @@ function CategoriesPanel({ categories, saving, onCreateCategory, onOpenCategory,
     const categoryRows = buildCategoryOptions(categories);
     return (
         <>
-            <CardHeader>
-                <div>
-                    <h2>{__('Categories', 'cci-blog')}</h2>
-                    <p>{__('Manage nested blog categories and storefront taxonomy.', 'cci-blog')}</p>
-                </div>
-                <Button variant='add' className='tw-whitespace-nowrap' disabled={saving} onClick={onCreateCategory}>
-                    <Plus aria-hidden='true' />
-                    {__('New category', 'cci-blog')}
-                </Button>
-            </CardHeader>
+            <ResourceListHeader
+                title={__('Categories', 'cci-blog')}
+                description={__('Manage nested blog categories and storefront taxonomy.', 'cci-blog')}
+                createLabel={__('New category', 'cci-blog')}
+                disabled={saving}
+                onCreate={onCreateCategory}
+            />
             {categories.length ? (
                 <DataTable
                     columns={[__('Name', 'cci-blog'), __('Author', 'cci-blog'), __('Parent', 'cci-blog'), __('Posts', 'cci-blog'), __('Status', 'cci-blog'), __('SEO', 'cci-blog')]}
@@ -1891,7 +1927,7 @@ function CategoryEditor({ category, authors, categories, tab, saving, onBack, on
                         disabled={!translationsEnabled || saving}
                         onChange={onLanguageChange}
                     />
-                    <Button variant='save' type='button' onClick={onSave} disabled={saving}>
+                    <Button variant='save' type='button' onClick={onSave} disabled={saving} aria-busy={saving}>
                         <Save aria-hidden='true' />
                         {saving ? __('Saving...', 'cci-blog') : __('Save category', 'cci-blog')}
                     </Button>
@@ -2104,14 +2140,11 @@ function CommentsPanel({ comments, commentsProvider, disqusShortname, saving, on
                 </CardHeader>
                 <CardContent className='tw-grid tw-gap-3'>
                     {moderationUrl ? (
-                        <a
-                            className='tw-inline-flex tw-w-fit tw-items-center tw-rounded-md tw-bg-cci-blog-brand tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-no-underline hover:tw-bg-cci-blog-brandHover hover:tw-text-white'
-                            href={moderationUrl}
-                            target='_blank'
-                            rel='noreferrer'
-                        >
-                            {__('Open Disqus moderation', 'cci-blog')}
-                        </a>
+                        <Button variant='primary' className='tw-w-fit' asChild>
+                            <a href={moderationUrl} target='_blank' rel='noopener noreferrer'>
+                                {__('Open Disqus moderation', 'cci-blog')}
+                            </a>
+                        </Button>
                     ) : (
                         <EmptyState label={__('Add the Disqus shortname in Settings to activate comments.', 'cci-blog')} />
                     )}
@@ -3714,11 +3747,6 @@ function fromDateTimeLocalValue(value) {
     return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)
         ? `${normalized.replace('T', ' ')}:00`
         : '';
-}
-
-function formatAdminDateTime(value) {
-    const normalized = toDateTimeLocalValue(value);
-    return normalized ? normalized.replace('T', ' ') : '';
 }
 
 function normalizePostForPlan(post, isPro) {

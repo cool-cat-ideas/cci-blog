@@ -116,15 +116,10 @@ body.mobile.admincciblogconfiguration #content.bootstrap {
     --cci-blog-border-soft: #e6eaf0;
     --cci-blog-text: #111827;
     --cci-blog-muted: #526173;
-    --cci-blog-brand: #6041df;
-    --cci-blog-brand-hover: #4f35b5;
+    --cci-blog-brand: var(--cci-admin-brand, #6b4be8);
+    --cci-blog-brand-hover: var(--cci-admin-brand-hover, #5232c8);
     --cci-blog-brand-soft: #f3f0ff;
     --cci-blog-brand-border: #c9c0ff;
-    --cci-blog-add: #15803d;
-    --cci-blog-add-hover: #166534;
-    --cci-blog-add-soft: #effbf3;
-    --cci-blog-add-soft-hover: #dcfce7;
-    --cci-blog-add-border: #9fe5b5;
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -218,75 +213,6 @@ body.mobile.admincciblogconfiguration #content.bootstrap {
   }
 }
 
-/* Add actions */
-.cci-blog-add-dropdown-trigger {
-  border: 1px solid var(--cci-blog-add-border) !important;
-  border-radius: 0.5rem !important;
-  background: var(--cci-blog-add-soft) !important;
-  color: var(--cci-blog-add) !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-.cci-blog-add-dropdown-trigger:hover,
-.cci-blog-add-dropdown-trigger:focus-visible {
-  border-color: var(--cci-blog-add-border) !important;
-  background: var(--cci-blog-add-soft-hover) !important;
-  color: var(--cci-blog-add-hover) !important;
-  outline: none !important;
-}
-
-.cci-blog-add-dropdown-trigger svg {
-  width: 0.875rem !important;
-  height: 0.875rem !important;
-  color: currentColor !important;
-}
-
-.cci-blog-add-dropdown {
-  position: relative;
-  display: inline-flex;
-}
-
-.cci-blog-add-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 0.375rem);
-  right: 0;
-  z-index: 50;
-  min-width: 12.5rem;
-  overflow: hidden;
-  border: 1px solid var(--cci-blog-border);
-  border-radius: 0.625rem;
-  background: var(--cci-blog-surface);
-}
-
-.cci-blog-add-dropdown-item {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 0.625rem;
-  border: 0;
-  border-bottom: 1px solid var(--cci-blog-border-soft);
-  background: var(--cci-blog-surface);
-  padding: 0.6875rem 0.8125rem;
-  color: var(--cci-blog-text);
-  font-size: 0.8125rem;
-  font-weight: 650;
-  line-height: 1;
-  text-align: left;
-  cursor: pointer;
-}
-
-.cci-blog-add-dropdown-item:last-child {
-  border-bottom: 0;
-}
-
-.cci-blog-add-dropdown-item:hover,
-.cci-blog-add-dropdown-item:focus-visible {
-  background: var(--cci-blog-add-soft);
-  color: var(--cci-blog-add-hover);
-  outline: none;
-}
-
 /* Editor tabs */
 .cci-blog-tab-trigger {
   position: relative;
@@ -375,13 +301,6 @@ body.mobile.admincciblogconfiguration #content.bootstrap {
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.005em;
-}
-
-.cci-blog-menu-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding-right: 0.5rem;
 }
 
 .cci-blog-menu-item-actions {
@@ -1587,42 +1506,6 @@ body.mobile.admincciblogconfiguration #content.bootstrap {
   white-space: nowrap;
 }
 
-.cci-blog-product-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  min-height: 1.5rem;
-  padding: 0 0.625rem;
-  border: 1px solid var(--cci-blog-add-border);
-  border-radius: 0.375rem;
-  background: var(--cci-blog-add-soft);
-  color: #15803d;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.cci-blog-product-action svg {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex: 0 0 auto;
-}
-
-.cci-blog-product-result:hover .cci-blog-product-action,
-.cci-blog-product-result:focus-visible .cci-blog-product-action {
-  border-color: #86efac;
-  background: var(--cci-blog-add-soft-hover);
-  color: #166534;
-}
-
-.cci-blog-product-result.cci-blog-state-selected .cci-blog-product-action {
-  border-color: var(--cci-blog-add);
-  background: var(--cci-blog-add);
-  color: #ffffff;
-}
-
 .cci-blog-product-empty,
 .cci-blog-product-error {
   margin: 0;
@@ -1808,8 +1691,7 @@ body.mobile.admincciblogconfiguration #content.bootstrap {
     grid-template-columns: 2.5rem minmax(0, 1fr);
   }
 
-  .cci-blog-product-price,
-  .cci-blog-product-action {
+  .cci-blog-product-price {
     justify-self: start;
     grid-column: 2;
   }

@@ -1,14 +1,13 @@
+import { ActiveLicenseCard, InactiveLicenseCard } from '@cci/admin-ui';
 import React from 'react';
 import {
     ChevronLeft,
     ChevronRight,
-    Crown,
     FilePenLine,
     MessageSquare,
     Route,
     Settings,
-    ShieldCheck,
-    ShoppingBag,
+      ShoppingBag,
     Tags,
 } from 'lucide-react';
 import { apiFetch, isCciBlogProLicenseActive, pluginData } from '../api';
@@ -19,7 +18,6 @@ import ProductLogo from './ProductLogo';
 import ProBadge from './ProBadge';
 import ConfirmLicenseDeactivateModal from './ConfirmLicenseDeactivateModal';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 
 const items = [
     { id: 'dashboard', label: 'Posts', icon: FilePenLine },
@@ -71,9 +69,9 @@ export default function DashboardSidebar({
                     sidebarItemBase,
                     collapsed && 'tw-justify-center tw-gap-0 tw-px-0',
                     activeSection === item.id
-                        ? '!tw-border-cci-blog-brandBorder !tw-bg-cci-blog-brandSoft !tw-text-cci-blog-brandStrong'
+                        ? '!tw-border-cci-blog-brandBorder !tw-bg-cci-blog-brandSoft !tw-text-cci-blog-brandStrong hover:!tw-border-cci-blog-brand hover:!tw-bg-white'
                         : '!tw-border-transparent !tw-bg-transparent !tw-text-slate-700 hover:!tw-border-cci-blog-brandBorder hover:!tw-bg-cci-blog-brandSoft hover:!tw-text-cci-blog-brandStrong',
-                    proLocked && '!tw-border-cci-blog-brandBorder !tw-bg-cci-blog-brandSoft !tw-text-cci-blog-brandStrong'
+                    proLocked && '!tw-border-cci-blog-brandBorder !tw-bg-cci-blog-brandSoft !tw-text-cci-blog-brandStrong hover:!tw-border-cci-blog-brand hover:!tw-bg-white'
                 )}
                 onClick={() => onSelect(proLocked ? 'settings' : item.id)}
             >
@@ -155,23 +153,12 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
     const [saving, setSaving] = React.useState(false);
     const [touched, setTouched] = React.useState(false);
     const [error, setError] = React.useState('');
+    const [errorTone, setErrorTone] = React.useState('error');
+    const [fieldError, setFieldError] = React.useState('');
     const [deactivateModalOpen, setDeactivateModalOpen] = React.useState(false);
     const apiBase = license?.apiBase || '';
-    const licenseLabel = license?.label || (isPro ? 'PRO' : coreString('inactive', 'Inactive'));
     const licensedSite = license?.domain || license?.customerEmail || '';
     const environmentLabel = license?.environment ? String(license.environment) : '';
-    const mascotUrl = pluginData.modulePath
-        ? `${pluginData.modulePath}views/img/cci-working.png`
-        : '';
-    const boxStyle = mascotUrl
-        ? {
-              backgroundImage: `linear-gradient(115deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.96) 58%, rgba(255,255,255,0.62) 100%), url("${mascotUrl}")`,
-              backgroundPosition: 'right -1.25rem top 3.25rem',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '6.75rem auto',
-          }
-        : undefined;
-
     const validateLicenseKey = (key) => {
         const value = key.trim();
 
@@ -207,6 +194,7 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
             .then((response) => {
                 applyLicense(response.license);
                 setError(response.warning || '');
+                setErrorTone(response.warning ? 'warning' : 'error');
 
                 if (response.license?.status === 'active') {
                     setLicenseKey('');
@@ -215,8 +203,8 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
                 if (successMessage && setNotice) {
                     setNotice({
                         type: response.warning ? 'warning' : 'success',
-                        message: successMessage,
-                        details: response.warning || '',
+                        message: response.warning || successMessage,
+                        details: '',
                     });
                 }
             })
@@ -224,16 +212,17 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
                 const message = compactLicenseError(
                     requestError,
                     __('License server is temporarily unavailable. Please try again later.', 'cci-blog'),
-                    __('License request failed.', 'cci-blog')
+                    __('License request failed.', 'cci-blog'),
                 );
 
                 setError(message);
+                setErrorTone('error');
 
                 if (setNotice) {
                     setNotice({
                         type: 'error',
-                        message: __('License request failed.', 'cci-blog'),
-                        details: message,
+                        message,
+                        details: '',
                     });
                 }
             })
@@ -244,16 +233,18 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
         const validationError = validateLicenseKey(licenseKey);
 
         setTouched(true);
-        setError(validationError);
+        setError('');
+        setFieldError(validationError);
 
         if (validationError) {
-            return;
+            setNotice?.({ type: 'error', message: validationError, details: '' });
+            return false;
         }
 
         sendLicenseRequest(
             '/license/activate',
             { licenseKey: licenseKey.trim() },
-            __('Pro license was activated.', 'cci-blog')
+            __('Pro license was activated.', 'cci-blog'),
         );
     };
 
@@ -266,113 +257,50 @@ function SidebarLicenseBox({ isPro, license, onLicenseChange, setNotice }) {
         sendLicenseRequest('/license/deactivate', {}, __('Pro license was deactivated.', 'cci-blog'));
     };
 
-    return (
-        <div
-            className={cn(
-                'tw-relative tw-grid tw-overflow-hidden tw-rounded-md tw-border tw-border-solid tw-bg-white tw-p-3.5',
-                isPro
-                    ? 'tw-border-cci-blog-brandBorder tw-bg-cci-blog-brandSoft'
-                    : 'tw-border-amber-200 tw-bg-gradient-to-br tw-from-amber-50 tw-via-white tw-to-white'
-            )}
-            style={boxStyle}
-        >
-            <ConfirmLicenseDeactivateModal
-                open={deactivateModalOpen}
+    if (isPro) {
+        return (
+            <ActiveLicenseCard
+                t={(text) => __(text, 'cci-blog')}
+                productName={__('CCI Blog Pro', 'cci-blog')}
+                site={licensedSite}
+                environment={environmentLabel}
                 saving={saving}
-                onCancel={() => setDeactivateModalOpen(false)}
-                onConfirm={confirmDeactivateLicense}
-            />
-            <div className='tw-relative tw-z-10 tw-flex tw-items-start tw-gap-2.5'>
-                <span
-                    className={cn(
-                        'tw-inline-flex tw-h-9 tw-w-9 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-solid [&_svg]:tw-h-4 [&_svg]:tw-w-4',
-                        isPro
-                            ? 'tw-border-amber-200 tw-bg-amber-50 tw-text-amber-700'
-                            : 'tw-border-amber-200 tw-bg-amber-50 tw-text-amber-700'
-                    )}
-                    aria-hidden='true'
-                >
-                    {isPro ? <Crown /> : <ShieldCheck />}
-                </span>
-                <div className='tw-min-w-0'>
-                    <strong className='tw-block tw-text-sm tw-font-semibold tw-leading-tight tw-text-cci-blog-text'>
-                        {__('CCI Blog Pro', 'cci-blog')}
-                    </strong>
-                    <span className='tw-mt-1 tw-inline-flex tw-rounded-full tw-border tw-border-solid tw-border-amber-200 tw-bg-white tw-px-2 tw-py-0.5 tw-text-[10px] tw-font-bold tw-uppercase tw-leading-none tw-text-amber-700'>
-                        {isPro ? licenseLabel : __('Pro upgrade', 'cci-blog')}
-                    </span>
-                </div>
-            </div>
+                onDeactivate={deactivateLicense}
+                error={error}
+                errorTone={errorTone}
+            >
+                <ConfirmLicenseDeactivateModal
+                    open={deactivateModalOpen}
+                    saving={saving}
+                    onCancel={() => setDeactivateModalOpen(false)}
+                    onConfirm={confirmDeactivateLicense}
+                />
+            </ActiveLicenseCard>
+        );
+    }
 
-            {isPro ? (
-                <div className='tw-relative tw-z-10 tw-grid tw-gap-2'>
-                    <p className='tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted'>
-                        {__('Premium features are active on this site.', 'cci-blog')}
-                    </p>
-                    {(licensedSite || environmentLabel) && (
-                        <div className='tw-grid tw-gap-1.5 tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-brandBorder tw-bg-white/70 tw-p-2.5 tw-text-xs'>
-                            {licensedSite && (
-                                <span className='tw-flex tw-justify-between tw-gap-2'>
-                                    <span className='tw-text-cci-blog-muted'>{__('Site', 'cci-blog')}</span>
-                                    <strong className='tw-truncate tw-text-cci-blog-text'>{licensedSite}</strong>
-                                </span>
-                            )}
-                            {environmentLabel && (
-                                <span className='tw-flex tw-justify-between tw-gap-2'>
-                                    <span className='tw-text-cci-blog-muted'>{__('Environment', 'cci-blog')}</span>
-                                    <strong className='tw-text-cci-blog-text'>{environmentLabel}</strong>
-                                </span>
-                            )}
-                        </div>
-                    )}
-                    <Button variant='danger' size='sm' onClick={deactivateLicense} disabled={saving}>
-                        {saving
-                            ? __('Deactivating...', 'cci-blog')
-                            : __('Deactivate license', 'cci-blog')}
-                    </Button>
-                </div>
-            ) : (
-                <div className='tw-relative tw-z-10 tw-grid tw-gap-2.5'>
-                    <p className='tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted'>
-                        {__('Enter your license key to unlock Pro add-ons on this domain.', 'cci-blog')}
-                    </p>
-                    <label className='tw-grid tw-gap-1.5'>
-                        <span className='tw-text-[11px] tw-font-semibold tw-leading-none tw-text-slate-600'>
-                            {__('License key', 'cci-blog')}
-                        </span>
-                        <Input
-                            type='password'
-                            value={licenseKey}
-                            placeholder='CCI-XXXX-XXXX'
-                            invalid={Boolean(error)}
-                            aria-invalid={Boolean(error)}
-                            onBlur={() => {
-                                setTouched(true);
-                                setError(validateLicenseKey(licenseKey));
-                            }}
-                            onChange={(event) => {
-                                const nextValue = event.target.value;
+    return (
+        <InactiveLicenseCard
+            t={(text) => __(text, 'cci-blog')}
+            productName={__('CCI Blog Pro', 'cci-blog')}
+            licenseKey={licenseKey}
+            saving={saving}
+            onActivate={activateLicense}
+            onKeyBlur={() => {
+                setTouched(true);
+                setFieldError(validateLicenseKey(licenseKey));
+            }}
+            onKeyChange={(nextValue) => {
+                setLicenseKey(nextValue);
+                setError('');
 
-                                setLicenseKey(nextValue);
-
-                                if (touched) {
-                                    setError(validateLicenseKey(nextValue));
-                                }
-                            }}
-                        />
-                    </label>
-                    <Button variant='primary' size='sm' className='cci-blog-state-full' onClick={activateLicense} disabled={saving}>
-                        {saving
-                            ? __('Activating...', 'cci-blog')
-                            : __('Activate license', 'cci-blog')}
-                    </Button>
-                    <p className='tw-m-0 tw-text-[11px] tw-leading-4 tw-text-cci-blog-muted'>
-                        {__('Already have a key? Paste it here and activate Pro in seconds.', 'cci-blog')}
-                    </p>
-                </div>
-            )}
-
-            {error && <p className='tw-relative tw-z-10 tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-danger'>{error}</p>}
-        </div>
+                if (touched) {
+                    setFieldError(validateLicenseKey(nextValue));
+                }
+            }}
+            error={error}
+            errorTone={errorTone}
+            fieldError={fieldError}
+        />
     );
 }

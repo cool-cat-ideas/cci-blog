@@ -133,3 +133,5 @@ $_MODULE['<{cci_blog}prestashop>cci_blog_b1593d5f66fb8d0845e945cca11a0a72'] = 'P
 $_MODULE['<{cci_blog}prestashop>cci_blog_58e2746592347604960709092efdaa42'] = 'Komentarze są wyłączone dla tego wpisu.';
 $_MODULE['<{cci_blog}prestashop>cci_blog_8b33830304744f209e5d50649bc83311'] = 'Komentarz został oznaczony jako spam.';
 $_MODULE['<{cci_blog}prestashop>cci_blog_96fe3af37dbcee74b5c9ab3980ceb1bc'] = 'Wypełnij wszystkie wymagane pola poprawnymi danymi.';
+
+$_MODULE['<{cci_blog}prestashop>post_5910ceeaf17d3a747c6b3c6f7e1387f7'] = 'Dołącz do dyskusji';

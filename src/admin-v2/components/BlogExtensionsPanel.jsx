@@ -134,10 +134,6 @@ export default function BlogExtensionsPanel({ license, onLicenseChange, onOpenSe
             <aside className='tw-grid tw-content-start tw-gap-4 tw-self-start'>
                 <LicensePanel
                     license={license}
-                    onLicenseChange={onLicenseChange}
-                    setNotice={setNotice}
-                    showUpdates={false}
-                    showManage={false}
                 />
             </aside>
             <ProUpgradeModal

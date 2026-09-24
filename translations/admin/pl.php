@@ -111,6 +111,8 @@ return [
             'Installed' => 'Zainstalowana',
             'Latest' => 'Najnowsza',
             'License' => 'Licencja',
+            'License active' => 'Licencja aktywna',
+            'License inactive' => 'Licencja nieaktywna',
             'License key' => 'Klucz licencji',
             'License request failed.' => 'Żądanie licencji nie powiodło się.',
             'License server is temporarily unavailable. Please try again later.' => 'Serwer licencji jest chwilowo niedostępny. Spróbuj ponownie później.',
@@ -212,6 +214,8 @@ return [
             'Choose local image' => 'Wybierz lokalny obraz',
             'Choose one primary category and optionally assign secondary categories.' => 'Wybierz jedną kategorię główną i opcjonalnie przypisz kategorie dodatkowe.',
             'Collapse category' => 'Zwiń kategorię',
+            'Search categories by title or slug' => 'Szukaj kategorii po nazwie lub adresie',
+            'No categories found.' => 'Nie znaleziono kategorii.',
             'Columns' => 'Kolumny',
             'Coming soon' => 'Wkrótce',
             'Commerce content blocks' => 'Bloki treści sprzedażowej',
@@ -684,4 +688,3 @@ return [
             'and all child elements from the current draft.' => 'i wszystkie elementy podrzędne z bieżącego szkicu.',
             'active' => 'aktywnych',
 ];
-

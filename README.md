@@ -2,6 +2,36 @@
 
 Publish articles and buying guides directly in PrestaShop, so a reader can move from useful content back to the catalogue without leaving the shop. Write in the visual editor, add author profiles and tables of contents, and publish article data that search engines can read.
 
+## See what you can build
+
+### Put helpful articles in front of your customers
+
+Show buying guides, product stories and practical advice on your shop homepage. Readers can discover the blog while browsing your offer.
+
+![CCI Blog articles on the PrestaShop homepage](docs/screenshots/cci-blog-homepage-articles-20260924.png)
+
+### Keep publishing inside PrestaShop
+
+Search your articles, check publication status and return to editing from one list. Categories, author profiles and SEO controls help you look after the content as it grows.
+
+![CCI Blog post dashboard](docs/screenshots/cci-blog-posts-dashboard-20260924.png)
+
+### Recommend products in context with PRO
+
+Writing about a product? Find it by name, reference or ID and add it to the article. Readers get a direct route from your advice to the relevant offer.
+
+![CCI Blog PRO product selection in the article editor](docs/screenshots/cci-blog-pro-product-picker-20260924.png)
+
+### Shape longer guides with PRO columns
+
+Place content side by side and set column widths for desktop, tablet and mobile. The slash menu lets you add blocks while writing inside a column.
+
+![CCI Blog PRO columns and block commands](docs/screenshots/cci-blog-pro-columns-editor-20260924.png)
+
+The admin screenshots show a store with PRO active. The base edition includes publishing in the main shop language, the visual editor, categories, author profiles and SEO controls. Product blocks and columns shown above require PRO.
+
+[Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.0.0/)
+
 ## Start publishing
 
 1. Install `cci_blog-1.0.0.zip` in **Modules > Module Manager**.
@@ -17,7 +47,7 @@ If an article does not appear, check its active state, publication date, shop as
 
 The base module works without a license key. CCI Blog Pro is optional and adds more layout, language, Multistore and product-content tools.
 
-Documentation: https://coolcatideas.com/docs/cci-blog/1.0.0/
+[Full documentation](https://coolcatideas.com/docs/cci-blog/1.0.0/)
 
 ## Support
 
@@ -28,3 +58,7 @@ Use the product repository under https://github.com/orgs/cool-cat-ideas/reposito
 ### 1.0.0
 
 - First public release.
+
+## Building and contributing
+
+See [Build from source](docs/building-from-source.md) for the npm workflow. Shared components, styles and API adapters are maintained in [CCI Admin UI](https://github.com/cool-cat-ideas/cci-admin-ui).

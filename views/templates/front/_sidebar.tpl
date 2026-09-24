@@ -16,12 +16,10 @@
     {foreach from=$ccb_categories item=cat}
     {if $cat.id_parent == 0}
     <li>
-      <a href="{$link->getModuleLink('cci_blog','category',['slug'=>$cat.slug])|escape:'html'}">
-        {$cat.name|escape:'html'}
-        <span class="cci-blog-category-list-meta">
-          <span class="cci-blog-count">{$cat.post_count}</span>
-        </span>
-      </a>
+      <div class="cci-blog-category-list-row">
+        <a href="{$link->getModuleLink('cci_blog','category',['slug'=>$cat.slug])|escape:'html'}">{$cat.name|escape:'html'}</a>
+        <span class="cci-blog-count">{$cat.post_count}</span>
+      </div>
       {* Subcategories *}
       {assign var=parentId value=$cat.id_category}
       {assign var=hasSubs value=false}
@@ -33,12 +31,10 @@
         {foreach from=$ccb_categories item=sub}
         {if $sub.id_parent == $parentId}
         <li>
-          <a href="{$link->getModuleLink('cci_blog','category',['slug'=>$sub.slug])|escape:'html'}">
-            {$sub.name|escape:'html'}
-            <span class="cci-blog-category-list-meta">
-              <span class="cci-blog-count">{$sub.post_count}</span>
-            </span>
-          </a>
+          <div class="cci-blog-category-list-row">
+        <a href="{$link->getModuleLink('cci_blog','category',['slug'=>$sub.slug])|escape:'html'}">{$sub.name|escape:'html'}</a>
+        <span class="cci-blog-count">{$sub.post_count}</span>
+      </div>
         </li>
         {/if}
         {/foreach}

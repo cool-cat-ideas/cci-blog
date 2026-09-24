@@ -66,6 +66,11 @@
           {$ccb_post.category_name|escape:'html'}
         </a>
       {/if}
+      {if $ccb_comments_on}
+        <a class="cci-blog-meta-comments" href="#cci-blog-comments">
+          {l s='Comments' mod='cci_blog'}
+        </a>
+      {/if}
     </div>
   </header>
 
@@ -103,6 +108,14 @@
   <div class="cci-blog-post-body" itemprop="articleBody">
     {$ccb_post.content nofilter}
   </div>
+
+  {if $ccb_comments_on}
+  <div class="cci-blog-post-discussion-link">
+    <a class="btn btn-outline-primary" href="#cci-blog-comments">
+      {l s='Join the discussion' mod='cci_blog'}
+    </a>
+  </div>
+  {/if}
 
   {* --- Tags --- *}
   {if $ccb_post.tags}
@@ -176,18 +189,7 @@
     <h2>{l s='Products mentioned in this post' mod='cci_blog'}</h2>
     <div class="cci-blog-products-grid">
       {foreach from=$ccb_products item=prod}
-      <div class="cci-blog-product-card">
-        <a class="cci-blog-product-card-link" href="{$link->getProductLink($prod.id_product)|escape:'html'}">
-          {if $prod.id_image}
-            <span class="cci-blog-product-card-media">
-              <img src="{$link->getImageLink($prod.link_rewrite, $prod.id_image, 'home_default')|escape:'html'}"
-                   alt="{$prod.name|escape:'html'}" loading="lazy">
-              <span class="cci-blog-product-card-action">{l s='View product' mod='cci_blog'}</span>
-            </span>
-          {/if}
-          <span class="cci-blog-product-card-title">{$prod.name|escape:'html'}</span>
-        </a>
-      </div>
+      {include file='catalog/_partials/miniatures/product.tpl' product=$prod}
       {/foreach}
     </div>
   </section>
@@ -210,20 +212,23 @@
     {if $ccb_comments_provider == 'disqus'}
       {* Disqus integration *}
       <section
+        id="cci-blog-comments"
+        tabindex="-1"
+        aria-labelledby="cci-blog-comments-title"
         class="cci-blog-post-comments cci-blog-post-comments-disqus"
         data-cci-blog-disqus
         data-disqus-shortname="{$ccb_disqus_shortname|escape:'html'}"
         data-disqus-url="{$ccb_post_url|escape:'html'}"
         data-disqus-identifier="cci-blog-post-{$ccb_post.id_post|intval}"
       >
-        <h2>{l s='Comments' mod='cci_blog'}</h2>
+        <h2 id="cci-blog-comments-title">{l s='Comments' mod='cci_blog'}</h2>
         <div id="disqus_thread"></div>
         <noscript>{l s='Enable JavaScript to view comments powered by Disqus.' mod='cci_blog'}</noscript>
       </section>
     {else}
       {* Native comments *}
-      <section class="cci-blog-post-comments">
-        <h2>{l s='Comments' mod='cci_blog'} ({$ccb_post.comments|count})</h2>
+      <section class="cci-blog-post-comments" id="cci-blog-comments" tabindex="-1" aria-labelledby="cci-blog-comments-title">
+        <h2 id="cci-blog-comments-title">{l s='Comments' mod='cci_blog'} ({$ccb_post.comments|count})</h2>
 
         {if $ccb_comment_success}
           <div class="cci-blog-alert cci-blog-alert-success">

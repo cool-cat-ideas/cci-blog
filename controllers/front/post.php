@@ -172,7 +172,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             'ccb_previous_post'   => $adjacentPosts['previous'],
             'ccb_next_post'       => $adjacentPosts['next'],
             'ccb_related'         => $related,
-            'ccb_products'        => $products,
+            'ccb_products'        => $this->presentLinkedProducts($products),
             'ccb_schema'          => $schemaOrg,
             'ccb_og'              => $ogTags,
             'ccb_hreflang'        => $hreflang,
@@ -210,6 +210,33 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             'keywords'    => $post['meta_keywords']    ?? '',
         ];
         $this->setTemplate('module:cci_blog/views/templates/front/post.tpl');
+    }
+
+    /** Present linked products with the same listing contract as the active theme. */
+    private function presentLinkedProducts(array $products): array
+    {
+        if (!$products) {
+            return [];
+        }
+
+        $assembler = new ProductAssembler($this->context);
+        $factory = new ProductPresenterFactory($this->context);
+        $settings = $factory->getPresentationSettings();
+        $presenter = new \PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter(
+            new \PrestaShop\PrestaShop\Adapter\Image\ImageRetriever($this->context->link),
+            $this->context->link,
+            new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter(),
+            new \PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever(),
+            $this->context->getTranslator()
+        );
+        $result = [];
+        foreach ($products as $product) {
+            // Fetch current shop/language/pricing data rather than reusing the legacy raw price.
+            $assembled = $assembler->assembleProduct(['id_product' => (int) $product['id_product']]);
+            $result[] = $presenter->present($settings, $assembled, $this->context->language);
+        }
+
+        return $result;
     }
 
     public function getTemplateVarPage()

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatAdminDateTime } from '@cci/admin-ui';
 import { Bug, Clipboard, RefreshCw, Save, Settings } from 'lucide-react';
 import { apiFetch, pluginData } from '../api';
 import { __ } from '../i18n';
@@ -125,7 +126,7 @@ export default function BlogSettingsPanel({ setNotice }) {
                         <h2>{__('Display and SEO', 'cci-blog')}</h2>
                         <p>{__('Control blog storefront, SEO and comment options.', 'cci-blog')}</p>
                     </div>
-                    <Button variant='primary' onClick={save} disabled={saving}>
+                    <Button variant='save' className='tw-shrink-0 tw-whitespace-nowrap' onClick={save} disabled={saving} aria-busy={saving}>
                         <Save aria-hidden='true' />
                         {saving ? __('Saving...', 'cci-blog') : __('Save settings', 'cci-blog')}
                     </Button>
@@ -374,7 +375,7 @@ export default function BlogSettingsPanel({ setNotice }) {
                                 message: [
                                     asset.exists ? __('Found', 'cci-blog') : __('Missing', 'cci-blog'),
                                     `${__('Size', 'cci-blog')}: ${asset.size ?? 0} B`,
-                                    asset.modifiedAt || '-',
+                                    formatAdminDateTime(asset.modifiedAt, pluginData.adminDate) || '—',
                                 ].join(' · '),
                             }))}
                         />
@@ -397,7 +398,7 @@ export default function BlogSettingsPanel({ setNotice }) {
                             empty={__('No warnings were reported.', 'cci-blog')}
                             items={diagnosticsLogs.map((log) => ({
                                 title: log.type || __('Check', 'cci-blog'),
-                                message: [log.message || '-', log.date || ''].filter(Boolean).join(' · '),
+                                message: [log.message || '-', log.date ? formatAdminDateTime(log.date, pluginData.adminDate) : ''].filter(Boolean).join(' · '),
                             }))}
                         />
                     </div>
