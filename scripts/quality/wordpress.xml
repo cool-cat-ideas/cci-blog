@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<ruleset name="CCI WordPress formatting">
+  <description>WordPress spacing and layout; functional and security checks run separately.</description>
+  <rule ref="WordPress-Core">
+    <exclude name="Generic.CodeAnalysis"/>
+    <exclude name="Generic.ControlStructures.InlineControlStructure"/>
+    <exclude name="Generic.Files.OneObjectStructurePerFile"/>
+    <exclude name="Generic.NamingConventions"/>
+    <exclude name="Generic.PHP"/>
+    <exclude name="Generic.VersionControl"/>
+    <exclude name="Modernize"/>
+    <exclude name="PEAR.Files"/>
+    <exclude name="PEAR.NamingConventions"/>
+    <exclude name="Squiz.Classes.SelfMemberReference"/>
+    <exclude name="Squiz.PHP"/>
+    <exclude name="Squiz.Scope"/>
+    <exclude name="Squiz.Strings.DoubleQuoteUsage"/>
+    <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+    <exclude name="Universal.NamingConventions"/>
+    <exclude name="Universal.Namespaces"/>
+    <exclude name="Universal.Operators.DisallowShortTernary"/>
+    <exclude name="Universal.Operators.DisallowStandalonePostIncrementDecrement"/>
+    <exclude name="Universal.Operators.StrictComparisons"/>
+    <exclude name="WordPress.CodeAnalysis"/>
+    <exclude name="WordPress.DateTime"/>
+    <exclude name="WordPress.DB"/>
+    <exclude name="WordPress.Files"/>
+    <exclude name="WordPress.NamingConventions"/>
+    <exclude name="WordPress.PHP"/>
+    <exclude name="WordPress.WP"/>
+  </rule>
+</ruleset>

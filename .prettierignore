@@ -1,0 +1,13 @@
+node_modules/
+vendor/
+output/
+release/
+releases/
+dist/
+build/
+**/*.min.js
+**/*.min.css
+**/vendor/
+**/libraries/
+package-lock.json
+composer.lock

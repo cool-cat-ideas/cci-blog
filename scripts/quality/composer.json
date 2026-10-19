@@ -1,0 +1,16 @@
+{
+  "name": "coolcatideas/product-quality-tools",
+  "type": "project",
+  "license": "proprietary",
+  "require-dev": {
+    "wp-coding-standards/wpcs": "^3.0",
+    "prestashop/php-dev-tools": "^5.0",
+    "friendsofphp/php-cs-fixer": "^3.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": false
+    }
+  }
+}

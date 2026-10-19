@@ -1,0 +1,15 @@
+{
+  "wordpress": [],
+  "exclude": [
+    "^(?:output|release|releases|dist|build|\\.git|\\.svn|node_modules|vendor)/",
+    "(?:^|/)(?:node_modules|vendor|libraries|library|\\.svn)/",
+    "(?:^|/)(?:assets|views)/(?:js|css)/vendor/",
+    "(?:^|/)(?:includes|src)/Licensing/",
+    "^src/php/Licensing/",
+    "^(?:src/Shared|includes/cci-license-php)/",
+    "\\.(?:min|bundle)\\.(?:js|css)$",
+    "^scripts/quality/vendor/",
+    "\\.lock$",
+    "^views/(?:js/cci-blog-admin\\.js|css/cci_blog_admin\\.css)$"
+  ]
+}

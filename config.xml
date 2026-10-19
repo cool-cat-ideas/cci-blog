@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>cci_blog</name>
+    <displayName><![CDATA[CCI Blog]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Publish articles and buying guides directly in PrestaShop. Add author profiles, tables of contents, comments, search and structured article data without running a separate blog.]]></description>
+    <author><![CDATA[Cool Cat Ideas]]></author>
+    <tab><![CDATA[front_office_features]]></tab>
+	<confirmUninstall><![CDATA[Are you sure you want to uninstall CCI Blog? All blog data will be deleted.]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>0</need_instance>
+</module>
