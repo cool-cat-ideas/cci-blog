@@ -126,15 +126,22 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             exit(json_encode(['success' => false, 'error' => $this->module->l('Unauthorized request.')], JSON_UNESCAPED_UNICODE));
         }
 
+        $action = (string) Tools::getValue('ajaxAction', '');
+        $payload = $this->getJsonPayload();
+        $permission = $this->actionPermission($action, is_array($payload) ? $payload : []);
+        if (!$this->checkToken() || !$this->access('view') || !$this->access($permission)
+            || ($permission !== 'view' && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST')
+            || !$this->context->employee->hasAuthOnShop((int) $this->context->shop->id)) {
+            http_response_code(403);
+            exit(json_encode(['success' => false, 'error' => $this->module->l('Unauthorized request.')], JSON_UNESCAPED_UNICODE));
+        }
+
         $this->ensureBlockSchema();
         $this->ensurePostCategorySchema();
         $this->ensureCategoryAuthorSchema();
         if (method_exists($this->module, 'ensureIntegrationHooks')) {
             $this->module->ensureIntegrationHooks();
         }
-
-        $action = (string) Tools::getValue('ajaxAction', '');
-        $payload = $this->getJsonPayload();
 
         try {
             $response = match ($action) {
@@ -182,6 +189,48 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         }
 
         exit(json_encode($response, JSON_UNESCAPED_UNICODE));
+    }
+
+    private function actionPermission(string $action, array $payload): string
+    {
+        return match ($action) {
+            'dashboard:get', 'diagnostics:get', 'posts:list', 'redirects:list', 'post:get',
+            'categories:list', 'category:get', 'multistore:context', 'comments:list',
+            'catalog:products', 'media:list', 'license:get' => 'view',
+            'post:save' => (int) ($payload['id_post'] ?? 0) > 0 ? 'edit' : 'add',
+            'category:save' => (int) ($payload['id_category'] ?? 0) > 0 ? 'edit' : 'add',
+            'post:delete', 'category:delete', 'redirect:delete' => 'delete',
+            'comment:update-status' => ($payload['status'] ?? '') === 'deleted' ? 'delete' : 'edit',
+            default => 'edit',
+        };
+    }
+
+    private function canAccessEntity(string $entity, int $id, bool $write = false): bool
+    {
+        if (!in_array($entity, ['post', 'category'], true) || $id <= 0) {
+            return false;
+        }
+        $shopId = (int) $this->context->shop->id;
+        $employee = $this->context->employee;
+        if (!Validate::isLoadedObject($employee) || !$employee->hasAuthOnShop($shopId)) {
+            return false;
+        }
+        $shops = array_map('intval', array_column(Db::getInstance()->executeS(
+            'SELECT id_shop FROM `' . _DB_PREFIX_ . 'cci_blog_' . $entity . '_shop`'
+            . ' WHERE id_' . $entity . ' = ' . $id
+        ) ?: [], 'id_shop'));
+        if (!in_array($shopId, $shops, true)) {
+            return false;
+        }
+        // Shared records have global fields; changing them affects every assigned shop.
+        if ($write) {
+            foreach ($shops as $assignedShopId) {
+                if (!$employee->hasAuthOnShop($assignedShopId)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private function buildInitialPayload(): array
@@ -1043,10 +1092,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
     private function getScopedSlugRedirect(int $redirectId): array
     {
-        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+        $langId = $this->getDefaultShopLanguageId();
         $shopId = (int) $this->context->shop->id;
 
-        return Db::getInstance()->getRow(
+        $redirect = Db::getInstance()->getRow(
             'SELECT r.id_redirect, r.entity_type, r.id_post, r.id_category, r.id_lang, r.old_slug,
                     COALESCE(pl.slug, cl.slug) AS current_slug
              FROM `' . _DB_PREFIX_ . 'cci_blog_slug_redirect` r
@@ -1062,6 +1111,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
              AND ((r.entity_type = "post" AND ps.id_post IS NOT NULL)
                   OR (r.entity_type = "category" AND cs.id_category IS NOT NULL))'
         ) ?: [];
+        if (!$redirect || !$this->canAccessEntity((string) $redirect['entity_type'], (int) $redirect['id_' . $redirect['entity_type']], true)) {
+            return [];
+        }
+        return $redirect;
     }
 
     private function getAdminAuthors(): array
@@ -1089,6 +1142,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
     private function getPostPayload(int $postId, int $requestedLangId = 0): array
     {
+        if ($postId > 0 && !$this->canAccessEntity('post', $postId)) {
+            return ['success' => false, 'error' => $this->module->l('Post not found.')];
+        }
+
         $langId = $this->resolveContentLanguageId($requestedLangId);
         if ($postId <= 0) {
             $post = $this->getEmptyPost();
@@ -1193,6 +1250,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
         $shopId = (int) $this->context->shop->id;
         $postId = (int) ($payload['id_post'] ?? 0);
+        if ($postId > 0 && !$this->canAccessEntity('post', $postId, true)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available for editing in this shop.')];
+        }
+
         $title = trim((string) ($payload['title'] ?? ''));
 
         if ($title === '') {
@@ -1350,6 +1411,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function deletePost(array $payload): array
     {
         $postId = (int) ($payload['id_post'] ?? 0);
+        if ($postId > 0 && !$this->canAccessEntity('post', $postId, true)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available for editing in this shop.')];
+        }
+
         if ($postId <= 0) {
             return ['success' => false, 'error' => $this->module->l('Invalid post selected.')];
         }
@@ -1410,8 +1475,9 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
         $rows = Db::getInstance()->executeS(
             'SELECT id_category
-             FROM `' . _DB_PREFIX_ . 'cci_blog_category`
-             WHERE id_category IN (' . implode(',', $categoryIds) . ')'
+             FROM `' . _DB_PREFIX_ . 'cci_blog_category_shop`
+             WHERE id_shop = ' . (int) $this->context->shop->id . '
+             AND id_category IN (' . implode(',', $categoryIds) . ')'
         ) ?: [];
         $existing = array_map('intval', array_column($rows, 'id_category'));
 
@@ -1513,6 +1579,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
         $shopId = (int) $this->context->shop->id;
         $categoryId = (int) ($payload['id_category'] ?? 0);
+        if ($categoryId > 0 && !$this->canAccessEntity('category', $categoryId, true)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available for editing in this shop.')];
+        }
+
         $name = trim((string) ($payload['name'] ?? ''));
         $previousSlugs = [];
         if ($categoryId > 0) {
@@ -1618,6 +1688,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function deleteCategory(array $payload): array
     {
         $categoryId = (int) ($payload['id_category'] ?? 0);
+        if ($categoryId > 0 && !$this->canAccessEntity('category', $categoryId, true)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available for editing in this shop.')];
+        }
+
         if ($categoryId <= 0) {
             return ['success' => false, 'error' => $this->module->l('Invalid category selected.')];
         }
@@ -1708,6 +1782,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             return [];
         }
 
+        if ($categoryId > 0 && !$this->canAccessEntity('category', $categoryId)) {
+            return [];
+        }
+
         $langId = $this->resolveContentLanguageId($requestedLangId);
         $shopId = (int) $this->context->shop->id;
 
@@ -1777,6 +1855,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'SELECT c.id_comment, c.id_post, c.author_name, c.author_email, c.content, c.status, c.date_add,
                     pl.title AS post_title
              FROM `' . _DB_PREFIX_ . 'cci_blog_comment` c
+             INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post_shop` ps
+                ON ps.id_post = c.id_post AND ps.id_shop = ' . $shopId . '
              LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post_lang` pl
                 ON pl.id_post = c.id_post AND pl.id_lang = ' . $langId . ' AND pl.id_shop = ' . $shopId . '
              WHERE c.status != "deleted"
@@ -1791,6 +1871,13 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $status = (string) ($payload['status'] ?? '');
         if ($commentId <= 0 || !in_array($status, ['pending', 'approved', 'spam', 'deleted'], true)) {
             return ['success' => false, 'error' => $this->module->l('Invalid comment status.')];
+        }
+
+        $postId = (int) Db::getInstance()->getValue(
+            'SELECT id_post FROM `' . _DB_PREFIX_ . 'cci_blog_comment` WHERE id_comment = ' . $commentId
+        );
+        if (!$this->canAccessEntity('post', $postId, true)) {
+            return ['success' => false, 'error' => $this->module->l('Comment not found.')];
         }
 
         Db::getInstance()->update('cci_blog_comment', ['status' => pSQL($status)], 'id_comment = ' . $commentId);

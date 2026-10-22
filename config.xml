@@ -2,7 +2,7 @@
 <module>
     <name>cci_blog</name>
     <displayName><![CDATA[CCI Blog]]></displayName>
-    <version><![CDATA[1.0.0]]></version>
+    <version><![CDATA[1.0.1]]></version>
     <description><![CDATA[Publish articles and buying guides directly in PrestaShop. Add author profiles, tables of contents, comments, search and structured article data without running a separate blog.]]></description>
     <author><![CDATA[Cool Cat Ideas]]></author>
     <tab><![CDATA[front_office_features]]></tab>

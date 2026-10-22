@@ -27,7 +27,7 @@ require_once __DIR__ . '/classes/CciBlogFeatureRegistry.php';
 
 class Cci_Blog extends Module
 {
-    public const VERSION = '1.0.0';
+    public const VERSION = '1.0.1';
     private const ADMIN_PARENT_TAB_CLASS = 'AdminCciParent';
     private const ADMIN_TABS = [
         'AdminCciBlog',
