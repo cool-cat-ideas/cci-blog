@@ -4,9 +4,9 @@
 
 # CCI Blog
 
-Publish articles and buying guides directly in PrestaShop, so a reader can move from useful content back to the catalogue without leaving the shop. Write in the visual editor, add author profiles and tables of contents, and publish article data that search engines can read.
+Publish buying guides, store news and answers to customer questions under your shop's address. CCI Blog keeps writing, publication and comment moderation in PrestaShop. The visual editor supports headings, images and video; categories, author profiles and tables of contents help readers find their way through the articles.
 
-Download the module ZIP from the [CCI Blog](https://coolcatideas.com/products/cci-blog/).
+Download the module ZIP from the [CCI Blog product page](https://coolcatideas.com/products/cci-blog/).
 
 ## See what you can build
 
@@ -40,7 +40,7 @@ The admin screenshots show a store with PRO active. The base edition includes pu
 
 ## Start publishing
 
-1. Install `cci_blog-1.0.0.zip` in **Modules > Module Manager**.
+1. Download the current CCI Blog ZIP from the product page and install it in **Modules > Module Manager**.
 2. Open **Cool Cat Ideas > CCI Blog**.
 3. Go to **Categories** and add the first category.
 4. Go to **Posts**, create an article and assign its main category.
