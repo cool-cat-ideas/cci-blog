@@ -10,33 +10,45 @@ Download the module ZIP from the [CCI Blog product page](https://coolcatideas.co
 
 ## See what you can build
 
-### Put helpful articles in front of your customers
+### Start with the work waiting in your blog
 
-Show buying guides, product stories and practical advice on your shop homepage. Readers can discover the blog while browsing your offer.
+Dashboard shows recent articles, their last recorded editors and the publication plan. Open an article by its title or switch to Posts for the full management table. Empty lists use informational messages.
 
-![CCI Blog articles on the PrestaShop homepage](docs/screenshots/cci-blog-homepage-articles-20260924.png)
+![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-dashboard-20261108.png)
 
-### Keep publishing inside PrestaShop
+### Review saved article versions
 
-Search your articles, check publication status and return to editing from one list. Categories, author profiles and SEO controls help you look after the content as it grows.
+See who saved an article, when it was saved and which fields changed. Compare a selected version with the current saved article or open its full content and settings. History stays within the article's shop and language.
 
-![CCI Blog post dashboard](docs/screenshots/cci-blog-posts-dashboard-20260924.png)
+![Article versions with the editor's name and highlighted text changes](docs/screenshots/cci-blog-versions-20261108.png)
+
+### Keep the last publication check in the article list
+
+See the saved result alongside each article. A changed dependency marks the result as needing refresh; saving updates it automatically. Opening the list does not run the checks again.
+
+![CCI Blog article list with saved publication results](docs/screenshots/cci-blog-saved-results-20261108.png)
+
+### Check publication details before publishing
+
+One server-side engine checks metadata, headings, links and publication settings. It explains what needs attention and distinguishes unavailable checks. The result does not predict search rankings. Add your own rules through the documented extension hook.
+
+![Publication checks and search settings in the article editor](docs/screenshots/cci-blog-publication-checks-20261108.png)
 
 ### Recommend products in context with PRO
 
-Writing about a product? Find it by name, reference or ID and add it to the article. Readers get a direct route from your advice to the relevant offer.
+Place a product beside the text or between sections. Grids, carousels and comparisons use the active theme's product cards. A theme change therefore also changes the cards used in the article.
 
-![CCI Blog PRO product selection in the article editor](docs/screenshots/cci-blog-pro-product-picker-20260924.png)
+![Theme-native product card with article text wrapping around it, with PRO active](docs/screenshots/cci-blog-wrapped-product-20261108.png)
 
-### Shape longer guides with PRO columns
+### Choose a reading layout with PRO
 
-Place content side by side and set column widths for desktop, tablet and mobile. The slash menu lets you add blocks while writing inside a column.
+Keep the table of contents above the article, in the sidebar or in a sticky sidebar. On phones it returns above the text. Optional blog navigation and permitted hook content can fill the sidebar below it.
 
-![CCI Blog PRO columns and block commands](docs/screenshots/cci-blog-pro-columns-editor-20260924.png)
+![Changing the table of contents layout in settings and checking the storefront](docs/screenshots/cci-blog-toc-layouts-20261108.gif)
 
-The admin screenshots show a store with PRO active. The base edition includes publishing in the main shop language, the visual editor, categories, author profiles and SEO controls. Product blocks and columns shown above require PRO.
+Administration screenshots show the base edition. Product blocks and sidebar table-of-contents examples show the PRO preview. The base edition includes article versions and comparisons, publication checks, saved results, author-written In brief blocks, internal link selection and an inline table of contents. Product blocks, columns and sidebar table-of-contents layouts require PRO, which is currently shown as a preview.
 
-[Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.0.0/)
+[Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
 ## Start publishing
 
@@ -53,7 +65,7 @@ If an article does not appear, check its active state, publication date, shop as
 
 The base module works without a license key. CCI Blog Pro is optional and adds more layout, language, Multistore and product-content tools.
 
-[Full documentation](https://coolcatideas.com/docs/cci-blog/1.0.0/)
+[Full documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
 ## Configure and customize
 
@@ -62,6 +74,10 @@ The base module works without a license key. CCI Blog Pro is optional and adds m
 - [Build an installable editor-block extension](docs/DEVELOPER.md#create-an-installable-editor-block-extension).
 - [Hook arguments and examples](docs/HOOKS_REFERENCE.md) and [supported PHP helpers](docs/API_REFERENCE.md).
 - [Slugs, redirects and sitemap setup](docs/ROUTES_SEO.md).
+- [Publication checks, saved results and custom rules](docs/PUBLICATION_AUDIT.md).
+- [Article versions, comparisons and storage](docs/ARTICLE_VERSIONS.md).
+- [Summaries, links and product comparisons](docs/EDITORIAL_BLOCKS.md).
+- [Table-of-contents layouts and sidebar hooks](docs/TABLE_OF_CONTENTS.md).
 
 Keep changes in a theme or separate module. Do not replace core PHP methods or edit installed module files.
 

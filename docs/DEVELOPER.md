@@ -7,13 +7,13 @@ hooks and blocks supplied by installed modules.
 
 ## Choose what you are extending
 
-| Goal | Recommended mechanism | Guide |
-| --- | --- | --- |
-| Theme markup | PrestaShop override for article, list or widget templates | [Storefront template overrides](#storefront-template-overrides) |
-| Theme styling | Scoped CSS for colors, spacing or typography | [Storefront template overrides](#storefront-template-overrides) |
-| Existing module output | Hook block and a safe display hook | [Register a custom article hook](#register-a-custom-article-hook) |
-| New editor block | Separate installable extension module owning its data | [Create an installable editor-block extension](#create-an-installable-editor-block-extension) |
-| Public integration | Separate module implementing documented CCI Blog hooks | [Hooks reference](HOOKS_REFERENCE.md) |
+| Goal                   | Recommended mechanism                                     | Guide                                                                                         |
+| ---------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Theme markup           | PrestaShop override for article, list or widget templates | [Storefront template overrides](#storefront-template-overrides)                               |
+| Theme styling          | Scoped CSS for colors, spacing or typography              | [Storefront template overrides](#storefront-template-overrides)                               |
+| Existing module output | Hook block and a safe display hook                        | [Register a custom article hook](#register-a-custom-article-hook)                             |
+| New editor block       | Separate installable extension module owning its data     | [Create an installable editor-block extension](#create-an-installable-editor-block-extension) |
+| Public integration     | Separate module implementing documented CCI Blog hooks    | [Hooks reference](HOOKS_REFERENCE.md)                                                         |
 
 Start with the workflow above. The architecture and PHP method sections are
 reference material; extension modules should use documented hooks instead of
@@ -63,17 +63,17 @@ This controller prepares the React admin payload, settings, post data, extension
 
 Stable hooks:
 
-| Hook | Direction | Purpose |
-| --- | --- | --- |
-| `displayHome` | PrestaShop calls CCI Blog | Renders the latest posts home widget when enabled. |
+| Hook                                       | Direction                                     | Purpose                                                         |
+| ------------------------------------------ | --------------------------------------------- | --------------------------------------------------------------- |
+| `displayHome`                              | PrestaShop calls CCI Blog                     | Renders the latest posts home widget when enabled.              |
 | `displayLeftColumn` / `displayRightColumn` | CCI Blog renders the matching PrestaShop hook | Renders modules assigned to the selected blog sidebar position. |
-| `actionFrontControllerSetMedia` | PrestaShop calls CCI Blog | Loads front CSS and JS on blog pages. |
-| `moduleRoutes` | PrestaShop calls CCI Blog | Registers blog URLs. |
-| `displayCciBlogFeatures` | Pro/add-on returns data | Adds feature definitions. |
-| `displayCciBlogAdminExtensions` | Add-on returns data | Lists installed blog add-ons. |
-| `displayCciBlogAdminBlockExtensions` | Add-on returns data | Registers article editor block types. |
-| `displayCciBlogContentHookOptions` | Add-on returns data | Adds safe hook names to the Hook block picker. |
-| `displayCciBlogRenderContentBlock` | CCI Blog calls add-on | Renders Pro or add-on content blocks. |
+| `actionFrontControllerSetMedia`            | PrestaShop calls CCI Blog                     | Loads front CSS and JS on blog pages.                           |
+| `moduleRoutes`                             | PrestaShop calls CCI Blog                     | Registers blog URLs.                                            |
+| `displayCciBlogFeatures`                   | Pro/add-on returns data                       | Adds feature definitions.                                       |
+| `displayCciBlogAdminExtensions`            | Add-on returns data                           | Lists installed blog add-ons.                                   |
+| `displayCciBlogAdminBlockExtensions`       | Add-on returns data                           | Registers article editor block types.                           |
+| `displayCciBlogContentHookOptions`         | Add-on returns data                           | Adds safe hook names to the Hook block picker.                  |
+| `displayCciBlogRenderContentBlock`         | CCI Blog calls add-on                         | Renders Pro or add-on content blocks.                           |
 
 Default article hook block targets:
 
@@ -431,17 +431,17 @@ Never hard-code a staging domain.
 Use the same theme path for any shipped template, preserving its assigned
 variables and semantic/SEO output:
 
-| Page or component | Module template | Theme override |
-| --- | --- | --- |
-| Single article | `front/post.tpl` | `front/post.tpl` |
-| Main list | `front/list.tpl` | `front/list.tpl` |
-| Category archive | `front/category.tpl` | `front/category.tpl` |
-| Tag archive | `front/tag.tpl` | `front/tag.tpl` |
-| Author archive | `front/author.tpl` | `front/author.tpl` |
-| Search results | `front/search.tpl` | `front/search.tpl` |
-| Article card | `front/_post_card.tpl` | `front/_post_card.tpl` |
-| Blog sidebar | `front/_sidebar.tpl` | `front/_sidebar.tpl` |
-| Home widget | `hook/home_widget.tpl` | `hook/home_widget.tpl` |
+| Page or component | Module template        | Theme override         |
+| ----------------- | ---------------------- | ---------------------- |
+| Single article    | `front/post.tpl`       | `front/post.tpl`       |
+| Main list         | `front/list.tpl`       | `front/list.tpl`       |
+| Category archive  | `front/category.tpl`   | `front/category.tpl`   |
+| Tag archive       | `front/tag.tpl`        | `front/tag.tpl`        |
+| Author archive    | `front/author.tpl`     | `front/author.tpl`     |
+| Search results    | `front/search.tpl`     | `front/search.tpl`     |
+| Article card      | `front/_post_card.tpl` | `front/_post_card.tpl` |
+| Blog sidebar      | `front/_sidebar.tpl`   | `front/_sidebar.tpl`   |
+| Home widget       | `hook/home_widget.tpl` | `hook/home_widget.tpl` |
 
 All frontend overrides start under
 `themes/{theme}/modules/cci_blog/views/templates/`. Keep escaping, canonical
@@ -461,7 +461,6 @@ advanced_seo
 ```
 
 The base module keeps these locked until `cci_blog_pro` validates the license.
-
 
 ## Change colors and card titles without replacing templates
 
@@ -505,3 +504,10 @@ Use the add-on's own `$this->author` and `$this->version`, as shown in the hook 
 The metadata hook adds a card; it does not create a settings form, install the add-on or load its renderer. Keep configuration in your add-on's own Module Manager configuration page. Register its rendering and asset hooks separately. Theme overrides do not create an installed-extension entry.
 
 After installation, open **Extensions → Installed extensions** and check the name, author and version. If the card is missing, confirm that the add-on is active in the current shop, that `install()` registered `displayCciBlogAdminExtensions`, and that its callback returns an array with non-empty `id` and `title`. On an existing add-on, register a newly added hook in an upgrade script; editing `install()` alone does not update an already installed module. Do not uninstall an add-on just to register the hook if that would erase its settings.
+
+## Publication and editorial extensions
+
+See [Publication checks and custom rules](PUBLICATION_AUDIT.md) for the canonical
+PHP engine, scoring policy, response contract and installable example module.
+See [Editorial blocks](EDITORIAL_BLOCKS.md) for summaries and Pro product
+comparisons, saved data, native product cards and theme overrides.

@@ -1,3 +1,10 @@
+import {
+  imageLinkState,
+  imageLinkValues,
+  captionLinkProps,
+  patchCaptionLink,
+  imageLinkFromProps,
+} from './editorial-image-links.js';
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
@@ -17,6 +24,7 @@ import {
   ChevronRight,
   Columns3,
   GripVertical,
+  ListChecks as LayersIcon,
   Image as ImageIcon,
   Link2,
   Package,
@@ -42,16 +50,19 @@ import { __ } from '../../i18n/i18n';
 import { Button } from '../ui/button';
 import { CssLengthInput, normalizeCssLengthValue } from '../ui/css-length-input';
 import { Field } from '../ui/field';
+import { Checkbox } from '../ui/checkbox';
 import { Input, Textarea } from '../ui/input';
 import { Select } from '../ui/select';
 import ConfirmDeleteModal from '../feedback/ConfirmDeleteModal';
 import ProBadge from '../licensing/ProBadge';
 import LocalMediaUrlInput from '../media/LocalMediaUrlInput';
+import InternalLinkPicker from './InternalLinkPicker';
 
 const extensionEventName = 'cci-blog:block-extension-registered';
 const proEditorFieldsEventName = 'cci-blog:pro-editor-fields-ready';
 const columnGapUnits = ['px', 'rem', 'em', '%'];
 const BlockExtensionsContext = React.createContext([]);
+const ContentLanguageContext = React.createContext(0);
 const FeatureGateContext = React.createContext(() => true);
 const LockedFeatureContext = React.createContext({ features: {}, onLockedFeatureClick: null });
 
@@ -108,8 +119,23 @@ const advancedBlockDefaults = {
   imageAlignment: 'left',
   imageFramed: '0',
   captionLinked: '0',
+  imageLinked: '1',
+  captionIndependent: '0',
+  captionLinkJson: '{}',
   productId: '',
   productIds: '',
+  summaryItemsJson: '[]',
+  comparisonFieldsJson: '["price","reference"]',
+  productPresentation: 'link',
+  productAlignment: 'center',
+  productCollectionLayout: 'carousel',
+  carouselEngine: 'owl',
+  carouselSpeed: '300',
+  carouselSlidesPerGroup: '1',
+  carouselCentered: '0',
+  carouselDrag: '1',
+  carouselAutoHeight: '0',
+  carouselRewind: '0',
   carouselItemsDesktop: '3',
   carouselItemsTablet: '2',
   carouselItemsMobile: '1',
@@ -446,6 +472,7 @@ ensureProEditorFieldRegistry();
 
 export default function BlockNotePostEditor({
   blocks,
+  languageId = pluginData.language?.id,
   onChange,
   extensionBlocks = [],
   editorKey = 'new',
@@ -608,7 +635,7 @@ export default function BlockNotePostEditor({
   );
 
   return (
-    <>
+    <ContentLanguageContext.Provider value={languageId}>
       <section className="cci-blog-blocknote-shell tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white">
         <div className="tw-grid tw-gap-4 tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-p-4 2xl:tw-grid-cols-[minmax(260px,1fr)_minmax(420px,auto)] 2xl:tw-items-start">
           <div className="tw-min-w-0">
@@ -637,6 +664,20 @@ export default function BlockNotePostEditor({
               icon={ImageIcon}
               label={__('Linked image', 'cci-blog')}
               onClick={() => insertAdvancedBlock('image_link')}
+            />
+            <InsertButton
+              icon={LayersIcon}
+              label={__('In brief', 'cci-blog')}
+              onClick={() => insertAdvancedBlock('summary')}
+            />
+            <InsertButton
+              icon={Package}
+              label={__('Product comparison', 'cci-blog')}
+              isPro
+              disabled={!canUseKind('product_comparison')}
+              lockedFeature={lockedFeatures.product}
+              onLockedFeatureClick={onLockedFeatureClick}
+              onClick={() => insertAdvancedBlock('product_comparison')}
             />
             <InsertButton
               icon={Columns3}
@@ -712,7 +753,7 @@ export default function BlockNotePostEditor({
         <div className="cci-blog-blocknote-surface tw-p-3 sm:tw-p-4">{blockNoteView}</div>
       </section>
       {advancedInlineLink.dialog}
-    </>
+    </ContentLanguageContext.Provider>
   );
 }
 
@@ -861,6 +902,25 @@ function createCciSlashMenuItems(
   const group = __('CCI Blog', 'cci-blog');
   const items = [
     {
+      title: __('In brief', 'cci-blog'),
+      cciKind: 'summary',
+      subtext: __('A short list of factual conclusions.', 'cci-blog'),
+      aliases: ['summary', 'brief', 'wnioski', 'cci'],
+      group,
+      icon: <LayersIcon size={18} />,
+      onItemClick: () => insertBlock('summary'),
+    },
+    {
+      title: __('Product comparison', 'cci-blog'),
+      cciKind: 'product_comparison',
+      subtext: __('Compare selected products using shop data.', 'cci-blog'),
+      aliases: ['compare', 'comparison', 'porownanie', 'cci'],
+      group,
+      icon: <Package size={18} />,
+      onItemClick: () => insertBlock('product_comparison'),
+    },
+
+    {
       title: __('Advanced link', 'cci-blog'),
       cciKind: 'link',
       subtext: __(
@@ -983,6 +1043,7 @@ function requiredFeatureForKind(kind) {
     {
       columns: 'advanced_layout_blocks',
       product: 'commerce_blocks',
+      product_comparison: 'commerce_blocks',
       product_carousel: 'product_carousel',
       hook: 'hook_blocks',
       module_block: 'extension_blocks',
@@ -1097,6 +1158,38 @@ function AdvancedBlockFields({
   lockedFeatures = {},
   onLockedFeatureClick,
 }) {
+  const languageId = React.useContext(ContentLanguageContext);
+  if (kind === 'summary') {
+    return (
+      <div className="tw-grid tw-gap-3">
+        <Field label={__('Summary title', 'cci-blog')}>
+          <Input
+            aria-label={__('Summary title', 'cci-blog')}
+            value={props.title}
+            onChange={(event) => update({ title: event.target.value })}
+          />
+        </Field>
+        <Field
+          label={__('Key points', 'cci-blog')}
+          note={__(
+            'One point per line, up to eight. Write factual conclusions for the reader.',
+            'cci-blog',
+          )}
+        >
+          <Textarea
+            aria-label={__('Key points', 'cci-blog')}
+            value={parseEditorialArray(props.summaryItemsJson).join('\n')}
+            onChange={(event) =>
+              update({
+                summaryItemsJson: JSON.stringify(event.target.value.split('\n').slice(0, 8)),
+              })
+            }
+            rows={5}
+          />
+        </Field>
+      </div>
+    );
+  }
   if (kind === 'link') {
     return <LinkSettings value={props} update={update} showLabel />;
   }
@@ -1154,17 +1247,82 @@ function AdvancedBlockFields({
               options={yesNoOptions()}
             />
           </Field>
+          <Field label={__('Link the image', 'cci-blog')}>
+            <Select
+              ariaLabel={__('Link the image', 'cci-blog')}
+              value={props.imageLinked === '0' ? '0' : '1'}
+              onValueChange={(imageLinked) =>
+                update({
+                  imageLinked,
+                  ...(imageLinked === '0' &&
+                  props.captionLinked === '1' &&
+                  props.captionIndependent !== '1'
+                    ? {
+                        captionIndependent: '1',
+                        captionLinkJson: JSON.stringify(imageLinkFromProps(props)),
+                      }
+                    : {}),
+                })
+              }
+              options={yesNoOptions()}
+            />
+          </Field>
           <Field label={__('Link the caption', 'cci-blog')}>
             <Select
+              ariaLabel={__('Link the caption', 'cci-blog')}
               value={props.captionLinked === '1' ? '1' : '0'}
-              onValueChange={(captionLinked) => update({ captionLinked })}
+              onValueChange={(captionLinked) =>
+                update({
+                  captionLinked,
+                  ...(captionLinked === '1' && props.imageLinked === '0'
+                    ? { captionIndependent: '1' }
+                    : {}),
+                })
+              }
               options={yesNoOptions()}
             />
           </Field>
         </div>
-        <div className="tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-cci-blog-surfaceSoft tw-p-3">
-          <LinkSettings value={props} update={update} />
-        </div>
+        {props.imageLinked !== '0' ? (
+          <div
+            role="group"
+            aria-label={__('Image link', 'cci-blog')}
+            className="tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-cci-blog-surfaceSoft tw-p-3"
+          >
+            <LinkSettings value={props} update={update} />
+          </div>
+        ) : null}
+        {props.captionLinked === '1' ? (
+          <>
+            <Field label={__('Caption destination', 'cci-blog')}>
+              <Select
+                ariaLabel={__('Caption destination', 'cci-blog')}
+                value={props.captionIndependent === '1' ? '1' : '0'}
+                onValueChange={(captionIndependent) => update({ captionIndependent })}
+                options={[
+                  {
+                    value: '0',
+                    label: __('Same as image link', 'cci-blog'),
+                    disabled: props.imageLinked === '0',
+                  },
+                  { value: '1', label: __('Separate caption link', 'cci-blog') },
+                ]}
+              />
+            </Field>
+            {props.captionIndependent === '1' ? (
+              <div
+                role="group"
+                aria-label={__('Caption link', 'cci-blog')}
+                className="tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-cci-blog-surfaceSoft tw-p-3"
+              >
+                <LinkSettings
+                  value={captionLinkProps(props)}
+                  update={(patch) => update(patchCaptionLink(props, patch))}
+                />
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </div>
     );
   }
@@ -1176,6 +1334,7 @@ function AdvancedBlockFields({
       props,
       update,
       externalExtensions,
+      languageId,
     });
   }
 
@@ -1198,6 +1357,7 @@ function renderRegisteredProField(renderer, args) {
       React,
       components: {
         Button,
+        Checkbox,
         ConfirmDeleteModal,
         CssLengthInput,
         Field,
@@ -1220,6 +1380,7 @@ function renderRegisteredProField(renderer, args) {
       helpers: {
         __,
         apiFetch,
+        languageId: args.languageId,
         columnGapUnits,
         getContentHookFieldNote,
         getContentHookHelpText,
@@ -1240,11 +1401,22 @@ function renderRegisteredProField(renderer, args) {
 }
 
 function LinkSettings({ value, update, showLabel = false }) {
+  const languageId = React.useContext(ContentLanguageContext);
   return (
     <div className="tw-grid tw-gap-3">
+      <InternalLinkPicker
+        languageId={languageId}
+        onSelect={(item) =>
+          update({
+            href: item.url,
+            ...(showLabel && !value.label?.trim() ? { label: item.title } : {}),
+          })
+        }
+      />
       {showLabel && (
         <Field label={__('Label', 'cci-blog')}>
           <Input
+            aria-label={__('Label', 'cci-blog')}
             value={value.label || ''}
             onChange={(event) => update({ label: event.target.value })}
           />
@@ -1253,6 +1425,7 @@ function LinkSettings({ value, update, showLabel = false }) {
       <div className="tw-grid tw-gap-3 md:tw-grid-cols-2">
         <Field label={__('Href', 'cci-blog')}>
           <Input
+            aria-label={__('Href', 'cci-blog')}
             value={value.href || ''}
             onChange={(event) => update({ href: event.target.value })}
             placeholder="https://example.com"
@@ -1260,12 +1433,14 @@ function LinkSettings({ value, update, showLabel = false }) {
         </Field>
         <Field label={__('Title', 'cci-blog')}>
           <Input
+            aria-label={__('Title', 'cci-blog')}
             value={value.title || ''}
             onChange={(event) => update({ title: event.target.value })}
           />
         </Field>
         <Field label={__('Target', 'cci-blog')}>
           <Select
+            ariaLabel={__('Target', 'cci-blog')}
             value={value.target || '_self'}
             onValueChange={(target) => update({ target: target === '_self' ? '' : target })}
             options={[
@@ -1276,6 +1451,7 @@ function LinkSettings({ value, update, showLabel = false }) {
         </Field>
         <Field label={__('Rel', 'cci-blog')}>
           <Input
+            aria-label={__('Rel', 'cci-blog')}
             value={value.rel || ''}
             onChange={(event) => update({ rel: event.target.value })}
             placeholder="nofollow sponsored"
@@ -1283,6 +1459,7 @@ function LinkSettings({ value, update, showLabel = false }) {
         </Field>
         <Field label={__('Link style', 'cci-blog')}>
           <Select
+            ariaLabel={__('Link style', 'cci-blog')}
             value={normalizeLinkVariant(value.variant) || 'default'}
             onValueChange={(variant) => update({ variant: variant === 'default' ? '' : variant })}
             options={linkVariantOptions}
@@ -1291,6 +1468,7 @@ function LinkSettings({ value, update, showLabel = false }) {
       </div>
       <Field label={__('ARIA label', 'cci-blog')}>
         <Input
+          aria-label={__('ARIA label', 'cci-blog')}
           value={value.ariaLabel || ''}
           onChange={(event) => update({ ariaLabel: event.target.value })}
         />
@@ -1308,6 +1486,7 @@ function AdvancedLinkDialog({
   onSubmit,
 }) {
   const [values, setValues] = React.useState(initialValues);
+  const dialogRef = React.useRef(null);
 
   React.useEffect(() => {
     if (open) {
@@ -1320,16 +1499,37 @@ function AdvancedLinkDialog({
       return undefined;
     }
 
+    const previousFocus = document.activeElement;
+    dialogRef.current?.querySelector('input, button')?.focus();
     const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         onCancel?.();
       }
+      if (event.key === 'Tab') {
+        const controls = Array.from(
+          dialogRef.current?.querySelectorAll('input, textarea, select, button, [tabindex="0"]') ||
+            [],
+        ).filter((element) => !element.disabled && element.getClientRects().length);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCancel, open]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -1348,7 +1548,8 @@ function AdvancedLinkDialog({
       }}
     >
       <form
-        className="tw-w-full tw-max-w-2xl tw-overflow-hidden tw-rounded-lg tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white"
+        ref={dialogRef}
+        className="tw-max-h-[calc(100dvh-2rem)] tw-w-full tw-max-w-2xl tw-overflow-y-auto tw-rounded-lg tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cci-blog-advanced-link-dialog-title"
@@ -1410,6 +1611,7 @@ function convertBlockNoteBlock(block, editor) {
       type: 'heading',
       level: clampNumber(block.props?.level, 2, 4, 2),
       text: inlineContentToText(block.content),
+      html: serializeBlock(editor, block),
     };
   }
 
@@ -1455,6 +1657,19 @@ function convertBlockNoteBlock(block, editor) {
 function advancedBlockToContent(props) {
   const kind = props.kind || 'link';
 
+  if (kind === 'summary')
+    return {
+      type: 'summary',
+      title: props.title || __('In brief', 'cci-blog'),
+      items: parseEditorialArray(props.summaryItemsJson).map(String).slice(0, 8),
+    };
+  if (kind === 'product_comparison')
+    return {
+      type: 'product_comparison',
+      title: props.title || __('Compare products', 'cci-blog'),
+      ids: props.productIds || '',
+      fields: parseEditorialArray(props.comparisonFieldsJson).map(String).slice(0, 12),
+    };
   if (kind === 'link') {
     return {
       type: 'link',
@@ -1492,8 +1707,7 @@ function advancedBlockToContent(props) {
       width: normalizeImageWidth(props.imageWidth),
       alignment: normalizeImageAlignment(props.imageAlignment),
       framed: props.imageFramed === '1',
-      link,
-      caption_link: props.captionLinked === '1' ? link : {},
+      ...imageLinkValues(props, link),
     };
   }
 
@@ -1510,6 +1724,10 @@ function advancedBlockToContent(props) {
       type: 'product',
       id_product: Number(props.productId || 0),
       label: props.label || __('Mentioned product', 'cci-blog'),
+      presentation: props.productPresentation === 'card' ? 'card' : 'link',
+      alignment: ['left', 'right'].includes(props.productAlignment)
+        ? props.productAlignment
+        : 'center',
     };
   }
 
@@ -1518,6 +1736,11 @@ function advancedBlockToContent(props) {
       type: 'product_carousel',
       title: props.title || __('Recommended products', 'cci-blog'),
       ids: props.productIds || '',
+      presentation: props.productPresentation === 'card' ? 'card' : 'link',
+      layout: props.productCollectionLayout === 'grid' ? 'grid' : 'carousel',
+      engine: ['auto', 'swiper', 'native'].includes(props.carouselEngine)
+        ? props.carouselEngine
+        : 'owl',
       options: carouselPropsToContentOptions(props),
     };
   }
@@ -1635,11 +1858,14 @@ function contentBlockToBlockNote(block) {
   }
 
   if (block.type === 'heading') {
+    const restored = block.html
+      ? htmlToBlockNoteBlocks(block.html).find((item) => item.type === 'heading')
+      : null;
     return [
       {
         type: 'heading',
         props: { level: clampNumber(block.level, 2, 4, 2) },
-        content: block.text || '',
+        content: restored?.content || block.text || '',
       },
     ];
   }
@@ -1690,6 +1916,23 @@ function contentBlockToBlockNote(block) {
 }
 
 function contentBlockToAdvancedProps(block) {
+  if (block.type === 'summary')
+    return {
+      ...advancedBlockDefaults,
+      kind: 'summary',
+      title: block.title || __('In brief', 'cci-blog'),
+      summaryItemsJson: JSON.stringify(Array.isArray(block.items) ? block.items : []),
+    };
+  if (block.type === 'product_comparison')
+    return {
+      ...advancedBlockDefaults,
+      kind: 'product_comparison',
+      title: block.title || __('Compare products', 'cci-blog'),
+      productIds: Array.isArray(block.ids) ? block.ids.join(',') : String(block.ids || ''),
+      comparisonFieldsJson: JSON.stringify(
+        Array.isArray(block.fields) ? block.fields : ['price', 'reference'],
+      ),
+    };
   if (block.type === 'link') {
     return {
       ...advancedBlockDefaults,
@@ -1713,6 +1956,7 @@ function contentBlockToAdvancedProps(block) {
     return {
       ...advancedBlockDefaults,
       kind: 'image_link',
+      ...imageLinkState(block),
       imageUrl: block.src || '',
       alt: block.alt || '',
       caption: block.caption || '',
@@ -1751,6 +1995,8 @@ function contentBlockToAdvancedProps(block) {
       kind: 'product',
       productId: String(block.id_product || ''),
       label: block.label || '',
+      productPresentation: block.presentation === 'card' ? 'card' : 'link',
+      productAlignment: ['left', 'right'].includes(block.alignment) ? block.alignment : 'center',
     };
   }
 
@@ -1762,6 +2008,15 @@ function contentBlockToAdvancedProps(block) {
       kind: 'product_carousel',
       title: block.title || '',
       productIds: block.ids || '',
+      productPresentation: block.presentation === 'card' ? 'card' : 'link',
+      productCollectionLayout: block.layout === 'grid' ? 'grid' : 'carousel',
+      carouselEngine: ['auto', 'swiper', 'native'].includes(block.engine) ? block.engine : 'owl',
+      carouselSpeed: String(options.speed ?? 300),
+      carouselSlidesPerGroup: String(options.slides_per_group ?? 1),
+      carouselCentered: boolOptionValue(options.centered, '0'),
+      carouselDrag: boolOptionValue(options.drag, '1'),
+      carouselAutoHeight: boolOptionValue(options.auto_height, '0'),
+      carouselRewind: boolOptionValue(options.rewind, '0'),
       carouselItemsDesktop: String(
         options.items_desktop ?? block.items_desktop ?? advancedBlockDefaults.carouselItemsDesktop,
       ),
@@ -2162,6 +2417,12 @@ function normalizeColumnGap(value) {
 
 function carouselPropsToContentOptions(props) {
   return {
+    speed: clampInteger(props.carouselSpeed, 0, 2000, 300),
+    slides_per_group: clampInteger(props.carouselSlidesPerGroup, 1, 8, 1),
+    centered: boolOptionValue(props.carouselCentered, '0') === '1',
+    drag: boolOptionValue(props.carouselDrag, '1') === '1',
+    auto_height: boolOptionValue(props.carouselAutoHeight, '0') === '1',
+    rewind: boolOptionValue(props.carouselRewind, '0') === '1',
     items_desktop: clampInteger(props.carouselItemsDesktop, 1, 8, 3),
     items_tablet: clampInteger(props.carouselItemsTablet, 1, 6, 2),
     items_mobile: clampInteger(props.carouselItemsMobile, 1, 3, 1),
@@ -2202,6 +2463,8 @@ function yesNoOptions() {
 
 function advancedKindOptions(canUseKind = null) {
   const options = [
+    { value: 'summary', label: __('In brief', 'cci-blog') },
+    { value: 'product_comparison', label: __('Product comparison', 'cci-blog') },
     { value: 'link', label: __('Advanced link', 'cci-blog') },
     { value: 'image_link', label: __('Linked image', 'cci-blog') },
     { value: 'columns', label: __('Columns', 'cci-blog') },
@@ -2221,15 +2484,29 @@ function advancedKindOptions(canUseKind = null) {
 }
 
 function defaultsForKind(kind) {
+  if (kind === 'summary') return { title: __('In brief', 'cci-blog'), summaryItemsJson: '[]' };
+  if (kind === 'product_comparison')
+    return {
+      title: __('Compare products', 'cci-blog'),
+      productIds: '',
+      comparisonFieldsJson: '["price","reference"]',
+    };
   if (kind === 'columns') {
     return { columnsJson: JSON.stringify([createColumn(), createColumn()]) };
   }
   if (kind === 'product') {
-    return { label: __('Mentioned product', 'cci-blog') };
+    return {
+      label: __('Mentioned product', 'cci-blog'),
+      productPresentation: 'card',
+      productAlignment: 'center',
+    };
   }
   if (kind === 'product_carousel') {
     return {
       title: __('Recommended products', 'cci-blog'),
+      productPresentation: 'card',
+      productCollectionLayout: 'carousel',
+      carouselEngine: 'auto',
       carouselItemsDesktop: advancedBlockDefaults.carouselItemsDesktop,
       carouselItemsTablet: advancedBlockDefaults.carouselItemsTablet,
       carouselItemsMobile: advancedBlockDefaults.carouselItemsMobile,
@@ -2251,6 +2528,9 @@ function defaultsForKind(kind) {
 }
 
 function blockTitle(kind, props) {
+  if (kind === 'product_carousel' && props.productCollectionLayout === 'grid') {
+    return __('Product grid', 'cci-blog');
+  }
   if (kind === 'module_block') {
     return props.title || props.blockName || __('Extension block', 'cci-blog');
   }
@@ -2262,6 +2542,9 @@ function blockTitle(kind, props) {
 }
 
 function blockDescription(kind, props) {
+  if (kind === 'summary') return __('Author-written conclusions for the reader.', 'cci-blog');
+  if (kind === 'product_comparison')
+    return __('Live catalogue values with native product cards.', 'cci-blog');
   if (kind === 'link') {
     return props.href || __('Link with rel, style variant, ID and title attributes.', 'cci-blog');
   }
@@ -2355,4 +2638,13 @@ function resolveBlockNoteDictionary() {
   const language = String(document.documentElement.lang || '').toLowerCase();
 
   return language.startsWith('pl') ? pl : en;
+}
+
+function parseEditorialArray(value) {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
 }

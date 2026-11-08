@@ -21,7 +21,12 @@ Never include passwords, license keys, access tokens, customer data or productio
 
 ## License and domain
 
-Free works without a license. Pro requires `cci_blog_pro` and an active license for the shop domain.
+Free works without a license. Editing Pro content requires `cci_blog_pro` and an active license for the shop domain.
+
+Ordinary expiry of a correctly signed license preserves previously published
+Pro content on the licensed shop. Renew the license to edit that content again.
+Revoked licenses, removed activations and invalid tokens do not retain Pro
+runtime access. Disabling or uninstalling the Pro module also removes its renderers.
 
 If activation fails, send the displayed error and affected shop domain through
 the private account form above. You do not need to send your licence key or

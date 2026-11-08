@@ -27,6 +27,11 @@ window.CCIBlogMediaLibraryUi = createLocalMediaLibraryUiBridge({
 const mount = document.getElementById('cci-blog-admin-root');
 
 if (mount) {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport && !/interactive-widget\s*=/i.test(viewport.content)) {
+    // BlockNote's mobile toolbar needs the editor viewport to follow the keyboard.
+    viewport.content = `${viewport.content}, interactive-widget=resizes-content`;
+  }
   const loaderStartedAt = performance.now();
   const minimumLoaderMs = 180;
 

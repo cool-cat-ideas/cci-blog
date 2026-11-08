@@ -5,7 +5,7 @@ export const pluginData = (() => {
   const initialPayload = cfg.initialPayload || {};
   const rawLicense = initialPayload.license || cfg.license || {};
   const defaultI18n = {
-    dashboard: 'Posts',
+    dashboard: 'Dashboard',
     extensions: 'Extensions',
     diagnostics: 'Diagnostics',
     settings: 'Settings',
@@ -134,7 +134,7 @@ function cciBlogBlockKindsForFeatures(features) {
   const kinds = [];
 
   if (enabled.has('advanced_layout_blocks')) kinds.push('columns');
-  if (enabled.has('commerce_blocks')) kinds.push('product');
+  if (enabled.has('commerce_blocks')) kinds.push('product', 'product_comparison');
   if (enabled.has('product_carousel')) kinds.push('product_carousel');
   if (enabled.has('hook_blocks')) kinds.push('hook');
   if (enabled.has('extension_blocks')) kinds.push('module_block');
@@ -224,6 +224,11 @@ const actionMap = {
   '/posts/list': 'posts:list',
   '/post/get': 'post:get',
   '/post/save': 'post:save',
+  '/post/history': 'post:history',
+  '/post/revision': 'post:revision',
+  '/post/audit': 'post:audit',
+  '/catalog/comparison-fields': 'catalog:comparison-fields',
+  '/post/preview': 'post:preview',
   '/post/delete': 'post:delete',
   '/categories/list': 'categories:list',
   '/category/get': 'category:get',
@@ -235,6 +240,7 @@ const actionMap = {
   '/comments/list': 'comments:list',
   '/comment/update-status': 'comment:update-status',
   '/catalog/products': 'catalog:products',
+  '/catalog/links': 'catalog:links',
   '/media/list': 'media:list',
   '/license/get': 'license:get',
   '/license/activate': 'license:activate',

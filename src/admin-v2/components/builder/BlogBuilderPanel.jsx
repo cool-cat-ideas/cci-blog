@@ -1,12 +1,16 @@
 import { formatAdminDateTime, ResourceListHeader } from '@cci/admin-ui';
 import React from 'react';
+import BlogDashboardWork from '../posts/BlogDashboardWork';
+import PostHistoryPanel from '../posts/PostHistoryPanel';
 import { StatusBadge as SharedStatusBadge } from '@cci/admin-ui';
 import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
   FilePenLine,
+  Eye,
   FolderTree,
+  History,
   Layers,
   Link2,
   MessageSquare,
@@ -44,7 +48,8 @@ import {
 } from './model/text.js';
 import { blogProFeatures } from './config/features.js';
 import { buildStorefrontBase } from './model/links.js';
-import { calculateSeoAudit } from './seo/audit.js';
+import { usePublicationAudit, emptyPublicationAudit } from './seo/publication-audit-client.js';
+import { publicationStatus, shopDateTime } from './model/publication.js';
 import {
   SeoEditorPanel,
   SeoContentAssistPanel,
@@ -60,6 +65,9 @@ const editorTabs = [
 ];
 
 const columnGapUnits = ['px', 'rem', 'em', '%'];
+const serverClockOffset = pluginData.serverTime
+  ? Number(pluginData.serverTime) * 1000 - Date.now()
+  : 0;
 
 const defaultPost = {
   id_post: 0,
@@ -122,6 +130,8 @@ export default function BlogBuilderPanel({
   onOpenSettings,
   onEditorStateChange,
   section = 'dashboard',
+  overviewOnly = false,
+  onOpenManagement,
 }) {
   const [posts, setPosts] = React.useState(pluginData.posts || []);
   const [postsPagination, setPostsPagination] = React.useState(
@@ -144,25 +154,27 @@ export default function BlogBuilderPanel({
   const [workingCategory, setWorkingCategory] = React.useState(createDefaultCategory);
   const [pendingDelete, setPendingDelete] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
+  const [previewing, setPreviewing] = React.useState(false);
 
   React.useEffect(() => {
+    if (overviewOnly && view !== 'list') setView('list');
     if (section !== 'dashboard' && view === 'editor') {
       setView('list');
     }
     if (section !== 'categories' && view === 'category-editor') {
       setView('list');
     }
-  }, [section, view]);
+  }, [section, view, overviewOnly]);
 
   React.useEffect(() => {
     if (typeof onEditorStateChange !== 'function') {
       return undefined;
     }
 
-    onEditorStateChange(view === 'editor' || view === 'category-editor');
+    onEditorStateChange(!overviewOnly && (view === 'editor' || view === 'category-editor'));
 
     return () => onEditorStateChange(false);
-  }, [onEditorStateChange, view]);
+  }, [onEditorStateChange, view, overviewOnly]);
 
   const notify = React.useCallback(
     (notice) => {
@@ -224,6 +236,7 @@ export default function BlogBuilderPanel({
         setWorking(normalizePost(response.post));
         setEditorTab('content');
         setView('editor');
+        onOpenManagement?.();
       })
       .catch((error) => {
         notify({ type: 'error', message: error.message, details: error.details || '' });
@@ -235,6 +248,7 @@ export default function BlogBuilderPanel({
     setWorking({ ...createDefaultPost(), id_lang: defaultContentLanguageId });
     setEditorTab('content');
     setView('editor');
+    onOpenManagement?.();
   };
 
   const changePostLanguage = (languageId) => {
@@ -256,6 +270,30 @@ export default function BlogBuilderPanel({
       setWorking(nextPost);
       setPosts((current) => upsertPostSummary(current, nextPost));
     });
+
+  const previewPost = () => {
+    const previewWindow = window.open('about:blank', '_blank');
+    if (!previewWindow) {
+      notify({
+        type: 'error',
+        message: __('Allow pop-ups to open the private preview.', 'cci-blog'),
+      });
+      return;
+    }
+    previewWindow.opener = null;
+    previewWindow.document.body.textContent = __('Preparing preview...', 'cci-blog');
+    setPreviewing(true);
+    apiFetch('/post/preview', { body: JSON.stringify(normalizePostForPlan(working, isPro)) })
+      .then((response) => previewWindow.location.replace(response.url))
+      .catch((error) => {
+        previewWindow.close();
+        notify({
+          type: 'error',
+          message: error.message || __('Could not create the private preview.', 'cci-blog'),
+        });
+      })
+      .finally(() => setPreviewing(false));
+  };
 
   const deletePost = (post) =>
     runRequest(
@@ -394,10 +432,12 @@ export default function BlogBuilderPanel({
       onConfirm: () => deleteComment(comment),
     });
 
-  if (view === 'list') {
+  if (overviewOnly || view === 'list') {
     return (
       <>
         <BlogList
+          overviewOnly={overviewOnly}
+          onManage={onOpenManagement}
           posts={posts}
           postsPagination={postsPagination}
           categories={categories}
@@ -466,6 +506,8 @@ export default function BlogBuilderPanel({
       saving={saving}
       onBack={() => setView('list')}
       onSave={savePost}
+      onPreview={previewPost}
+      previewing={previewing}
       onTabChange={setEditorTab}
       onChange={setWorking}
       onOpenSettings={onOpenSettings}
@@ -480,6 +522,8 @@ export default function BlogBuilderPanel({
 }
 
 function BlogList({
+  overviewOnly,
+  onManage,
   posts,
   postsPagination,
   categories,
@@ -504,40 +548,52 @@ function BlogList({
   const section = ['categories', 'comments'].includes(activeSection) ? activeSection : 'dashboard';
   const usesDisqus = commentsProvider === 'disqus';
 
+  if (overviewOnly) {
+    return (
+      <div className="tw-grid tw-min-w-0 tw-grid-cols-1 tw-gap-4">
+        <div className="tw-grid tw-grid-cols-1 tw-gap-3 lg:tw-grid-cols-3">
+          <MetricCard
+            icon={FilePenLine}
+            label={__('Posts', 'cci-blog')}
+            value={stats.posts ?? postsPagination?.total ?? posts.length}
+            description={`${stats.activePosts ?? 0} ${__('active', 'cci-blog')}`}
+            tone={section === 'dashboard' ? 'primary' : 'default'}
+          />
+          <MetricCard
+            icon={Tags}
+            label={__('Categories', 'cci-blog')}
+            value={stats.categories ?? categories.length}
+            description={`${stats.activeCategories ?? categories.filter((category) => Number(category.active) === 1).length} ${__('active', 'cci-blog')}`}
+            tone={section === 'categories' ? 'primary' : 'default'}
+          />
+          <MetricCard
+            icon={MessageSquare}
+            label={
+              usesDisqus ? __('Comment provider', 'cci-blog') : __('Pending comments', 'cci-blog')
+            }
+            value={usesDisqus ? 'Disqus' : (stats.pendingComments ?? 0)}
+            description={
+              stats.commentsEnabled
+                ? __('Comments enabled', 'cci-blog')
+                : __('Comments disabled', 'cci-blog')
+            }
+            tone={section === 'comments' ? 'primary' : 'default'}
+          />
+        </div>
+
+        <BlogDashboardWork
+          stats={stats}
+          onCreate={onCreatePost}
+          onOpen={onOpenPost}
+          onManage={onManage}
+        />
+        <ReviewPrompt setNotice={setNotice} />
+      </div>
+    );
+  }
+
   return (
     <div className="tw-grid tw-gap-4">
-      <div className="tw-grid tw-grid-cols-1 tw-gap-3 lg:tw-grid-cols-3">
-        <MetricCard
-          icon={FilePenLine}
-          label={__('Posts', 'cci-blog')}
-          value={stats.posts ?? postsPagination?.total ?? posts.length}
-          description={`${stats.activePosts ?? 0} ${__('active', 'cci-blog')}`}
-          tone={section === 'dashboard' ? 'primary' : 'default'}
-        />
-        <MetricCard
-          icon={Tags}
-          label={__('Categories', 'cci-blog')}
-          value={stats.categories ?? categories.length}
-          description={`${stats.activeCategories ?? categories.filter((category) => Number(category.active) === 1).length} ${__('active', 'cci-blog')}`}
-          tone={section === 'categories' ? 'primary' : 'default'}
-        />
-        <MetricCard
-          icon={MessageSquare}
-          label={
-            usesDisqus ? __('Comment provider', 'cci-blog') : __('Pending comments', 'cci-blog')
-          }
-          value={usesDisqus ? 'Disqus' : (stats.pendingComments ?? 0)}
-          description={
-            stats.commentsEnabled
-              ? __('Comments enabled', 'cci-blog')
-              : __('Comments disabled', 'cci-blog')
-          }
-          tone={section === 'comments' ? 'primary' : 'default'}
-        />
-      </div>
-
-      {section === 'dashboard' && <ReviewPrompt setNotice={setNotice} />}
-
       <Card>
         {section === 'dashboard' && (
           <>
@@ -592,6 +648,8 @@ function PostEditor({
   saving,
   onBack,
   onSave,
+  onPreview,
+  previewing,
   onTabChange,
   onChange,
   onOpenSettings,
@@ -604,9 +662,26 @@ function PostEditor({
 }) {
   const blocks = Array.isArray(post.blocks) ? post.blocks : [];
   const [proFeature, setProFeature] = React.useState(null);
-  const debouncedPost = useDebouncedValue(post, 350);
-  const seoAudit = React.useMemo(() => calculateSeoAudit(debouncedPost), [debouncedPost]);
+  const seoAudit = usePublicationAudit(post);
   const change = (patch) => onChange({ ...post, ...patch });
+  const currentStatus = publicationStatus(
+    post,
+    new Date(Date.now() + serverClockOffset),
+    pluginData.adminDate?.timeZone || 'UTC',
+  );
+  const changePublicationStatus = (status) => {
+    const now = new Date(Date.now() + serverClockOffset);
+    const timeZone = pluginData.adminDate?.timeZone || 'UTC';
+    change({
+      active: status === 'draft' ? 0 : 1,
+      date_published:
+        status === 'scheduled' && currentStatus !== 'scheduled'
+          ? shopDateTime(new Date(now.getTime() + 3600000), timeZone)
+          : status === 'published' && currentStatus === 'scheduled'
+            ? shopDateTime(now, timeZone)
+            : post.date_published,
+    });
+  };
   const editorKey = `${post.id_post || 'new'}-${post.date_upd || post.date_published || ''}`;
   const selectedCategoryIds = normalizeCategoryIds(post.category_ids, post.id_category);
   const primaryCategoryId = Number(post.id_category || 0);
@@ -682,18 +757,31 @@ function PostEditor({
   return (
     <>
       <Card className="tw-overflow-visible">
-        <CardHeader className="tw-flex tw-min-h-16 tw-flex-row tw-items-center tw-justify-between tw-gap-4 tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-bg-white tw-px-5 tw-py-4">
+        <CardHeader className="tw-flex tw-min-h-16 tw-flex-row tw-flex-wrap tw-items-center tw-justify-between tw-gap-4 tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-bg-white tw-px-5 tw-py-4">
           <Button variant="ghost" type="button" onClick={onBack}>
             <ArrowLeft aria-hidden="true" />
             {__('Back to all posts', 'cci-blog')}
           </Button>
           <div className="tw-flex tw-flex-wrap tw-items-center tw-justify-end tw-gap-2">
+            <PublicationStatusBadge post={post} />
             <ContentLanguageSelect
               languages={languages}
               languageId={post.id_lang}
               disabled={!translationsEnabled || saving}
               onChange={onLanguageChange}
             />
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={onPreview}
+              disabled={saving || previewing || !post.title?.trim()}
+              aria-busy={previewing}
+            >
+              <Eye aria-hidden="true" />
+              {previewing
+                ? __('Preparing preview...', 'cci-blog')
+                : __('Private preview', 'cci-blog')}
+            </Button>
             <Button
               variant="save"
               type="button"
@@ -731,7 +819,10 @@ function PostEditor({
 
         <Tabs value={tab} onValueChange={onTabChange} className="tw-grid tw-gap-0">
           <TabsList>
-            {editorTabs.map((item) => {
+            {[
+              ...editorTabs,
+              { value: 'history', label: __('Versions', 'cci-blog'), icon: History },
+            ].map((item) => {
               const Icon = item.icon;
               return (
                 <TabsTrigger key={item.value} value={item.value}>
@@ -758,6 +849,20 @@ function PostEditor({
                       </div>
                       <div className="cci-blog-post-settings-grid tw-grid tw-gap-3">
                         <Field
+                          label={__('Publication status', 'cci-blog')}
+                          note={__('Changes take effect after saving.', 'cci-blog')}
+                        >
+                          <Select
+                            value={currentStatus}
+                            onValueChange={changePublicationStatus}
+                            options={[
+                              { value: 'draft', label: __('Draft', 'cci-blog') },
+                              { value: 'scheduled', label: __('Scheduled', 'cci-blog') },
+                              { value: 'published', label: __('Published', 'cci-blog') },
+                            ]}
+                          />
+                        </Field>
+                        <Field
                           label={__('Created', 'cci-blog')}
                           note={
                             post.date_add
@@ -773,7 +878,10 @@ function PostEditor({
                             readOnly
                           />
                         </Field>
-                        <Field label={__('Publication date', 'cci-blog')}>
+                        <Field
+                          label={__('Publication date', 'cci-blog')}
+                          note={`${__('Shop time zone:', 'cci-blog')} ${pluginData.adminDate?.timeZone || 'UTC'}`}
+                        >
                           <Input
                             type="datetime-local"
                             value={toDateTimeLocalValue(post.date_published)}
@@ -810,11 +918,6 @@ function PostEditor({
                       ) : null}
                     </div>
                     <div className="tw-mt-3 tw-grid tw-gap-3 md:tw-grid-cols-3">
-                      <ToggleField
-                        checked={Boolean(Number(post.active))}
-                        label={__('Published', 'cci-blog')}
-                        onChange={(checked) => change({ active: checked ? 1 : 0 })}
-                      />
                       <ToggleField
                         checked={Boolean(Number(post.featured))}
                         label={__('Featured post', 'cci-blog')}
@@ -854,6 +957,7 @@ function PostEditor({
 
                   <BlockNotePostEditor
                     blocks={blocks}
+                    languageId={post.id_lang}
                     editorKey={editorKey}
                     extensionBlocks={pluginData.blockExtensions || []}
                     isPro={isPro}
@@ -881,6 +985,18 @@ function PostEditor({
                 onChange={change}
                 onLockedFeatureClick={openProFeature}
               />
+            </TabsPanel>
+            <TabsPanel value="history" className="tw-m-0 tw-border-0 tw-bg-transparent">
+              {tab === 'history' && (
+                <PostHistoryPanel
+                  key={`${post.id_post}:${post.id_lang}`}
+                  postId={Number(post.id_post || 0)}
+                  languageId={Number(post.id_lang || 0)}
+                  revisionKey={post.history_revision_id}
+                  authors={authors}
+                  categories={categories}
+                />
+              )}
             </TabsPanel>
           </CardContent>
         </Tabs>
@@ -1506,10 +1622,10 @@ function postTableRow(post, columns, onOpenPost, onDeletePost) {
     ),
     author: () => post.author_name || '-',
     category: () => post.category_names || post.category_name || '-',
-    status: () => <PublicationStatusBadge published={Number(post.active) === 1} />,
+    status: () => <PublicationStatusBadge post={post} />,
     seo: () => <PostSeoStatus post={post} />,
     updated: () =>
-      formatAdminDateTime(post.date_upd || post.date_published, pluginData.adminDate) || '—',
+      formatAdminDateTime(post.date_upd || post.date_published, pluginData.adminDate) || '-',
   };
 
   return columns
@@ -1635,37 +1751,63 @@ function applyPostTableColumnExtensions(columns, proExtensions) {
 }
 
 function PostSeoStatus({ post }) {
-  const serverScore = Number.isFinite(Number(post?.seo_score)) ? Number(post.seo_score) : null;
-  const audit = React.useMemo(() => {
-    if (serverScore !== null) {
-      return {
-        score: serverScore,
-        overallStatus: serverScore >= 80 ? 'good' : serverScore >= 55 ? 'warning' : 'bad',
-      };
-    }
-
-    return calculateSeoAudit(normalizePost(post));
-  }, [post, serverScore]);
-
-  return <SeoStatusBadge audit={audit} />;
+  return <StoredPublicationStatus audit={post.publication_audit || emptyPublicationAudit()} />;
 }
 
 function CategorySeoStatus({ category }) {
-  const audit = React.useMemo(() => calculateSeoAudit(buildCategorySeoDraft(category)), [category]);
+  return <StoredPublicationStatus audit={category.publication_audit || emptyPublicationAudit()} />;
+}
 
-  return <SeoStatusBadge audit={audit} />;
+function StoredPublicationStatus({ audit }) {
+  const note = audit.notChecked
+    ? __('Not checked', 'cci-blog')
+    : audit.stale
+      ? __('Needs refresh', 'cci-blog')
+      : audit.score === null
+        ? __('Unavailable', 'cci-blog')
+        : '';
+  return (
+    <div className="tw-grid tw-gap-1">
+      <div>
+        <SeoStatusBadge audit={audit} />
+      </div>
+      {note && <span className="tw-text-xs tw-text-cci-blog-muted">{note}</span>}
+    </div>
+  );
 }
 
 function SeoStatusBadge({ audit }) {
-  const tone = seoStatusTone(audit.overallStatus);
+  const tone = seoStatusTone(audit.stale ? 'info' : audit.overallStatus);
+  const freshness = audit.notChecked
+    ? __('Not checked', 'cci-blog')
+    : audit.stale
+      ? __('Needs refresh', 'cci-blog')
+      : audit.score === null
+        ? __('Unavailable', 'cci-blog')
+        : statusLabel(audit.overallStatus);
+  const checkedAt = audit.checkedAt
+    ? `${__('Last check', 'cci-blog')}: ${new Date(audit.checkedAt).toLocaleString()}`
+    : '';
 
   return (
     <span
       className={`tw-inline-flex tw-min-w-14 tw-items-center tw-justify-center tw-rounded-full tw-border tw-border-solid tw-px-2 tw-py-1 tw-text-[11px] tw-font-bold tw-leading-none ${tone.badge}`}
-      aria-label={`${__('SEO score', 'cci-blog')}: ${audit.score}/100, ${statusLabel(audit.overallStatus)}`}
-      title={`${__('SEO score', 'cci-blog')}: ${audit.score}/100 — ${statusLabel(audit.overallStatus)}`}
+      aria-label={[
+        `${__('Publication checks', 'cci-blog')}: ${audit.score ?? '-'}`,
+        freshness,
+        checkedAt,
+      ]
+        .filter(Boolean)
+        .join(', ')}
+      title={[
+        `${__('Publication checks', 'cci-blog')}: ${audit.score ?? '-'}`,
+        freshness,
+        checkedAt,
+      ]
+        .filter(Boolean)
+        .join(' - ')}
     >
-      {audit.score}/100
+      {audit.score === null ? '-' : `${audit.score}/100`}
     </span>
   );
 }
@@ -1836,15 +1978,11 @@ function CategoryEditor({
     () => buildCategoryOptions(categories, { excludeId: Number(category.id_category || 0) }),
     [categories, category.id_category],
   );
-  const debouncedCategory = useDebouncedValue(category, 350);
   const authorOptions = React.useMemo(
     () => buildAuthorOptions(authors, category.id_author, category.author_name),
     [authors, category.id_author, category.author_name],
   );
-  const seoAudit = React.useMemo(
-    () => calculateSeoAudit(buildCategorySeoDraft(debouncedCategory)),
-    [debouncedCategory],
-  );
+  const seoAudit = usePublicationAudit(buildCategorySeoDraft(category));
   const categoryBaseUrl = buildCategoryStorefrontBase();
   const previewSlug =
     category.slug ||
@@ -2265,10 +2403,27 @@ function StatusBadge({ active }) {
   );
 }
 
-function PublicationStatusBadge({ published }) {
+function PublicationStatusBadge({ post }) {
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const status = publicationStatus(
+    post,
+    new Date(now + serverClockOffset),
+    pluginData.adminDate?.timeZone || 'UTC',
+  );
   return (
-    <SharedStatusBadge active={published}>
-      {published ? __('Published', 'cci-blog') : __('Draft', 'cci-blog')}
+    <SharedStatusBadge
+      tone={status === 'scheduled' ? 'info' : status === 'published' ? 'success' : 'neutral'}
+      data-publication-status={status}
+    >
+      {status === 'scheduled'
+        ? __('Scheduled', 'cci-blog')
+        : status === 'published'
+          ? __('Published', 'cci-blog')
+          : __('Draft', 'cci-blog')}
     </SharedStatusBadge>
   );
 }
@@ -2378,7 +2533,12 @@ function getBlockText(block) {
   if (block.type === 'link') return String(block.label || block.href || '').trim();
   if (block.type === 'image') return String(block.caption || block.alt || block.src || '').trim();
   if (block.type === 'product') return String(block.label || '').trim();
-  if (block.type === 'product_carousel') return String(block.title || '').trim();
+  if (block.type === 'product_carousel' || block.type === 'product_comparison')
+    return String(block.title || '').trim();
+  if (block.type === 'summary')
+    return [block.title, ...(Array.isArray(block.items) ? block.items : [])]
+      .filter(Boolean)
+      .join(' ');
   if (block.type === 'hook') return String(block.hook || '').trim();
   if (block.type === 'columns') {
     return (block.columns || [])
@@ -2665,6 +2825,8 @@ function buildCategorySeoDraft(category = {}) {
     .trim();
 
   return {
+    id_category: Number(category.id_category || 0),
+    id_lang: Number(category.id_lang || pluginData.language?.id || 0),
     title,
     slug: category.slug || normalizeAdminSlug(title),
     intro: description,
@@ -2672,7 +2834,7 @@ function buildCategorySeoDraft(category = {}) {
     meta_description: category.meta_description || description,
     focus_keyword: focusKeyword,
     seo_content_type: 'category',
-    blocks: title ? [{ type: 'heading', level: 2, text: title }] : [],
+    blocks: [{ type: 'paragraph', html: description }],
   };
 }
 
@@ -2966,7 +3128,8 @@ function fromDateTimeLocalValue(value) {
 }
 
 function normalizePostForPlan(post, isPro) {
-  const normalized = normalizePost(post);
+  const { publication_audit, seo_score, ...draft } = post;
+  const normalized = normalizePost(draft);
   if (isPro) {
     return normalized;
   }

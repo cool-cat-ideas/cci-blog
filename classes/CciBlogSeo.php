@@ -15,24 +15,35 @@ class CciBlogSeo
      */
     public static function hreflangTags(int $postId, int $shopId): string
     {
-        $languages = Language::getLanguages(true, $shopId);
         $html = '';
-
-        foreach ($languages as $lang) {
-            $row = Db::getInstance()->getRow(
-                'SELECT slug FROM `' . _DB_PREFIX_ . "cci_blog_post_lang`
-                 WHERE id_post = $postId AND id_lang = " . (int) $lang['id_lang'] . " AND id_shop = $shopId"
-            );
-            if (!$row) {
-                continue;
-            }
-            $base = Configuration::get('CCB_BASE_SLUG') ?: 'blog';
-            $link = Context::getContext()->link;
-            $url = $link->getModuleLink('cci_blog', 'post', ['slug' => $row['slug']], true, (int) $lang['id_lang']);
-            $html .= '<link rel="alternate" hreflang="' . $lang['language_code'] . '" href="' . htmlspecialchars($url) . '">' . "\n";
+        foreach (self::hreflangUrls($postId, $shopId) as $code => $url) {
+            $html .= '<link rel="alternate" hreflang="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' . "\n";
         }
 
         return $html;
+    }
+
+    /** Feed the theme's native hreflang block to avoid duplicate annotations. */
+    public static function hreflangUrls(int $postId, int $shopId): array
+    {
+        $urls = [];
+        foreach (Language::getLanguages(true, $shopId) as $lang) {
+            $row = Db::getInstance()->getRow(
+                'SELECT pl.slug, pl.title, pl.content, pl.intro FROM `' . _DB_PREFIX_ . 'cci_blog_post_lang` pl'
+                . ' INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post` p ON p.id_post = pl.id_post'
+                . ' INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post_shop` ps ON ps.id_post = p.id_post AND ps.id_shop = pl.id_shop'
+                . ' WHERE pl.id_post = ' . $postId . ' AND pl.id_lang = ' . (int) $lang['id_lang'] . ' AND pl.id_shop = ' . $shopId
+                . ' AND p.active = 1 AND (p.date_published IS NULL OR p.date_published <= "' . pSQL(date('Y-m-d H:i:s')) . '")'
+            );
+            if (!$row || trim((string) $row['slug']) === '' || trim((string) $row['title']) === ''
+                || trim((string) $row['content'] . (string) $row['intro']) === '') {
+                continue;
+            }
+            $code = (string) ($lang['language_code'] ?: $lang['iso_code']);
+            $urls[$code] = Context::getContext()->link->getModuleLink('cci_blog', 'post', ['slug' => $row['slug']], true, (int) $lang['id_lang'], $shopId);
+        }
+
+        return $urls;
     }
 
     /**
@@ -44,12 +55,12 @@ class CciBlogSeo
     public static function ogTags(array $post, string $url): string
     {
         $title = htmlspecialchars(
-            (string) (!empty($post['meta_title']) ? $post['meta_title'] : ($post['title'] ?? '')),
+            (string) (!empty($post['og_title']) ? $post['og_title'] : (!empty($post['meta_title']) ? $post['meta_title'] : ($post['title'] ?? ''))),
             ENT_QUOTES,
             'UTF-8'
         );
         $desc = htmlspecialchars(
-            (string) (!empty($post['meta_description']) ? $post['meta_description'] : ($post['intro'] ?? '')),
+            strip_tags((string) (!empty($post['og_description']) ? $post['og_description'] : (!empty($post['meta_description']) ? $post['meta_description'] : ($post['intro'] ?? '')))),
             ENT_QUOTES,
             'UTF-8'
         );

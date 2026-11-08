@@ -42,7 +42,14 @@ function normalizeLicense(license = {}) {
 }
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState(() => {
+    const section = new URLSearchParams(window.location.search).get('section');
+    return ['posts', 'categories', 'comments', 'redirects', 'extensions', 'settings'].includes(
+      section,
+    )
+      ? section
+      : 'dashboard';
+  });
   const [license, setLicense] = useState(() => normalizeLicense(pluginData.license));
   const [notices, setNotices] = useState([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarCollapsed);
@@ -120,11 +127,15 @@ export default function App() {
 
   const handleSidebarSelect = useCallback((section) => {
     setActiveSection(section);
+    const url = new URL(window.location.href);
+    if (section === 'dashboard') url.searchParams.delete('section');
+    else url.searchParams.set('section', section);
+    window.history.replaceState(null, '', url.toString());
   }, []);
 
   const handleOpenSettings = useCallback(() => {
-    setActiveSection('settings');
-  }, []);
+    handleSidebarSelect('settings');
+  }, [handleSidebarSelect]);
 
   return (
     <TooltipProvider delayDuration={200} skipDelayDuration={100}>
@@ -176,6 +187,7 @@ export default function App() {
             license={license}
             onLicenseChange={handleLicenseChange}
             onOpenSettings={handleOpenSettings}
+            onSelectSection={handleSidebarSelect}
           />
         </AdminWorkspace>
       </AdminShell>
@@ -185,7 +197,8 @@ export default function App() {
 
 function getPageHeader(activeSection) {
   const pages = {
-    dashboard: {
+    dashboard: { title: __('Dashboard', 'cci-blog') },
+    posts: {
       title: __('Posts', 'cci-blog'),
       description: __('Create, manage and publish content commerce articles.', 'cci-blog'),
     },
@@ -230,16 +243,17 @@ function DashboardSection({
   license,
   onLicenseChange,
   onOpenSettings,
+  onSelectSection,
 }) {
   const [editorActive, setEditorActive] = useState(false);
 
   if (activeSection === 'settings') {
     return (
       <AdminColumns>
-        <div className="tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start">
+        <div className="tw-grid tw-min-w-0 tw-grid-cols-1 tw-content-start tw-gap-4 tw-self-start">
           <BlogSettingsPanel setNotice={setNotice} />
         </div>
-        <aside className="tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start">
+        <aside className="tw-grid tw-min-w-0 tw-grid-cols-1 tw-content-start tw-gap-4 tw-self-start">
           <LicensePanel license={license} />
           <ReviewPrompt setNotice={setNotice} compact />
         </aside>
@@ -262,14 +276,17 @@ function DashboardSection({
     );
   }
 
-  const contentSection = ['dashboard', 'categories', 'comments'].includes(activeSection)
+  const overviewOnly = activeSection === 'dashboard';
+  const contentSection = ['categories', 'comments'].includes(activeSection)
     ? activeSection
     : 'dashboard';
 
   return (
-    <AdminColumns fullWidth={editorActive}>
-      <div className="tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start">
+    <AdminColumns fullWidth={!overviewOnly}>
+      <div className="tw-grid tw-min-w-0 tw-grid-cols-1 tw-content-start tw-gap-4 tw-self-start">
         <BlogBuilderPanel
+          onOpenManagement={() => onSelectSection('posts')}
+          overviewOnly={overviewOnly}
           isPro={isPro}
           onLicenseNotice={setNotice}
           setNotice={setNotice}
@@ -278,8 +295,8 @@ function DashboardSection({
           section={contentSection}
         />
       </div>
-      {!editorActive ? (
-        <aside className="tw-grid tw-min-w-0 tw-content-start tw-gap-4 tw-self-start">
+      {overviewOnly && !editorActive ? (
+        <aside className="tw-grid tw-min-w-0 tw-grid-cols-1 tw-content-start tw-gap-4 tw-self-start">
           <LicensePanel license={license} />
           <ProductNewsPanel
             endpoint={pluginData.newsEndpoint || pluginData.marketplaceFeedEndpoint}

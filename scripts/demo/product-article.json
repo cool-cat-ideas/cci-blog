@@ -1,0 +1,211 @@
+{
+  "slug": "cci-demo-products-in-article",
+  "title": "Three pieces, one collection: a practical guide to choosing printed products",
+  "intro": "A printed T-shirt, a sweater and a framed poster each have a different place in everyday life. This guide looks at how to choose them, with three products placed directly beside the relevant advice.",
+  "meta_title": "Choosing printed products: T-shirt, sweater and poster",
+  "meta_description": "A practical guide to choosing printed clothing and a framed poster, with three product cards placed within the article: left, right and centered.",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "content": "A collection is easier to understand when each item has a reason to be there. Clothing belongs in a wardrobe; a poster belongs on a wall. The same visual idea can connect them, but the questions worth asking before buying are different. A shopper looking for an everyday T-shirt needs to think about fit and the clothes they already own. Someone choosing a framed print needs to look at the room, the available wall space and the effect the picture will have beside other objects."
+    },
+    {
+      "type": "paragraph",
+      "content": "The three products below give those decisions a concrete starting point. Open a product page whenever you need the current options and ordering details. The surrounding text explains what to consider before making that choice, so you can read the guide from beginning to end or spend more time with the section that matches what you need."
+    },
+    {
+      "type": "summary",
+      "title": "In brief",
+      "items": [
+        "Choose clothing by fit and everyday use before matching the print.",
+        "Check the available wall space before choosing a poster.",
+        "Compare current prices and catalogue features below, then open the product page for ordering options."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Start with the piece you will wear most often"
+    },
+    {
+      "type": "product",
+      "id_product": 1,
+      "presentation": "card",
+      "alignment": "left",
+      "label": "An everyday starting point"
+    },
+    {
+      "type": "paragraph",
+      "content": "An everyday T-shirt is a useful starting point because it can sit inside a wardrobe that already exists. Before choosing a print, picture the trousers, shorts or overshirt you would normally wear with it. If the design is the strongest element of the outfit, quieter colors around it can give it enough space. You do not need to build an entirely new outfit around a single item. Start with a combination you already enjoy wearing, then decide whether the printed piece belongs in it."
+    },
+    {
+      "type": "paragraph",
+      "content": "The Hummingbird printed T-shirt in this catalogue has a regular fit, a round neckline and short sleeves. Those details describe the shape, but they cannot tell you exactly how a particular size will sit on your body. Check the available sizing information on the product page. When measurements are provided, compare them with a T-shirt you already own and like. Lay that garment flat and measure it consistently rather than trying to judge the size from a styled photograph."
+    },
+    {
+      "type": "paragraph",
+      "content": "Look at the relationship between the print and the whole garment. A design may appear quite different when viewed close up and when seen as part of a complete outfit. Browse the available photographs, check the color and size selections, and make sure the option you choose is the one you intended to order. If you are buying a gift, a familiar fit and a color the recipient already wears are often more useful starting points than guessing what might surprise them."
+    },
+    {
+      "type": "paragraph",
+      "content": "It also helps to separate a first impression from the practical questions. You may be drawn to the illustration immediately, yet still want to check the fabric description, care information and delivery details before ordering. Keep those checks close to the purchase decision. The product page is where you can review the current catalogue information and select the available combination. The guide can help you think through the choice without freezing those changing details inside the article."
+    },
+    {
+      "type": "paragraph",
+      "content": "For a small collection, this is the item that can establish the visual starting point. A recognizable motif is enough to connect it with another piece later. There is no need for every product to repeat the same image at the same scale. Think about what feels appropriate to the item itself: something worn close to the body will be seen at a different distance from a print displayed across a room."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Choose a second layer for the way you dress"
+    },
+    {
+      "type": "product",
+      "id_product": 2,
+      "presentation": "card",
+      "alignment": "right",
+      "label": "A second layer to compare"
+    },
+    {
+      "type": "paragraph",
+      "content": "A sweater changes the balance of an outfit. It covers more of the body, has longer sleeves and may be worn over another garment. When you compare it with a T-shirt, start by thinking about how you actually dress during the week. Will it be the main visible piece, or something you often wear under a jacket? Do you prefer room for another layer underneath, or a closer fit? These are practical questions that help narrow the options before you become absorbed in the artwork."
+    },
+    {
+      "type": "paragraph",
+      "content": "The Hummingbird printed sweater shown here is listed with a regular fit, a round neckline and long sleeves. Its catalogue description identifies cotton and a brushed inner side. Use that description as a starting point, then review the full product information for the option you want. A photograph can show the overall appearance, but it cannot replace the written details or tell you how the garment will feel to you in everyday use."
+    },
+    {
+      "type": "paragraph",
+      "content": "Sizing deserves another look even if you have already chosen a T-shirt from the same collection. The name of a size does not guarantee identical measurements across different garment types. Compare the sweater with a similar piece you wear comfortably. Pay attention to the body length and sleeves as well as the chest measurement when that information is available. If you plan to wear it over another layer, consider that combination rather than assessing the sweater entirely on its own."
+    },
+    {
+      "type": "paragraph",
+      "content": "Color can connect two items without making them look like a uniform. You might choose one recurring color from the print and let that guide the rest of the outfit. Equally, the T-shirt and sweater can serve separate occasions. A useful collection gives people room to choose the format they prefer. Buying both is not a requirement for understanding the idea behind the design, and the article should offer enough context for someone who only wants one piece."
+    },
+    {
+      "type": "paragraph",
+      "content": "Before ordering, return to the everyday questions: which item fills a gap, which works with what you own, and which option will you reach for regularly? Check the current size and color choices on the product page. If you are comparing several products, keep your priorities consistent. A clear idea of fit, use and appearance makes the comparison easier than changing the criteria every time you open another product."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Give the room a separate point of interest"
+    },
+    {
+      "type": "paragraph",
+      "content": "A framed poster moves the same decision into a different setting. Instead of considering an outfit, look at the room and the space around the picture. A desk, shelf or piece of furniture can help establish its position. Measure the available wall area and compare it with the dimensions offered on the product page. Try marking out the size with removable paper before deciding. This makes it easier to judge the relationship between the print and the objects nearby."
+    },
+    {
+      "type": "product",
+      "id_product": 3,
+      "presentation": "card",
+      "alignment": "center",
+      "label": "A pause for a different setting"
+    },
+    {
+      "type": "paragraph",
+      "content": "The framed poster shown above is a different kind of purchase from the clothing. Its catalogue description refers to a rigid matt paper and a smooth surface. Read the full details for the selected size and presentation before ordering, including what is supplied with the product. The word framed tells you something about the format, but you should still check the actual options rather than assuming every dimension or fitting is identical."
+    },
+    {
+      "type": "paragraph",
+      "content": "Think about how the picture will be seen during an ordinary day. A print above a desk is often viewed from relatively close by; a picture in a hallway may be noticed while someone is walking past. Nearby shelves, lamps and other pictures will also influence the composition. You can keep the arrangement simple by choosing one clear focal point and leaving some space around it. Take a photograph of the intended wall if that helps you compare the available sizes away from the room."
+    },
+    {
+      "type": "paragraph",
+      "content": "If you are choosing a gift, the recipient's room is a more useful reference than your own. Consider the kinds of images, colors and objects they already have around them. A framed print does not have to match every item in the room, but it should have somewhere sensible to go. When you cannot check the space, avoid treating a larger size as an automatic improvement. The right dimensions depend on the place where the picture will be displayed."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Compare several products in one place"
+    },
+    {
+      "type": "paragraph",
+      "content": "Sometimes the most useful next step is to see several options together. The grid below brings three products into a single block. Each card uses the same product information as the shop catalogue, so you can open the item that interests you and continue with its available options."
+    },
+    {
+      "type": "product_carousel",
+      "title": "Three products together",
+      "ids": "1, 2, 3",
+      "presentation": "card",
+      "layout": "grid"
+    },
+    {
+      "type": "paragraph",
+      "content": "A carousel keeps a longer selection within the flow of the article. Use the arrows or page buttons to browse the examples below. The selection includes clothing and framed prints, so it is easy to compare different uses of the products without leaving the guide."
+    },
+    {
+      "type": "product_carousel",
+      "title": "Browse the collection - Owl Carousel",
+      "ids": "1, 2, 3, 4, 5",
+      "presentation": "card",
+      "layout": "carousel",
+      "engine": "owl",
+      "options": {
+        "items_desktop": 3,
+        "items_tablet": 2,
+        "items_mobile": 1,
+        "margin": 16,
+        "nav": true,
+        "dots": true,
+        "autoplay": false,
+        "speed": 350
+      }
+    },
+    {
+      "type": "product_carousel",
+      "title": "Browse the collection - Swiper",
+      "ids": "1, 2, 3, 4, 5",
+      "presentation": "card",
+      "layout": "carousel",
+      "engine": "swiper",
+      "options": {
+        "items_desktop": 3,
+        "items_tablet": 2,
+        "items_mobile": 1,
+        "margin": 16,
+        "nav": true,
+        "dots": true,
+        "autoplay": false,
+        "speed": 350
+      }
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Keep the final decision practical"
+    },
+    {
+      "type": "paragraph",
+      "content": "These three pieces illustrate a way of browsing a small collection without losing sight of how each product will be used. Start with the clothing you wear, consider whether another layer would be useful, then treat a print for the room as its own decision. Shared artwork can connect different products, while fit, dimensions and everyday use give each one a separate purpose."
+    },
+    {
+      "type": "paragraph",
+      "content": "When you are ready to choose, open the relevant product page and review the available options, current price and ordering information. The cards inside this guide are shortcuts to those pages. You can continue reading around the first two examples, or pause at the centered print before moving on to the final checks. The article remains a guide, with the products placed where they help explain the decision."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Compare the catalogue details"
+    },
+    {
+      "type": "paragraph",
+      "content": "The table uses current shop data rather than figures copied into this article. A missing feature means that the catalogue does not provide that value; it is not a claim that the product lacks it. Open a product card to review the available combinations."
+    },
+    {
+      "type": "product_comparison",
+      "title": "Clothing and a framed print",
+      "ids": [
+        1,
+        2,
+        3
+      ],
+      "fields": [
+        "price",
+        "reference",
+        "feature:1",
+        "feature:2"
+      ]
+    }
+  ]
+}

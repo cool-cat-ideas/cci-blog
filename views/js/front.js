@@ -1,6 +1,6 @@
 /**
  * CCI Blog – front.js
- * Progressive enhancements, with optional Owl Carousel support.
+ * Progressive enhancements, with optional Owl Carousel and Swiper support.
  */
 
 (function () {
@@ -32,15 +32,104 @@
   function initTableOfContents(root) {
     var scope = root || document;
     var tables = scope.querySelectorAll('[data-cci-blog-table-of-contents]');
-    var mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
-
     tables.forEach(function (details) {
       if (details.dataset.cciBlogTocReady === '1') return;
       details.dataset.cciBlogTocReady = '1';
+      var nav = details.closest('[data-cci-blog-toc-nav]');
+      var layout = details.closest('[data-cci-blog-post-layout]');
+      var mode = nav ? nav.dataset.cciBlogTocMode : 'inline';
+      var sideMode = mode === 'sidebar' || mode === 'sticky';
+      var mobileQuery = window.matchMedia
+        ? window.matchMedia(sideMode ? '(max-width: 991px)' : '(max-width: 768px)')
+        : null;
+      var home = layout && layout.querySelector('[data-cci-blog-toc-home]');
+      var rail = layout && layout.querySelector('[data-cci-blog-toc-rail]');
+      var headers = Array.from(
+        document.querySelectorAll('#header, .cci-demo-store-banner, #wpadminbar'),
+      );
+      var links = nav ? Array.from(nav.querySelectorAll('a[href^="#"]')) : [];
+      var sections = links.map(function (link) {
+        return document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      });
+      var queued = false;
+      var lastOffset = -1;
+      var current = -1;
+
+      var updateOffset = function () {
+        var bottom = headers
+          .map(function (header) {
+            return {
+              position: getComputedStyle(header).position,
+              rect: header.getBoundingClientRect(),
+            };
+          })
+          .sort(function (a, b) {
+            return a.rect.top - b.rect.top;
+          })
+          .reduce(function (value, header) {
+            var rect = header.rect;
+            return (header.position === 'fixed' || header.position === 'sticky') &&
+              rect.top <= value + 2 &&
+              rect.bottom > 0
+              ? Math.max(value, rect.bottom)
+              : value;
+          }, 0);
+        var offset = Math.max(8, bottom + Number((nav && nav.dataset.cciBlogTocGap) || 16));
+        var nativePadding =
+          parseFloat(
+            getComputedStyle(document.scrollingElement || document.documentElement)
+              .scrollPaddingTop,
+          ) || 0;
+        if (layout)
+          layout.style.setProperty(
+            '--cci-blog-anchor-offset',
+            Math.max(0, offset - nativePadding) + 'px',
+          );
+        if (layout && lastOffset !== offset)
+          layout.style.setProperty('--cci-blog-sticky-top', offset + 'px');
+        lastOffset = offset;
+        return offset;
+      };
+      var updateCurrent = function () {
+        queued = false;
+        var offset = updateOffset();
+        if (!sideMode) return;
+        var active = 0;
+        sections.forEach(function (section, index) {
+          if (section && section.getBoundingClientRect().top <= offset + 16) active = index;
+        });
+        if (active === current) return;
+        current = active;
+        links.forEach(function (link, index) {
+          if (index === active) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+        if (rail && rail.contains(nav) && details.open && !nav.contains(document.activeElement)) {
+          var linkRect = links[active] && links[active].getBoundingClientRect();
+          var railRect = rail.getBoundingClientRect();
+          if (linkRect && linkRect.top < railRect.top)
+            rail.scrollTop -= railRect.top - linkRect.top + 8;
+          else if (linkRect && linkRect.bottom > railRect.bottom)
+            rail.scrollTop += linkRect.bottom - railRect.bottom + 8;
+        }
+      };
+      var scheduleUpdate = function () {
+        if (!queued) {
+          queued = true;
+          window.requestAnimationFrame(updateCurrent);
+        }
+      };
 
       var syncBreakpoint = function () {
         if (!mobileQuery) return;
+        if (sideMode && nav && rail && home) {
+          var focused = nav.contains(document.activeElement) ? document.activeElement : null;
+          (mobileQuery.matches ? home : rail).prepend(nav);
+          nav.classList.toggle('cci-blog-toc-in-sidebar', !mobileQuery.matches);
+          if (focused) focused.focus({ preventScroll: true });
+        }
         details.open = !mobileQuery.matches;
+        scheduleUpdate();
       };
 
       syncBreakpoint();
@@ -50,6 +139,18 @@
         } else if (typeof mobileQuery.addListener === 'function') {
           mobileQuery.addListener(syncBreakpoint);
         }
+      }
+      window.addEventListener('scroll', scheduleUpdate, { passive: true });
+      window.addEventListener('resize', scheduleUpdate, { passive: true });
+      details.addEventListener('toggle', function () {
+        current = -1;
+        scheduleUpdate();
+      });
+      if (typeof ResizeObserver === 'function') {
+        var observer = new ResizeObserver(scheduleUpdate);
+        headers.forEach(function (header) {
+          observer.observe(header);
+        });
       }
     });
   }
@@ -204,125 +305,8 @@
   // ------------------------------------------------------------------
   // 9. Product carousels
   // ------------------------------------------------------------------
-  var owlCarouselLoadPromise = null;
-
-  function getOwlCarouselScriptSrc() {
-    var script = document.querySelector('script[src*="/owlcarousel/owl.carousel.min.js"]');
-    if (script && script.src) {
-      return script.src;
-    }
-
-    var stylesheet = document.querySelector(
-      'link[href*="/owlcarousel/assets/owl.carousel.min.css"]',
-    );
-    if (stylesheet && stylesheet.href) {
-      return stylesheet.href.replace('/assets/owl.carousel.min.css', '/owl.carousel.min.js');
-    }
-
-    return '';
-  }
-
-  function ensureOwlCarouselPlugin() {
-    var $ = window.jQuery || window.$;
-    if ($ && $.fn && typeof $.fn.owlCarousel === 'function') {
-      return Promise.resolve(true);
-    }
-
-    var src = getOwlCarouselScriptSrc();
-    if (!$ || !$.fn || !src) {
-      return Promise.resolve(false);
-    }
-
-    if (owlCarouselLoadPromise) {
-      return owlCarouselLoadPromise;
-    }
-
-    owlCarouselLoadPromise = new Promise(function (resolve) {
-      var script = document.createElement('script');
-      script.src = src;
-      script.async = false;
-      script.onload = function () {
-        var currentJquery = window.jQuery || window.$;
-        resolve(Boolean(currentJquery && currentJquery.fn && currentJquery.fn.owlCarousel));
-      };
-      script.onerror = function () {
-        resolve(false);
-      };
-      document.head.appendChild(script);
-    });
-
-    return owlCarouselLoadPromise;
-  }
-
   function initProductCarousels(root) {
-    var scope = root || document;
-    var tracks = scope.querySelectorAll(
-      '[data-cci-blog-carousel="owl"] .cci-blog-content-product-carousel-track',
-    );
-    var $ = window.jQuery || window.$;
-
-    if (!$ || !$.fn || typeof $.fn.owlCarousel !== 'function') {
-      tracks.forEach(function (track) {
-        if (track.dataset.ccbCarouselReady !== 'owl') {
-          var carousel = track.closest('[data-cci-blog-carousel="owl"]');
-          track.dataset.ccbCarouselReady = 'pending';
-          track.classList.remove('cci-blog-state-carousel-fallback');
-          track.classList.add('cci-blog-state-carousel-pending');
-          if (carousel) {
-            carousel.classList.remove('cci-blog-state-carousel-fallback');
-            carousel.classList.add('cci-blog-state-carousel-pending');
-          }
-        }
-      });
-
-      ensureOwlCarouselPlugin().then(function (loaded) {
-        if (loaded) {
-          window.requestAnimationFrame(function () {
-            initProductCarousels(root);
-          });
-          return;
-        }
-
-        tracks.forEach(function (track) {
-          if (track.dataset.ccbCarouselReady !== 'owl') {
-            var carousel = track.closest('[data-cci-blog-carousel="owl"]');
-            track.dataset.ccbCarouselReady = 'fallback';
-            track.classList.remove('cci-blog-state-carousel-pending');
-            track.classList.add('cci-blog-state-carousel-fallback');
-            if (carousel) {
-              carousel.classList.remove('cci-blog-state-carousel-pending');
-              carousel.classList.add('cci-blog-state-carousel-fallback');
-            }
-          }
-        });
-      });
-
-      return;
-    }
-
-    tracks.forEach(function (track) {
-      if (track.dataset.ccbCarouselReady === 'owl') {
-        $(track).trigger('refresh.owl.carousel');
-        return;
-      }
-
-      var carousel = track.closest('[data-cci-blog-carousel="owl"]');
-      var options = {};
-      try {
-        options = JSON.parse(carousel.getAttribute('data-cci-blog-carousel-options') || '{}');
-      } catch (error) {
-        options = {};
-      }
-
-      track.classList.remove('cci-blog-state-carousel-fallback');
-      track.classList.remove('cci-blog-state-carousel-pending');
-      track.classList.add('owl-carousel');
-      $(track).owlCarousel(options);
-      track.dataset.ccbCarouselReady = 'owl';
-      carousel.classList.remove('cci-blog-state-carousel-fallback');
-      carousel.classList.remove('cci-blog-state-carousel-pending');
-      carousel.classList.add('cci-blog-state-owl-ready');
-    });
+    window.CCIBlogProductCarousels?.init(root);
   }
 
   if (document.readyState === 'loading') {

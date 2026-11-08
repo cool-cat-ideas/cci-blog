@@ -9,7 +9,7 @@ import LocalMediaUrlInput from '../../media/LocalMediaUrlInput';
 import { normalizeAdminSlug } from '../model/text.js';
 import { blogProFeatures } from '../config/features.js';
 import { buildPostStorefrontUrl } from '../model/links.js';
-import { seoContentTypeOptions } from './config.js';
+import { seoContentTypeOptions } from './content-types.js';
 
 export function SeoEditorPanel({ post, audit, onChange, onLockedFeatureClick }) {
   const previewTitle = post.meta_title || post.title || __('Untitled post', 'cci-blog');
@@ -27,7 +27,7 @@ export function SeoEditorPanel({ post, audit, onChange, onLockedFeatureClick }) 
       <div className="tw-grid tw-content-start tw-gap-4">
         <section className="tw-rounded-md tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-p-4">
           <div className="tw-grid tw-gap-3 md:tw-grid-cols-2">
-            <Field label={__('Focus keyword', 'cci-blog')}>
+            <Field label={__('Optional focus phrase', 'cci-blog')}>
               <Input
                 value={post.focus_keyword || ''}
                 onChange={(event) => update({ focus_keyword: event.target.value })}
@@ -36,7 +36,10 @@ export function SeoEditorPanel({ post, audit, onChange, onLockedFeatureClick }) 
             </Field>
             <Field
               label={__('Content type', 'cci-blog')}
-              note={__('SEO length thresholds adapt to the selected article type.', 'cci-blog')}
+              note={__(
+                'Article type provides context for custom rules. It does not set a minimum word count.',
+                'cci-blog',
+              )}
             >
               <Select
                 value={post.seo_content_type || 'article'}
@@ -73,6 +76,24 @@ export function SeoEditorPanel({ post, audit, onChange, onLockedFeatureClick }) 
                 onChange={(og_image) => update({ og_image })}
                 onLockedClick={() => onLockedFeatureClick?.(blogProFeatures.localMediaLibrary)}
                 placeholder="/img/..."
+              />
+            </Field>
+            <Field
+              label={__('Social sharing title', 'cci-blog')}
+              note={__('Leave empty to use the SEO title.', 'cci-blog')}
+            >
+              <Input
+                value={post.og_title || ''}
+                onChange={(event) => update({ og_title: event.target.value })}
+              />
+            </Field>
+            <Field
+              label={__('Social sharing description', 'cci-blog')}
+              note={__('Leave empty to use the SEO description.', 'cci-blog')}
+            >
+              <Textarea
+                value={post.og_description || ''}
+                onChange={(event) => update({ og_description: event.target.value })}
               />
             </Field>
           </div>
@@ -116,7 +137,7 @@ export function SeoContentAssistPanel({
 }) {
   const tone = seoStatusTone(audit.overallStatus);
   const priorityChecks = getSeoPriorityChecks(audit.checks, compact ? 4 : 4);
-  const panelDescription = description || __('SEO analysis', 'cci-blog');
+  const panelDescription = description || __('Verified checks and editorial guidance', 'cci-blog');
   const seoButtonLabel = openLabel || __('Open SEO settings', 'cci-blog');
 
   if (compact) {
@@ -126,7 +147,7 @@ export function SeoContentAssistPanel({
           <div className="tw-flex tw-items-start tw-justify-between tw-gap-2">
             <div>
               <strong className="tw-block tw-text-sm tw-font-semibold tw-leading-5 tw-text-cci-blog-text">
-                {__('SEO while writing', 'cci-blog')}
+                {__('Publication checks', 'cci-blog')}
               </strong>
               <p className="tw-m-0 tw-text-xs tw-leading-4 tw-text-cci-blog-muted">
                 {panelDescription}
@@ -135,7 +156,7 @@ export function SeoContentAssistPanel({
             <span
               className={`tw-inline-flex tw-min-w-12 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-solid tw-px-2 tw-py-1 tw-text-sm tw-font-semibold ${tone.badge}`}
             >
-              {audit.score}
+              {audit.score ?? '-'}
             </span>
           </div>
           <div
@@ -144,9 +165,10 @@ export function SeoContentAssistPanel({
           >
             <div
               className={`tw-h-full tw-rounded-full ${tone.bar}`}
-              style={{ width: `${audit.score}%` }}
+              style={{ width: `${audit.score ?? '-'}%` }}
             />
           </div>
+          <AuditRequestState audit={audit} />
           <div className="tw-flex tw-flex-wrap tw-gap-1">
             <SeoTinyMetric label={__('Words', 'cci-blog')} value={audit.metrics.wordCount} />
             <SeoTinyMetric
@@ -185,16 +207,20 @@ export function SeoContentAssistPanel({
           <div className="tw-flex tw-items-center tw-justify-between tw-gap-3">
             <div>
               <strong className="tw-block tw-text-base tw-font-semibold tw-leading-5 tw-text-cci-blog-text">
-                {__('SEO while writing', 'cci-blog')}
+                {__('Publication checks', 'cci-blog')}
               </strong>
               <p className="tw-m-0 tw-mt-1 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
-                {description || __('Live score from the visible article draft.', 'cci-blog')}
+                {description ||
+                  __(
+                    'Server checks for this draft, not a prediction of search positions.',
+                    'cci-blog',
+                  )}
               </p>
             </div>
             <span
               className={`tw-inline-flex tw-min-w-14 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-solid tw-px-2.5 tw-py-1.5 tw-text-base tw-font-semibold ${tone.badge}`}
             >
-              {audit.score}
+              {audit.score ?? '-'}
             </span>
           </div>
           <div
@@ -203,9 +229,10 @@ export function SeoContentAssistPanel({
           >
             <div
               className={`tw-h-full tw-rounded-full ${tone.bar}`}
-              style={{ width: `${audit.score}%` }}
+              style={{ width: `${audit.score ?? '-'}%` }}
             />
           </div>
+          <AuditRequestState audit={audit} />
           <div className="tw-flex tw-flex-wrap tw-gap-1.5">
             <SeoTinyMetric label={__('Words', 'cci-blog')} value={audit.metrics.wordCount} />
             <SeoTinyMetric
@@ -281,6 +308,25 @@ export function SeoSuggestionRow({ check, compact = false }) {
         <p className="tw-m-0 tw-mt-1 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
           {check.message}
         </p>
+        {check.source && check.source !== 'core' && (
+          <p className="tw-m-0 tw-mt-1 tw-text-xs tw-text-cci-blog-muted">
+            {__('Custom rule from:', 'cci-blog')} {check.source}
+          </p>
+        )}
+        {check.details?.length > 0 && (
+          <ul className="tw-m-0 tw-mt-2 tw-grid tw-gap-1 tw-pl-4 tw-text-xs tw-leading-5">
+            {check.details.map((detail, index) => (
+              <li key={index}>
+                <span className="tw-break-all">
+                  {detail.href ||
+                    detail.title ||
+                    (detail.id_product ? `#${detail.id_product}` : '')}
+                </span>
+                {detail.reason ? `: ${detail.reason}` : ''}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -296,6 +342,53 @@ export function compactSeoMessage(check) {
     .replace(/^Keyword density:/i, __('Density:', 'cci-blog'));
 }
 
+function AuditRequestState({ audit }) {
+  if (audit.pending)
+    return (
+      <p className="tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted" role="status">
+        {__('Checking this draft...', 'cci-blog')}
+      </p>
+    );
+  if (audit.error)
+    return (
+      <div className="tw-grid tw-gap-2" role="alert">
+        <p className="tw-m-0 tw-text-xs tw-leading-5">{audit.error}</p>
+        <Button variant="builder" size="sm" type="button" onClick={audit.retry}>
+          {__('Retry', 'cci-blog')}
+        </Button>
+      </div>
+    );
+  if (audit.configurationWarnings?.length)
+    return (
+      <div className="tw-text-xs tw-leading-5" role="alert">
+        <p className="tw-m-0">
+          {__('Audit rules need attention. Check your integration configuration.', 'cci-blog')}
+        </p>
+        <ul className="tw-m-0 tw-mt-2 tw-pl-4 tw-break-words">
+          {audit.configurationWarnings.slice(0, 10).map((warning, index) => (
+            <li key={index}>{warning}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  if (!audit.complete && audit.checks.length)
+    return (
+      <p className="tw-m-0 tw-text-xs tw-leading-5" role="status">
+        {__(
+          'Some checks are unavailable. Review the report; no complete score is shown.',
+          'cci-blog',
+        )}
+      </p>
+    );
+  if (audit.customized)
+    return (
+      <p className="tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
+        {__('This shop uses custom audit rules.', 'cci-blog')}
+      </p>
+    );
+  return null;
+}
+
 export function SeoScorePanel({ audit, description }) {
   const tone = seoStatusTone(audit.overallStatus);
 
@@ -305,16 +398,20 @@ export function SeoScorePanel({ audit, description }) {
         <div className="tw-flex tw-items-start tw-justify-between tw-gap-3">
           <div>
             <strong className="tw-text-base tw-font-semibold tw-text-cci-blog-text">
-              {__('SEO score', 'cci-blog')}
+              {__('Publication checks', 'cci-blog')}
             </strong>
             <p className="tw-m-0 tw-mt-1 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
-              {description || __('SEO analysis', 'cci-blog')}
+              {description ||
+                __(
+                  'Only applicable scored checks affect this result. It does not measure usefulness or predict Google rankings.',
+                  'cci-blog',
+                )}
             </p>
           </div>
           <span
             className={`tw-inline-flex tw-min-w-16 tw-items-center tw-justify-center tw-rounded-md tw-border tw-border-solid tw-px-3 tw-py-2 tw-text-lg tw-font-semibold ${tone.badge}`}
           >
-            {audit.score}
+            {audit.score ?? '-'}
           </span>
         </div>
         <div
@@ -323,9 +420,10 @@ export function SeoScorePanel({ audit, description }) {
         >
           <div
             className={`tw-h-full tw-rounded-full ${tone.bar}`}
-            style={{ width: `${audit.score}%` }}
+            style={{ width: `${audit.score ?? 0}%` }}
           />
         </div>
+        <AuditRequestState audit={audit} />
         <div className="tw-grid tw-grid-cols-1 tw-gap-2">
           <SeoMetricPill label={__('Words', 'cci-blog')} value={audit.metrics.wordCount} />
           <SeoMetricPill
@@ -333,14 +431,10 @@ export function SeoScorePanel({ audit, description }) {
             value={audit.metrics.contentTypeLabel}
           />
           <SeoMetricPill
-            label={__('Keyword density', 'cci-blog')}
-            value={`${audit.metrics.keywordDensity}%`}
+            label={__('Literal phrase matches', 'cci-blog')}
+            value={audit.metrics.keywordOccurrences || 0}
           />
           <SeoMetricPill label={__('Title chars', 'cci-blog')} value={audit.metrics.titleLength} />
-          <SeoMetricPill
-            label={__('Title width', 'cci-blog')}
-            value={`${audit.metrics.titlePixels}px ${__('est.', 'cci-blog')}`}
-          />
           <SeoMetricPill label={__('Meta chars', 'cci-blog')} value={audit.metrics.metaLength} />
           <SeoMetricPill
             label={__('Internal links', 'cci-blog')}
@@ -397,14 +491,20 @@ export function SeoChecksPanel({ audit }) {
 
 export function seoGroupDescription(groupId) {
   const descriptions = {
-    keyword: __('Keyword placement and usage across the editable content.', 'cci-blog'),
+    keyword: __('Optional phrase information without default scoring.', 'cci-blog'),
     title: __('Title length, estimated pixel width and keyword placement.', 'cci-blog'),
     meta: __('Meta description length, sentence quality and keyword usage.', 'cci-blog'),
     slug: __('URL slug length, stop words and keyword coverage.', 'cci-blog'),
-    metadata: __('Title, meta description and URL quality checks.', 'cci-blog'),
-    content: __('Length, headings, readability and content structure.', 'cci-blog'),
-    links: __('Internal, external and image accessibility checks.', 'cci-blog'),
-    media: __('Image alt text and file-name quality checks.', 'cci-blog'),
+    metadata: __(
+      'Available and duplicate search metadata. Display-length advice is optional.',
+      'cci-blog',
+    ),
+    content: __('Visible content and heading structure. Word count is informational.', 'cci-blog'),
+    links: __(
+      'Locally checked pages, section anchors and products. External URLs are not fetched.',
+      'cci-blog',
+    ),
+    media: __('Descriptions for informative images and decorative-image guidance.', 'cci-blog'),
     readability: __('Sentence length and simple readability heuristics.', 'cci-blog'),
   };
 
@@ -437,13 +537,32 @@ export function SeoCheckRow({ check }) {
         <p className="tw-m-0 tw-mt-1 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
           {check.message}
         </p>
+        {check.source && check.source !== 'core' && (
+          <p className="tw-m-0 tw-mt-1 tw-text-xs tw-text-cci-blog-muted">
+            {__('Custom rule from:', 'cci-blog')} {check.source}
+          </p>
+        )}
+        {check.details?.length > 0 && (
+          <ul className="tw-m-0 tw-mt-2 tw-grid tw-gap-1 tw-pl-4 tw-text-xs tw-leading-5">
+            {check.details.map((detail, index) => (
+              <li key={index}>
+                <span className="tw-break-all">
+                  {detail.href ||
+                    detail.title ||
+                    (detail.id_product ? `#${detail.id_product}` : '')}
+                </span>
+                {detail.reason ? `: ${detail.reason}` : ''}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
 }
 
 export function getSeoPriorityChecks(checks, limit = 4) {
-  const rank = { bad: 0, warning: 1, info: 2, good: 3 };
+  const rank = { unavailable: 0, bad: 0, warning: 1, info: 2, good: 3, not_applicable: 4 };
   const filtered = (Array.isArray(checks) ? checks : [])
     .filter((check) => check.id !== 'content_type')
     .sort((a, b) => {
@@ -455,17 +574,21 @@ export function getSeoPriorityChecks(checks, limit = 4) {
       return Number(b.weight || 0) - Number(a.weight || 0);
     });
 
-  const needsWork = filtered.filter((check) => check.status !== 'good').slice(0, limit);
+  const needsWork = filtered
+    .filter((check) => ['bad', 'warning', 'unavailable'].includes(check.status))
+    .slice(0, limit);
   if (needsWork.length > 0) {
     return needsWork;
   }
 
-  return filtered.slice(0, limit);
+  return filtered.filter((check) => check.status === 'good' && check.scored).slice(0, limit);
 }
 
 export function groupSeoChecks(checks) {
   const labels = {
-    keyword: __('Focus keyword', 'cci-blog'),
+    keyword: __('Optional focus phrase', 'cci-blog'),
+    metadata: __('Search metadata', 'cci-blog'),
+    custom: __('Custom rules', 'cci-blog'),
     title: __('Title tag', 'cci-blog'),
     meta: __('Meta description', 'cci-blog'),
     slug: __('Slug and URL', 'cci-blog'),
@@ -474,12 +597,15 @@ export function groupSeoChecks(checks) {
     media: __('Images', 'cci-blog'),
     readability: __('Readability', 'cci-blog'),
   };
-  const order = Object.keys(labels);
+  const order = [
+    ...Object.keys(labels),
+    ...new Set(checks.map((check) => check.group).filter((id) => !Object.hasOwn(labels, id))),
+  ];
 
   return order
     .map((id) => ({
       id,
-      label: labels[id],
+      label: labels[id] || id,
       checks: checks.filter((check) => check.group === id),
     }))
     .filter((group) => group.checks.length > 0);
@@ -517,6 +643,8 @@ export function seoStatusTone(status) {
 }
 
 export function statusLabel(status) {
+  if (status === 'unavailable') return __('Unavailable', 'cci-blog');
+  if (status === 'not_applicable') return __('Not applicable', 'cci-blog');
   if (status === 'good') return __('Good', 'cci-blog');
   if (status === 'warning') return __('Warning', 'cci-blog');
   if (status === 'bad') return __('Needs work', 'cci-blog');

@@ -13,16 +13,28 @@ if (!defined('_PS_VERSION_')) {
 class Cci_BlogPostModuleFrontController extends CciBlogFrontController
 {
     private array $blogMeta = [];
+    private array $displayPost = [];
+    private bool $isPreview = false;
 
     public function init(): void
     {
         parent::init();
 
-        $post = CciBlogPost::getBySlug(
+        $previewValue = Tools::getValue('cci_blog_preview', '');
+        $previewToken = is_string($previewValue) ? $previewValue : '';
+        $this->isPreview = Tools::getIsset('cci_blog_preview');
+        if ($this->isPreview) {
+            header('Cache-Control: private, no-store, max-age=0');
+            header('X-Robots-Tag: noindex, nofollow, noarchive');
+            header('Referrer-Policy: no-referrer');
+        }
+        $post = $this->isPreview ? (CciBlogPostPreview::read($previewToken, (int) $this->context->shop->id, (int) $this->context->language->id) ?? []) : CciBlogPost::getBySlug(
             $this->getRouteSlug(),
             (int) $this->context->language->id,
-            (int) $this->context->shop->id
+            (int) $this->context->shop->id,
+            false
         );
+        $this->displayPost = $post;
         if ($post) {
             $this->blogMeta = [
                 'title' => $post['meta_title'] ?: $post['title'],
@@ -46,7 +58,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         $shopId = (int) $this->context->shop->id;
 
         // --- 301 redirect for old slugs ---
-        $redirect = Db::getInstance()->getRow(
+        $redirect = $this->isPreview ? false : Db::getInstance()->getRow(
             'SELECT id_post FROM `' . _DB_PREFIX_ . "cci_blog_slug_redirect`
              WHERE entity_type = 'post' AND old_slug = '" . pSQL($slug) . "' AND id_lang = $langId"
         );
@@ -61,7 +73,10 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             }
         }
 
-        $post = CciBlogPost::getBySlug($slug, $langId, $shopId);
+        $post = $this->displayPost;
+        // Native product miniatures need the theme variables assigned by the
+        // parent initContent, including URLs, tokens and module hook variables.
+        CciBlogPost::hydrateRenderedContent($post);
 
         if (!$post) {
             $this->renderNotFound();
@@ -69,14 +84,14 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             return;
         }
 
-        if ($this->isHtmlRequest() !== (bool) Configuration::get('CCB_URL_SUFFIX_HTML')) {
+        if (!$this->isPreview && $this->isHtmlRequest() !== (bool) Configuration::get('CCB_URL_SUFFIX_HTML')) {
             $url = $this->context->link->getModuleLink('cci_blog', 'post', ['slug' => $post['slug']]);
             Tools::redirect($url, '', null, 'HTTP/1.1 301 Moved Permanently');
         }
 
         // Increment view counter (simple, cookie-deduped)
         $cookieKey = 'ccb_viewed_' . $post['id_post'];
-        if (!isset($this->context->cookie->$cookieKey)) {
+        if (!$this->isPreview && !isset($this->context->cookie->$cookieKey)) {
             CciBlogPost::incrementViews((int) $post['id_post']);
             $this->context->cookie->$cookieKey = 1;
         }
@@ -84,7 +99,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         $commentsGloballyEnabled = (bool) Configuration::get('CCB_COMMENTS_ENABLED');
         $commentsProvider = $this->getCommentsProvider();
         $disqusShortname = $this->getDisqusShortname();
-        $commentsEnabledForPost = $commentsGloballyEnabled && (bool) $post['allow_comments'];
+        $commentsEnabledForPost = !$this->isPreview && $commentsGloballyEnabled && (bool) $post['allow_comments'];
         $nativeCommentsEnabled = $commentsEnabledForPost && $commentsProvider === 'native';
         $disqusCommentsEnabled = $commentsEnabledForPost
             && $commentsProvider === 'disqus'
@@ -100,7 +115,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         }
 
         $post['reading_time'] = CciBlogPost::readingTime($post['content'] ?? '');
-        $post['tags'] = CciBlogPost::getTags((int) $post['id_post'], $langId);
+        $post['tags'] = $this->isPreview ? ($post['tags'] ?? []) : CciBlogPost::getTags((int) $post['id_post'], $langId);
         $post['comments'] = $nativeCommentsEnabled
             ? CciBlogComment::getApprovedForPost((int) $post['id_post'])
             : [];
@@ -117,9 +132,27 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             $sidebarPosition = 'right';
         }
 
+        $tocLayout = 'inline';
+        if ($tableOfContents['items'] && Module::isEnabled('cci_blog_pro')) {
+            $pro = Module::getInstanceByName('cci_blog_pro');
+            if ($pro && method_exists($pro, 'getCciTableOfContentsLayout')) {
+                $tocLayout = $pro->getCciTableOfContentsLayout((string) Configuration::get('CCB_TABLE_OF_CONTENTS_LAYOUT'), $shopId);
+            }
+        }
+        if ($tocLayout !== 'inline' && $sidebarPosition === 'none') {
+            $sidebarPosition = 'right';
+        }
+
         $sidebarCategories = [];
         $sidebarTagCloud = [];
-        if ($sidebarPosition !== 'none') {
+        $sidebarContent = $tocLayout !== 'inline'
+            ? CciBlogArticleSidebar::normalizeContent((string) Configuration::get('CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT'))
+            : 'none';
+        $sidebarWidgets = CciBlogArticleSidebar::showsWidgets($sidebarContent);
+        $sidebarHook = CciBlogArticleSidebar::showsHook($sidebarContent)
+            ? CciBlogArticleSidebar::renderHook((string) (Configuration::get('CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK') ?: 'displayCciBlogArticleSidebar'), (int) $post['id_post'], $this->context)
+            : '';
+        if ($sidebarPosition !== 'none' && ($tocLayout === 'inline' || $sidebarWidgets)) {
             $sidebarCategories = CciBlogCategory::getSidebarCategories($langId, $shopId);
             $sidebarTagCloud = CciBlogTag::getCloud($langId, $shopId);
         }
@@ -144,7 +177,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         $logoUrl = $logoFile !== ''
             ? $this->context->link->getMediaLink(__PS_BASE_URI__ . 'img/' . $logoFile)
             : '';
-        $schemaOrg = (int) Configuration::get('CCB_SCHEMA_ORG')
+        $schemaOrg = !$this->isPreview && (int) Configuration::get('CCB_SCHEMA_ORG')
             ? CciBlogPost::getSchemaOrg(
                 $post,
                 $url,
@@ -154,8 +187,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
                 (string) $this->context->language->iso_code
             )
             : '';
-        $ogTags = (int) Configuration::get('CCB_OG_TAGS') ? CciBlogSeo::ogTags($post, $url) : '';
-        $hreflang = CciBlogSeo::hreflangTags((int) $post['id_post'], $shopId);
+        $ogTags = !$this->isPreview && (int) Configuration::get('CCB_OG_TAGS') ? CciBlogSeo::ogTags($post, $url) : '';
 
         // Handle comment submission
         $commentError = '';
@@ -171,30 +203,35 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
 
         $this->context->smarty->assign([
             'ccb_post' => $post,
+            'ccb_preview' => $this->isPreview,
+            'ccb_social_enabled' => !$this->isPreview && (bool) Configuration::get('CCB_OG_TAGS'),
             'ccb_previous_post' => $adjacentPosts['previous'],
             'ccb_next_post' => $adjacentPosts['next'],
             'ccb_related' => $related,
             'ccb_products' => $this->presentLinkedProducts($products),
             'ccb_schema' => $schemaOrg,
             'ccb_og' => $ogTags,
-            'ccb_hreflang' => $hreflang,
             'ccb_base' => Configuration::get('CCB_BASE_SLUG'),
             'ccb_comments_on' => $nativeCommentsEnabled || $disqusCommentsEnabled,
             'ccb_comments_provider' => $commentsProvider,
             'ccb_moderation' => (bool) Configuration::get('CCB_COMMENTS_MODERATION'),
-            'ccb_social_share' => (bool) Configuration::get('CCB_SOCIAL_SHARE'),
+            'ccb_social_share' => !$this->isPreview && (bool) Configuration::get('CCB_SOCIAL_SHARE'),
             'ccb_breadcrumb' => (bool) Configuration::get('CCB_BREADCRUMB'),
             'ccb_disqus_shortname' => $disqusShortname,
             'ccb_table_of_contents' => $tableOfContents['items'],
+            'ccb_toc_layout' => $tocLayout,
+            'ccb_toc_sidebar_widgets' => $sidebarWidgets,
+            'ccb_toc_sidebar_hook' => $sidebarHook,
+            'ccb_toc_sticky_gap' => max(8, min(80, (int) (Configuration::get('CCB_TABLE_OF_CONTENTS_STICKY_GAP') ?: 16))),
             'ccb_highlight' => (bool) Configuration::get('CCB_HIGHLIGHT_SYNTAX'),
             'ccb_show_author' => (bool) Configuration::get('CCB_SHOW_AUTHOR'),
             'ccb_show_date' => (bool) Configuration::get('CCB_SHOW_DATE'),
-            'ccb_show_views' => (bool) Configuration::get('CCB_SHOW_VIEWS'),
+            'ccb_show_views' => !$this->isPreview && (bool) Configuration::get('CCB_SHOW_VIEWS'),
             'ccb_show_read_time' => (bool) Configuration::get('CCB_SHOW_READ_TIME'),
             'ccb_sidebar' => $sidebarPosition,
             'ccb_categories' => $sidebarCategories,
             'ccb_tag_cloud' => $sidebarTagCloud,
-            'ccb_feed_enabled' => (bool) Configuration::get('CCB_FEED_ENABLED'),
+            'ccb_feed_enabled' => !$this->isPreview && (bool) Configuration::get('CCB_FEED_ENABLED'),
             'ccb_comment_error' => $commentError,
             'ccb_comment_success' => $commentSuccess,
             'ccb_comment_token' => $this->commentFormToken((int) $post['id_post']),
@@ -253,17 +290,27 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             }
         }
 
+        if ($this->isPreview) {
+            $page['canonical'] = '';
+            $page['meta']['robots'] = 'noindex,nofollow';
+        }
+
         return $page;
+    }
+
+    public function getTemplateVarUrls()
+    {
+        $urls = parent::getTemplateVarUrls();
+        $urls['alternative_langs'] = !$this->isPreview && $this->displayPost
+            ? CciBlogSeo::hreflangUrls((int) $this->displayPost['id_post'], (int) $this->context->shop->id) : [];
+
+        return $urls;
     }
 
     protected function getBreadcrumbLinks()
     {
         $breadcrumb = parent::getBreadcrumbLinks();
-        $post = CciBlogPost::getBySlug(
-            preg_replace('/\.html$/i', '', $this->getRouteSlug()) ?: '',
-            (int) $this->context->language->id,
-            (int) $this->context->shop->id
-        );
+        $post = $this->displayPost;
         if (!$post) {
             return $breadcrumb;
         }

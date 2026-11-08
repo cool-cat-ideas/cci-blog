@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS `PREFIX_cci_blog_category_lang` (
   `meta_title`       VARCHAR(255),
   `meta_description` VARCHAR(512),
   `meta_keywords`    VARCHAR(255),
+  `seo_score`        TINYINT UNSIGNED NULL DEFAULT NULL,
+  `publication_audit_summary` TEXT NULL,
   PRIMARY KEY (`id_category`, `id_lang`, `id_shop`),
   UNIQUE KEY `slug_lang_shop` (`slug`, `id_lang`, `id_shop`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -40,6 +42,21 @@ CREATE TABLE IF NOT EXISTS `PREFIX_cci_blog_category_shop` (
 -- -----------------------------------------------------------------------
 -- Blog Posts
 -- -----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `PREFIX_cci_blog_post_revision` (
+  `id_revision` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_post` INT UNSIGNED NOT NULL,
+  `id_shop` INT UNSIGNED NOT NULL,
+  `id_lang` INT UNSIGNED NOT NULL,
+  `id_employee` INT UNSIGNED NOT NULL DEFAULT 0,
+  `employee_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `event_type` VARCHAR(16) NOT NULL DEFAULT 'save',
+  `changed_fields` TEXT NOT NULL,
+  `snapshot` LONGTEXT NOT NULL,
+  `date_add` DATETIME NOT NULL,
+  PRIMARY KEY (`id_revision`),
+  KEY `idx_scope_revision` (`id_post`, `id_shop`, `id_lang`, `id_revision`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `PREFIX_cci_blog_post` (
   `id_post`      INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   `id_category`  INT UNSIGNED  NOT NULL DEFAULT 1,
@@ -74,7 +91,8 @@ CREATE TABLE IF NOT EXISTS `PREFIX_cci_blog_post_lang` (
   `meta_keywords`    VARCHAR(255),
   `focus_keyword`    VARCHAR(255),
   `seo_content_type` VARCHAR(32) DEFAULT 'article',
-  `seo_score`        TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `seo_score`        TINYINT UNSIGNED NULL DEFAULT NULL,
+  `publication_audit_summary` TEXT NULL,
   `og_title`         VARCHAR(255),
   `og_description`   VARCHAR(512),
   PRIMARY KEY (`id_post`, `id_lang`, `id_shop`),

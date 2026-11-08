@@ -108,4 +108,16 @@ assertContentBlock(
     'A linked figure caption should remain inside the figure.'
 );
 
+$headingHtml = CciBlogPost::renderBlocksToHtml([[
+    'type' => 'heading', 'level' => 2, 'text' => 'A linked heading',
+    'html' => '<h2>A <a href="https://example.com/blog/article" onclick="alert(1)">linked heading</a></h2>',
+]], new Context());
+assertContentBlock(str_contains($headingHtml, '<h2 class="cci-blog-content-heading">A <a href="https://example.com/blog/article">linked heading</a></h2>'), 'A heading keeps its internal link without nesting heading elements.');
+assertContentBlock(!str_contains($headingHtml, 'onclick'), 'Heading link markup still uses the server sanitizer.');
+
 echo "OK: content block rendering smoke test passed.\n";
+
+$summary = CciBlogPost::renderBlocksToHtml([['type' => 'summary', 'title' => '<script>Title</script>', 'items' => ['<img src=x onerror=alert(1)>Useful conclusion', '', 'Second conclusion']]], new Context());
+assertContentBlock(substr_count($summary, '<li>') === 2 && str_contains($summary, '<section class="cci-blog-summary">'), 'A summary renders its nonempty points as a semantic list.');
+assertContentBlock(!str_contains($summary, '<script') && !str_contains($summary, '<img'), 'Summary strings must not become executable HTML.');
+assertContentBlock(CciBlogPost::renderBlocksToHtml([['type' => 'summary', 'items' => []]], new Context()) === '', 'An empty summary must not add an empty storefront panel.');

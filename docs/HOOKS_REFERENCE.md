@@ -6,14 +6,15 @@ Hooks described as contribution hooks are executed with PrestaShop's array-retur
 
 ## Start with the right extension path
 
-| Goal | Recommended mechanism | Guide |
-| --- | --- | --- |
-| Theme markup | PrestaShop override for article, listing or widget templates | [Storefront template overrides](DEVELOPER.md#storefront-template-overrides) |
-| Theme styling | CSS scoped to `.cci-blog-*` | [Storefront template overrides](DEVELOPER.md#storefront-template-overrides) |
-| Existing module output | Hook block with an allowlisted display hook | [Register a custom article hook](DEVELOPER.md#register-a-custom-article-hook) |
-| New editor block | Separate PrestaShop module owning saved data and storefront HTML | [Create an installable editor-block extension](DEVELOPER.md#create-an-installable-editor-block-extension) |
-| Extension metadata | Feature and installed-extension contribution hooks | Continue with this page |
-| Admin JavaScript | Admin-assets contribution hook | [Admin assets](#admin-assets) |
+| Goal                               | Recommended mechanism                                            | Guide                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Theme markup                       | PrestaShop override for article, listing or widget templates     | [Storefront template overrides](DEVELOPER.md#storefront-template-overrides)                               |
+| Theme styling                      | CSS scoped to `.cci-blog-*`                                      | [Storefront template overrides](DEVELOPER.md#storefront-template-overrides)                               |
+| Existing module output             | Hook block with an allowlisted display hook                      | [Register a custom article hook](DEVELOPER.md#register-a-custom-article-hook)                             |
+| New editor block                   | Separate PrestaShop module owning saved data and storefront HTML | [Create an installable editor-block extension](DEVELOPER.md#create-an-installable-editor-block-extension) |
+| Extension metadata                 | Feature and installed-extension contribution hooks               | Continue with this page                                                                                   |
+| Publication checks and store rules | `displayCciBlogPublicationAuditRules`                            | [Single engine, score policy and complete extension example](PUBLICATION_AUDIT.md)                        |
+| Admin JavaScript                   | Admin-assets contribution hook                                   | [Admin assets](#admin-assets)                                                                             |
 
 Do not implement a theme-only change as a module hook. An editor extension
 normally uses a pair of hooks: one registers the block in the editor and the
@@ -21,14 +22,14 @@ other renders its saved payload on the storefront.
 
 ## Choose hooks by the workflow they complete
 
-| Workflow | Public hooks | Result |
-| --- | --- | --- |
-| Declare an extension capability | `displayCciBlogFeatures` | Adds a namespaced feature without unlocking reserved Pro features |
-| Show a real installed extension | `displayCciBlogAdminExtensions` | Adds extension metadata to **Installed extensions** |
-| Add and render an editor block | `displayCciBlogAdminBlockExtensions` plus `displayCciBlogContentBlock` | Registers editor metadata and renders the saved payload |
-| Add a safe Hook-block target | `displayCciBlogContentHookOptions` plus the selected `display*` hook | Makes a display hook selectable and supplies its article HTML |
-| Render an advanced delegated block | `displayCciBlogRenderContentBlock` | Returns HTML for a supported low-level block type |
-| Load extension admin JavaScript | `displayCciBlogAdminAssets` | Adds scripts to the React admin workspace |
+| Workflow                           | Public hooks                                                           | Result                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Declare an extension capability    | `displayCciBlogFeatures`                                               | Adds a namespaced feature without unlocking reserved Pro features |
+| Show a real installed extension    | `displayCciBlogAdminExtensions`                                        | Adds extension metadata to **Installed extensions**               |
+| Add and render an editor block     | `displayCciBlogAdminBlockExtensions` plus `displayCciBlogContentBlock` | Registers editor metadata and renders the saved payload           |
+| Add a safe Hook-block target       | `displayCciBlogContentHookOptions` plus the selected `display*` hook   | Makes a display hook selectable and supplies its article HTML     |
+| Render an advanced delegated block | `displayCciBlogRenderContentBlock`                                     | Returns HTML for a supported low-level block type                 |
+| Load extension admin JavaScript    | `displayCciBlogAdminAssets`                                            | Adds scripts to the React admin workspace                         |
 
 Each row is a complete purpose, not a list of interchangeable names. Register
 every hook your module implements during `install()` and return the documented
@@ -154,6 +155,17 @@ public function hookDisplayCciBlogContentHookOptions(array $params): array
 ### Selected article display hook
 
 The selected hook, including built-ins `displayCciBlogPostTop`, `displayCciBlogPostMiddle` and `displayCciBlogPostBottom`, receives `$params['block']` (`array`) with the saved Hook block.
+
+`displayCciBlogArticleSidebar` is a dedicated display hook for the Pro article
+sidebar. Select it under **Blog settings > Content below the table of contents**
+and attach a compatible module through **Design > Positions**. Other allowlisted
+storefront and extension hooks can be selected there too. Output should fit the
+sidebar width. An empty hook does not add an empty panel.
+
+When rendered in that sidebar, `$params['block']` includes `placement` set to
+`article_sidebar`, plus `id_post`, `id_shop` and `id_lang`. This uses the same
+protected Pro Hook-block renderer as article blocks. See [article navigation](TABLE_OF_CONTENTS.md)
+for layout, mobile placement, configuration and license behavior.
 
 - **Returns:** storefront HTML as `string`.
 - **Side effects:** output is inserted at the saved block position.

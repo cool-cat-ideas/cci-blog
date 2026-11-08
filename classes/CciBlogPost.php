@@ -10,6 +10,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/CciBlogPublicationAudit.php';
+
 class CciBlogPost extends ObjectModel
 {
     private static $externalContentHookOptions;
@@ -118,8 +120,9 @@ class CciBlogPost extends ObjectModel
                 'paragraph' => self::renderParagraphBlock($block),
                 'link' => self::renderLinkBlock($block),
                 'image' => self::renderImageBlock($block, $context),
+                'summary' => self::renderSummaryBlock($block),
                 'video' => self::renderVideoBlock($block),
-                'columns', 'product', 'product_carousel', 'hook', 'module_block' => self::renderExternalContentBlock($block, $context),
+                'columns', 'product', 'product_carousel', 'product_comparison', 'hook', 'module_block' => self::renderExternalContentBlock($block, $context),
                 default => '',
             };
         }
@@ -150,6 +153,11 @@ class CciBlogPost extends ObjectModel
         ]) ?: self::renderExternalContentBlockViaProModule($type, $block, $context);
     }
 
+    private static function renderSummaryBlock(array $block): string
+    {
+        return CciBlogEditorialBlocks::renderSummaryBlock($block);
+    }
+
     private static function renderExternalContentBlockViaProModule(string $type, array $block, Context $context): string
     {
         if (!class_exists('Module')) {
@@ -170,55 +178,22 @@ class CciBlogPost extends ObjectModel
 
     private static function renderHeadingBlock(array $block): string
     {
-        $level = max(2, min(4, (int) ($block['level'] ?? 2)));
-        $text = trim((string) ($block['text'] ?? ''));
-        if ($text === '') {
-            return '';
-        }
-
-        return '<h' . $level . ' class="cci-blog-content-heading">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</h' . $level . '>';
+        return CciBlogEditorialBlocks::renderHeadingBlock($block);
     }
 
     private static function renderParagraphBlock(array $block): string
     {
-        $richHtml = trim((string) ($block['html'] ?? ''));
-        if ($richHtml !== '') {
-            return '<div class="cci-blog-content-rich-text">' . self::sanitizeRichHtml($richHtml) . '</div>';
-        }
-
-        $content = trim((string) ($block['content'] ?? ''));
-        if ($content === '') {
-            return '';
-        }
-
-        return '<p class="cci-blog-content-paragraph">' . nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8')) . '</p>';
+        return CciBlogEditorialBlocks::renderParagraphBlock($block);
     }
 
     private static function renderLinkBlock(array $block): string
     {
-        $anchor = self::renderLinkAnchor($block);
-        if ($anchor === '') {
-            return '';
-        }
-
-        return '<div class="cci-blog-content-link-wrap">' . $anchor . '</div>';
+        return CciBlogEditorialBlocks::renderLinkBlock($block);
     }
 
     private static function renderLinkAnchor(array $block): string
     {
-        $attributes = self::buildAnchorAttributes($block, 'cci-blog-content-link');
-        if ($attributes === '') {
-            return '';
-        }
-
-        $label = trim((string) ($block['label'] ?? ''));
-        if ($label === '') {
-            $label = trim((string) ($block['href'] ?? ''));
-        }
-
-        return '<a ' . $attributes . '>'
-            . htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
-            . '</a>';
+        return CciBlogEditorialBlocks::renderLinkAnchor($block);
     }
 
     /**
@@ -332,65 +307,12 @@ class CciBlogPost extends ObjectModel
 
     private static function renderImageBlock(array $block, Context $context): string
     {
-        $src = trim((string) ($block['src'] ?? ''));
-        if ($src === '') {
-            return '';
-        }
-
-        $alt = htmlspecialchars((string) ($block['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $caption = trim((string) ($block['caption'] ?? ''));
-        $width = max(0, min(2400, (int) ($block['width'] ?? 0)));
-        $alignment = self::sanitizeImageAlignment((string) ($block['alignment'] ?? ''));
-        $figureClasses = ['cci-blog-content-image'];
-        if ($alignment !== '') {
-            $figureClasses[] = 'cci-blog-content-image-' . $alignment;
-        }
-        if (!empty($block['framed'])) {
-            $figureClasses[] = 'cci-blog-content-image-framed';
-        }
-        $figureStyle = $width > 0
-            ? ' style="--cci-blog-content-image-max-width: ' . $width . 'px"'
-            : '';
-        $managed = self::getManagedImageAttributes($src, $context);
-        $imageAttributes = '';
-        if ((string) ($managed['srcset'] ?? '') !== '') {
-            $imageAttributes .= ' srcset="' . htmlspecialchars((string) $managed['srcset'], ENT_QUOTES, 'UTF-8') . '"';
-            $imageAttributes .= ' sizes="' . htmlspecialchars((string) ($managed['sizes'] ?? '100vw'), ENT_QUOTES, 'UTF-8') . '"';
-        }
-        if ((int) ($managed['width'] ?? 0) > 0 && (int) ($managed['height'] ?? 0) > 0) {
-            $imageAttributes .= ' width="' . (int) $managed['width'] . '" height="' . (int) $managed['height'] . '"';
-        }
-        $image = '<img src="' . htmlspecialchars((string) ($managed['src'] ?? $src), ENT_QUOTES, 'UTF-8') . '"'
-            . $imageAttributes . ' alt="' . $alt . '" loading="lazy">';
-        $link = is_array($block['link'] ?? null) ? $block['link'] : [];
-        $linkAttributes = self::buildAnchorAttributes($link, 'cci-blog-content-image-link');
-
-        if ($linkAttributes !== '') {
-            $image = '<a ' . $linkAttributes . '>' . $image . '</a>';
-        }
-
-        $captionHtml = '';
-        if ($caption !== '') {
-            $captionContent = htmlspecialchars($caption, ENT_QUOTES, 'UTF-8');
-            $captionLink = is_array($block['caption_link'] ?? null) ? $block['caption_link'] : [];
-            $captionLinkAttributes = self::buildAnchorAttributes($captionLink, 'cci-blog-content-image-caption-link');
-            if ($captionLinkAttributes !== '') {
-                $captionContent = '<a ' . $captionLinkAttributes . '>' . $captionContent . '</a>';
-            }
-            $captionHtml = '<figcaption>' . $captionContent . '</figcaption>';
-        }
-
-        return '<figure class="' . implode(' ', $figureClasses) . '"' . $figureStyle . '>'
-            . $image
-            . $captionHtml
-            . '</figure>';
+        return CciBlogEditorialBlocks::renderImageBlock($block, self::getManagedImageAttributes((string) ($block['src'] ?? ''), $context));
     }
 
     private static function sanitizeImageAlignment(string $alignment): string
     {
-        $alignment = strtolower(trim($alignment));
-
-        return in_array($alignment, ['left', 'center', 'right'], true) ? $alignment : '';
+        return CciBlogEditorialBlocks::sanitizeImageAlignment($alignment);
     }
 
     public static function getManagedImageAttributes(string $url, ?Context $context = null): array
@@ -434,20 +356,7 @@ class CciBlogPost extends ObjectModel
 
     private static function renderVideoBlock(array $block): string
     {
-        $src = self::sanitizeUrl((string) ($block['src'] ?? ''));
-        if ($src === '') {
-            return '';
-        }
-
-        $caption = trim((string) ($block['caption'] ?? ''));
-        $title = trim((string) ($block['title'] ?? ''));
-
-        return '<figure class="cci-blog-content-video">'
-            . '<video src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '" controls preload="metadata"'
-            . ($title !== '' ? ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"' : '')
-            . '></video>'
-            . ($caption !== '' ? '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>' : '')
-            . '</figure>';
+        return CciBlogEditorialBlocks::renderVideoBlock($block);
     }
 
     public static function getDefaultContentHookNames(): array
@@ -456,6 +365,7 @@ class CciBlogPost extends ObjectModel
             'displayCciBlogPostTop',
             'displayCciBlogPostMiddle',
             'displayCciBlogPostBottom',
+            'displayCciBlogArticleSidebar',
         ];
     }
 
@@ -646,168 +556,52 @@ class CciBlogPost extends ObjectModel
 
     private static function buildAnchorAttributes(array $data, string $baseClass = ''): string
     {
-        $href = self::sanitizeUrl((string) ($data['href'] ?? ''));
-        if ($href === '') {
-            return '';
-        }
-
-        $target = self::sanitizeTarget((string) ($data['target'] ?? ''));
-        $rel = self::sanitizeRel((string) ($data['rel'] ?? ''));
-        if ($target === '_blank') {
-            $rel = trim($rel . ' noopener noreferrer');
-        }
-
-        $classNames = [];
-        if ($baseClass !== '') {
-            $classNames[] = $baseClass;
-            $variant = self::sanitizeLinkVariant((string) ($data['variant'] ?? $data['link_variant'] ?? ''));
-            if ($variant === '') {
-                $variant = self::inferLinkVariantFromClass((string) ($data['class'] ?? ''));
-            }
-            if ($variant !== '') {
-                $classNames[] = $baseClass . '--' . $variant;
-            }
-        }
-
-        $attributes = [
-            'href' => $href,
-            'class' => implode(' ', $classNames),
-        ];
-
-        foreach (['id' => 'id', 'title' => 'title', 'aria_label' => 'aria-label'] as $source => $attribute) {
-            $value = trim((string) ($data[$source] ?? ''));
-            if ($source === 'id') {
-                $value = self::sanitizeHtmlId($value);
-            }
-            if ($value !== '') {
-                $attributes[$attribute] = $value;
-            }
-        }
-
-        if ($target !== '') {
-            $attributes['target'] = $target;
-        }
-        if ($rel !== '') {
-            $attributes['rel'] = implode(' ', array_values(array_unique(explode(' ', $rel))));
-        }
-
-        return self::buildHtmlAttributes($attributes);
+        return CciBlogEditorialBlocks::buildAnchorAttributes($data, $baseClass);
     }
 
     private static function buildHtmlAttributes(array $attributes): string
     {
-        $html = [];
-        foreach ($attributes as $name => $value) {
-            $value = trim((string) $value);
-            if ($value === '') {
-                continue;
-            }
-
-            $html[] = $name . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
-        }
-
-        return implode(' ', $html);
+        return CciBlogEditorialBlocks::buildHtmlAttributes($attributes);
     }
 
     private static function sanitizeRichHtml(string $html): string
     {
-        $html = strip_tags($html, '<p><br><strong><b><em><i><u><s><strike><code><pre><hr><ul><ol><li><blockquote><a><h2><h3><h4><table><thead><tbody><tfoot><tr><th><td>');
-        $html = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html);
-        $html = preg_replace('/\s+style\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html);
-
-        return (string) preg_replace_callback('/<a\b([^>]*)>/i', static function (array $matches): string {
-            $attributes = self::parseHtmlAttributes((string) ($matches[1] ?? ''));
-            $classNames = preg_split('/\s+/', trim((string) ($attributes['class'] ?? ''))) ?: [];
-            $isAdvancedLink = array_key_exists('data-cci-blog-advanced-link', $attributes)
-                || in_array('cci-blog-content-link', $classNames, true);
-            $anchorAttributes = self::buildAnchorAttributes($attributes, $isAdvancedLink ? 'cci-blog-content-link' : '');
-
-            return $anchorAttributes === '' ? '<a>' : '<a ' . $anchorAttributes . '>';
-        }, $html);
+        return CciBlogEditorialBlocks::sanitizeRichHtml($html);
     }
 
     private static function parseHtmlAttributes(string $raw): array
     {
-        $attributes = [];
-        preg_match_all('/([a-zA-Z0-9_:-]+)\s*=\s*("([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/', $raw, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $name = strtolower((string) $match[1]);
-            $value = html_entity_decode((string) ($match[3] ?? $match[4] ?? $match[5] ?? ''), ENT_QUOTES, 'UTF-8');
-            if ($name === 'aria-label') {
-                $name = 'aria_label';
-            }
-            $attributes[$name] = $value;
-        }
-
-        return $attributes;
+        return CciBlogEditorialBlocks::parseHtmlAttributes($raw);
     }
 
     private static function sanitizeUrl(string $url): string
     {
-        $url = trim($url);
-        if ($url === '') {
-            return '';
-        }
-
-        if (preg_match('/^(#|\/|\?|\.\/|\.\.\/)/', $url)) {
-            return $url;
-        }
-
-        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
-        if (in_array($scheme, ['http', 'https', 'mailto', 'tel'], true)) {
-            return $url;
-        }
-
-        return '';
+        return CciBlogEditorialBlocks::sanitizeUrl($url);
     }
 
     private static function sanitizeTarget(string $target): string
     {
-        $target = trim($target);
-        if ($target === '') {
-            return '';
-        }
-
-        return preg_match('/^(_self|_blank|_parent|_top|[a-zA-Z][a-zA-Z0-9_-]{0,31})$/', $target) ? $target : '';
+        return CciBlogEditorialBlocks::sanitizeTarget($target);
     }
 
     private static function sanitizeRel(string $rel): string
     {
-        $tokens = preg_split('/\s+/', strtolower(trim($rel))) ?: [];
-        $tokens = array_filter($tokens, static fn (string $token): bool => (bool) preg_match('/^[a-z0-9_-]{1,32}$/', $token));
-
-        return implode(' ', array_values(array_unique($tokens)));
+        return CciBlogEditorialBlocks::sanitizeRel($rel);
     }
 
     private static function sanitizeLinkVariant(string $variant): string
     {
-        $variant = strtolower(trim($variant));
-        $variant = preg_replace('/[^a-z0-9_-]+/', '_', $variant);
-
-        return in_array($variant, ['button', 'muted'], true) ? $variant : '';
+        return CciBlogEditorialBlocks::sanitizeLinkVariant($variant);
     }
 
     private static function inferLinkVariantFromClass(string $class): string
     {
-        $tokens = preg_split('/\s+/', strtolower(trim($class))) ?: [];
-        foreach ($tokens as $token) {
-            if (str_contains($token, 'button') || str_contains($token, 'btn')) {
-                return 'button';
-            }
-            if (str_contains($token, 'muted') || str_contains($token, 'subtle')) {
-                return 'muted';
-            }
-        }
-
-        return '';
+        return CciBlogEditorialBlocks::inferLinkVariantFromClass($class);
     }
 
     private static function sanitizeHtmlId(string $id): string
     {
-        $id = trim($id);
-
-        return preg_match('/^[a-zA-Z][a-zA-Z0-9_:.:-]{0,63}$/', $id) ? $id : '';
+        return CciBlogEditorialBlocks::sanitizeHtmlId($id);
     }
 
     /**
@@ -940,7 +734,7 @@ class CciBlogPost extends ObjectModel
     /**
      * Find a single post by slug.
      */
-    public static function getBySlug(string $slug, int $langId, int $shopId): array
+    public static function getBySlug(string $slug, int $langId, int $shopId, bool $renderContent = true): array
     {
         $sql = "
             SELECT p.*, pl.*,
@@ -965,7 +759,9 @@ class CciBlogPost extends ObjectModel
 
         $post = Db::getInstance()->getRow($sql) ?: [];
         if ($post) {
-            self::hydrateRenderedContent($post);
+            if ($renderContent) {
+                self::hydrateRenderedContent($post);
+            }
             $post['author_slug'] = self::buildAuthorSlug((string) ($post['author_name'] ?? ''));
             self::hydrateCoverImage($post);
         }
@@ -1038,7 +834,7 @@ class CciBlogPost extends ObjectModel
      * prevents previously saved HTML from keeping obsolete wrappers after a
      * renderer update, while legacy posts without blocks still use `content`.
      */
-    private static function hydrateRenderedContent(array &$post): void
+    public static function hydrateRenderedContent(array &$post): void
     {
         $encodedBlocks = trim((string) ($post['content_blocks'] ?? ''));
         if ($encodedBlocks === '') {
@@ -1143,7 +939,7 @@ class CciBlogPost extends ObjectModel
      */
     public static function readingTime(string $content): int
     {
-        $wordCount = str_word_count(strip_tags($content));
+        $wordCount = CciBlogPublicationAudit::wordCount(CciBlogPublicationAudit::plainText($content));
 
         return max(1, (int) ceil($wordCount / 200));
     }
@@ -1271,6 +1067,7 @@ class CciBlogPost extends ObjectModel
         return self::filterSchemaValue([
             '@type' => 'Person',
             'name' => (string) ($post['author_name'] ?: $shopName),
+            'url' => !empty($post['author_slug']) ? Context::getContext()->link->getModuleLink('cci_blog', 'author', ['slug' => $post['author_slug']]) : '',
             'description' => trim(strip_tags((string) ($post['author_bio'] ?? ''))),
             'image' => (string) ($post['author_avatar'] ?? ''),
             'sameAs' => $sameAs,

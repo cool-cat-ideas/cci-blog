@@ -52,7 +52,12 @@ final class CciBlogTableOfContents
                 return $fallback;
             }
 
-            $headingNodes = $xpath->query('.//*[self::h2 or self::h3 or self::h4 or self::h5 or self::h6]', $wrapper);
+            $headingNodes = $xpath->query(
+                './/*[self::h2 or self::h3 or self::h4 or self::h5 or self::h6]'
+                . '[not(ancestor::*[contains(concat(" ", normalize-space(@class), " "), " cci-blog-product-tile ")])]'
+                . '[not(ancestor::*[contains(concat(" ", normalize-space(@class), " "), " cci-blog-product-comparison ")])]',
+                $wrapper
+            );
             if (!$headingNodes instanceof DOMNodeList) {
                 return $fallback;
             }

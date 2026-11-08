@@ -8,17 +8,31 @@
 {block name='head' append}
   {include file='module:cci_blog/views/templates/front/_assets_head.tpl'}
   {if $ccb_og}{$ccb_og nofilter}{/if}
-  {if $ccb_hreflang}{$ccb_hreflang nofilter}{/if}
   {if $ccb_highlight}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js" defer></script>
     <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
   {/if}
 {/block}
 
+{block name='head_open_graph'}
+  {if $ccb_social_enabled}
+    <meta property="og:title" content="{$ccb_post.og_title|default:$page.meta.title|escape:'html'}">
+    <meta property="og:description" content="{$ccb_post.og_description|default:$page.meta.description|strip_tags|escape:'html'}">
+    <meta property="og:url" content="{$ccb_post_url|escape:'html'}">
+    <meta property="og:site_name" content="{$shop.name|escape:'html'}">
+    <meta property="og:type" content="article">
+  {elseif !$ccb_preview}
+    {$smarty.block.parent}
+  {/if}
+{/block}
+
 {block name='content'}
-<div class="cci-blog-post-layout {if $ccb_sidebar != 'none'}cci-blog-post-layout-with-sidebar cci-blog-post-layout-sidebar-{$ccb_sidebar|escape:'html'}{/if}">
-<article class="cci-blog-post" itemscope itemtype="https://schema.org/BlogPosting">
+{if $ccb_preview}
+  <div class="alert alert-info" role="status">{l s='Private preview. This link expires after 15 minutes. Changes have not been published.' mod='cci_blog'}</div>
+{/if}
+<div class="cci-blog-post-layout cci-blog-post-layout-toc-{$ccb_toc_layout|escape:'html'} {if $ccb_sidebar != 'none'}cci-blog-post-layout-with-sidebar cci-blog-post-layout-sidebar-{$ccb_sidebar|escape:'html'}{/if}" data-cci-blog-post-layout>
+<article class="cci-blog-post"{if !$ccb_preview} itemscope itemtype="https://schema.org/BlogPosting"{/if}>
   {assign var=ccb_author_url value=''}
   {if isset($ccb_post.author_slug) && $ccb_post.author_slug}
     {assign var=ccb_author_url value=$link->getModuleLink('cci_blog','author',['slug'=>$ccb_post.author_slug])}
@@ -26,6 +40,7 @@
 
   {* --- Header --- *}
   <header class="cci-blog-post-header">
+    {if $ccb_toc_layout != 'inline'}<a class="cci-blog-toc-skip-link" href="#cci-blog-reading-navigation">{l s='In this article' mod='cci_blog'}</a>{/if}
     <h1 class="cci-blog-post-title" itemprop="headline">{$ccb_post.title|escape:'html'}</h1>
     <span class="cci-blog-blog-index-accent" aria-hidden="true"></span>
 
@@ -91,17 +106,9 @@
 
   {* --- Table of Contents --- *}
   {if $ccb_table_of_contents}
-  <nav class="cci-blog-post-table-of-contents" aria-label="{l s='In this article' mod='cci_blog'}">
-    <details class="cci-blog-table-of-contents-details" data-cci-blog-table-of-contents open>
-      <summary class="cci-blog-table-of-contents-summary">
-        <span>{l s='In this article' mod='cci_blog'}</span>
-        <span class="cci-blog-table-of-contents-toggle" aria-hidden="true"></span>
-      </summary>
-      <div class="cci-blog-table-of-contents-content">
-        {include file='module:cci_blog/views/templates/front/_table_of_contents_items.tpl' items=$ccb_table_of_contents}
-      </div>
-    </details>
-  </nav>
+  <div data-cci-blog-toc-home>
+    {include file='module:cci_blog/views/templates/front/_table_of_contents.tpl'}
+  </div>
   {/if}
 
   {* --- Content --- *}
@@ -293,8 +300,14 @@
 </article>
 
   {if $ccb_sidebar != 'none'}
-  <aside class="cci-blog-sidebar" aria-label="{l s='Blog sidebar' mod='cci_blog'}">
-    {include file='module:cci_blog/views/templates/front/_sidebar.tpl'}
+  <aside class="cci-blog-sidebar{if $ccb_toc_layout != 'inline'} cci-blog-sidebar-toc{if $ccb_toc_sidebar_widgets || $ccb_toc_sidebar_hook} cci-blog-sidebar-toc-with-content{/if}{/if}" aria-label="{l s='Blog sidebar' mod='cci_blog'}">
+    {if $ccb_toc_layout != 'inline'}
+      <div class="cci-blog-toc-rail" data-cci-blog-toc-rail>
+        {include file='module:cci_blog/views/templates/front/_article_sidebar_content.tpl'}
+      </div>
+    {else}
+      {include file='module:cci_blog/views/templates/front/_sidebar.tpl'}
+    {/if}
   </aside>
   {/if}
 </div>

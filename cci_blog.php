@@ -15,6 +15,9 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/classes/CciBlogPost.php';
+require_once __DIR__ . '/classes/CciBlogPostHistory.php';
+require_once __DIR__ . '/classes/CciBlogPostPreview.php';
+require_once __DIR__ . '/classes/CciBlogFeed.php';
 require_once __DIR__ . '/classes/CciBlogCategory.php';
 require_once __DIR__ . '/classes/CciBlogTag.php';
 require_once __DIR__ . '/classes/CciBlogComment.php';
@@ -22,12 +25,15 @@ require_once __DIR__ . '/classes/CciBlogSeo.php';
 require_once __DIR__ . '/classes/CciBlogPagination.php';
 require_once __DIR__ . '/classes/CciBlogFrontController.php';
 require_once __DIR__ . '/classes/CciBlogTableOfContents.php';
+require_once __DIR__ . '/classes/CciBlogArticleSidebar.php';
+require_once __DIR__ . '/classes/CciBlogPublicationAudit.php';
+require_once __DIR__ . '/classes/CciBlogPublicationAuditService.php';
 require_once __DIR__ . '/classes/CciSharedLicenseEnvironment.php';
 require_once __DIR__ . '/classes/CciBlogFeatureRegistry.php';
 
 class Cci_Blog extends Module
 {
-    public const VERSION = '1.0.1';
+    public const VERSION = '1.1.0';
     private const ADMIN_PARENT_TAB_CLASS = 'AdminCciParent';
     private const ADMIN_TABS = [
         'AdminCciBlog',
@@ -292,6 +298,7 @@ class Cci_Blog extends Module
             'actionAfterUpdateEmployeeFormHandler',
             'gSitemapAppendUrls',
             'moduleRoutes',
+            'displayCciBlogArticleSidebar',
             'registerGDPRConsent',
         ];
         foreach (array_merge($hooks, $featureRegistry->integrationHooks()) as $hook) {
@@ -315,6 +322,7 @@ class Cci_Blog extends Module
             'actionAfterUpdateEmployeeFormHandler',
             'gSitemapAppendUrls',
         ];
+        $hooks[] = 'displayCciBlogArticleSidebar';
         foreach (array_merge($hooks, $featureRegistry->integrationHooks()) as $hook) {
             $this->registerHook($hook);
         }
@@ -667,6 +675,10 @@ class Cci_Blog extends Module
             'CCB_COMMENTS_MODERATION' => 1,
             'CCB_TABLE_OF_CONTENTS_ENABLED' => 1,
             'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS' => 2,
+            'CCB_TABLE_OF_CONTENTS_LAYOUT' => 'inline',
+            'CCB_TABLE_OF_CONTENTS_STICKY_GAP' => 16,
+            'CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT' => 'none',
+            'CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK' => 'displayCciBlogArticleSidebar',
             'CCB_RELATED_POSTS' => 3,
             'CCB_RELATED_PRODUCTS' => 1,
             'CCB_BREADCRUMB' => 1,
@@ -702,6 +714,8 @@ class Cci_Blog extends Module
             'CCB_SHOW_VIEWS', 'CCB_SHOW_READ_TIME', 'CCB_COMMENTS_ENABLED',
             'CCB_COMMENTS_PROVIDER', 'CCB_COMMENTS_MODERATION',
             'CCB_TABLE_OF_CONTENTS_ENABLED', 'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS',
+            'CCB_TABLE_OF_CONTENTS_LAYOUT', 'CCB_TABLE_OF_CONTENTS_STICKY_GAP',
+            'CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT', 'CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK',
             'CCB_RELATED_POSTS', 'CCB_RELATED_PRODUCTS',
             'CCB_BREADCRUMB', 'CCB_SOCIAL_SHARE', 'CCB_NEWSLETTER_WIDGET',
             'CCB_SCHEMA_ORG', 'CCB_OG_TAGS', 'CCB_DISQUS_SHORTNAME',
@@ -1068,6 +1082,40 @@ class Cci_Blog extends Module
         return [];
     }
 
+    public function hookDisplayCciBlogPublicationAuditRules(array $params): array
+    {
+        return [];
+    }
+
+    public function hookActionObjectAddAfter(array $params): void
+    {
+        $this->invalidatePublicationResults($params);
+    }
+
+    public function hookActionObjectUpdateAfter(array $params): void
+    {
+        $this->invalidatePublicationResults($params);
+    }
+
+    public function hookActionObjectDeleteAfter(array $params): void
+    {
+        $this->invalidatePublicationResults($params);
+    }
+
+    private function invalidatePublicationResults(array $params): void
+    {
+        $object = $params['object'] ?? null;
+        if ($object instanceof Product || $object instanceof CMS || $object instanceof Feature
+            || $object instanceof FeatureValue || $object instanceof CciBlogPost || $object instanceof CciBlogCategory) {
+            CciBlogPublicationAuditStorage::invalidate();
+        }
+    }
+
+    public function hookDisplayCciBlogArticleSidebar(array $params): string
+    {
+        return '';
+    }
+
     public function hookActionFrontControllerSetMedia(array $params = []): void
     {
         $controllerName = (string) Tools::getValue('controller');
@@ -1088,13 +1136,6 @@ class Cci_Blog extends Module
         $frontJsVersion = (string) (@filemtime(__DIR__ . '/views/js/front.js') ?: $this->version);
         $frontCssVersion = (string) (@filemtime(__DIR__ . '/views/css/cci_blog_front.css') ?: $this->version);
 
-        if ($isBlogPage && $this->getOwlAssetsSource() === 'module') {
-            $this->context->controller->registerStylesheet(
-                'cci_blog-owl-carousel',
-                'modules/' . $this->name . '/views/vendor/owlcarousel/assets/owl.carousel.min.css',
-                ['media' => 'all', 'priority' => 190]
-            );
-        }
         $this->context->controller->registerStylesheet(
             'cci-blog-front-styles',
             __PS_BASE_URI__ . 'modules/' . $this->name . '/views/css/cci_blog_front.css',
@@ -1111,13 +1152,25 @@ class Cci_Blog extends Module
             return;
         }
 
-        if ($this->getOwlAssetsSource() === 'module') {
-            $this->context->controller->registerJavascript(
-                'cci_blog-owl-carousel',
-                'modules/' . $this->name . '/views/vendor/owlcarousel/owl.carousel.min.js',
-                ['position' => 'bottom', 'priority' => 190]
-            );
-        }
+        $assetBase = __PS_BASE_URI__ . 'modules/' . $this->name . '/views/vendor/';
+        Media::addJsDef(['cciBlogCarouselConfig' => [
+            'allowModuleAssets' => $this->getOwlAssetsSource() === 'module',
+            'assets' => [
+                'owl' => ['js' => $assetBase . 'owlcarousel/owl.carousel.min.js', 'css' => $assetBase . 'owlcarousel/assets/owl.carousel.min.css'],
+                'swiper' => ['js' => $assetBase . 'swiper/swiper-bundle.min.js', 'css' => $assetBase . 'swiper/swiper-bundle.min.css'],
+            ],
+            'strings' => ['previous' => $this->l('Previous products'), 'next' => $this->l('Next products'), 'pause' => $this->l('Pause carousel'), 'play' => $this->l('Play carousel'), 'page' => $this->l('Product page')],
+        ]]);
+        $this->context->controller->registerJavascript(
+            'cci-blog-carousel-library-bridge',
+            __PS_BASE_URI__ . 'modules/' . $this->name . '/views/js/carousel-library-bridge.js',
+            ['position' => 'head', 'priority' => 1, 'server' => 'remote', 'version' => (string) filemtime(__DIR__ . '/views/js/carousel-library-bridge.js')]
+        );
+        $this->context->controller->registerJavascript(
+            'cci-blog-product-carousels',
+            __PS_BASE_URI__ . 'modules/' . $this->name . '/views/js/product-carousels.js',
+            ['position' => 'bottom', 'priority' => 199, 'server' => 'remote', 'version' => (string) filemtime(__DIR__ . '/views/js/product-carousels.js')]
+        );
         $this->context->controller->registerJavascript(
             'cci-blog-front',
             __PS_BASE_URI__ . 'modules/' . $this->name . '/views/js/front.js',

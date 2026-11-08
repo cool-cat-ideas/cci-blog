@@ -5,6 +5,8 @@
  */
 global $_MODULE;
 $_MODULE = [];
+$_MODULE['<{cci_blog}prestashop>post_69175d1e0404672430c1fafe004a8804'] = 'Prywatny podgląd. Link wygasa po 15 minutach. Zmiany nie zostały opublikowane.';
+$_MODULE['<{cci_blog}prestashop>cci_blog_bb5cf8edf3e6c94e11597e754cefaa15'] = 'Najnowsze wpisy na blogu';
 
 $_MODULE['<{cci_blog}prestashop>cci_blog_'] = 'CCI Blog';
 $_MODULE['<{cci_blog}prestashop>cci_blog_4592d1ce819137c0134685c3893de503'] = 'Publikuj wpisy blogowe bezpośrednio w sklepie, z edytorem wizualnym, biogramami autorów, spisem treści, komentarzami Disqus, danymi artykułu JSON-LD i linkami w sitemapie.';
@@ -135,3 +137,9 @@ $_MODULE['<{cci_blog}prestashop>cci_blog_8b33830304744f209e5d50649bc83311'] = 'K
 $_MODULE['<{cci_blog}prestashop>cci_blog_96fe3af37dbcee74b5c9ab3980ceb1bc'] = 'Wypełnij wszystkie wymagane pola poprawnymi danymi.';
 
 $_MODULE['<{cci_blog}prestashop>post_5910ceeaf17d3a747c6b3c6f7e1387f7'] = 'Dołącz do dyskusji';
+
+$_MODULE['<{cci_blog}prestashop>cci_blog_db85aad967d3a3ccf983432d4d5fe93c'] = 'Poprzednie produkty';
+$_MODULE['<{cci_blog}prestashop>cci_blog_3ad4b6ffef669d687ade73fa2fc8532c'] = 'Następne produkty';
+$_MODULE['<{cci_blog}prestashop>cci_blog_2e2aa8b9b4529c8a7ced06488f570393'] = 'Wstrzymaj karuzelę';
+$_MODULE['<{cci_blog}prestashop>cci_blog_cb55612a8dde7b72d81699017ebfcb5c'] = 'Uruchom karuzelę';
+$_MODULE['<{cci_blog}prestashop>cci_blog_eb763a2e313718f33f55e1f0d84df6ee'] = 'Strona produktów';

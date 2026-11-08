@@ -1,7 +1,8 @@
 import React from 'react';
 import { formatAdminDateTime } from '@cci/admin-ui';
 import { Bug, Clipboard, RefreshCw, Save, Settings } from 'lucide-react';
-import { apiFetch, pluginData } from '../../api/api';
+import { apiFetch, pluginData, getCciBlogProRuntime } from '../../api/api';
+import { getContentHookOptions } from '../../api/content-hooks';
 import { __ } from '../../i18n/i18n';
 import { Button } from '../ui/button';
 import { CardHeader } from '../ui/card';
@@ -10,11 +11,18 @@ import { Field, FieldLabel } from '../ui/field';
 import { Input, Textarea } from '../ui/input';
 import { Select } from '../ui/select';
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '../ui/tabs';
+import ProBadge from '../licensing/ProBadge';
 
 export default function BlogSettingsPanel({ setNotice }) {
   const [activeTab, setActiveTab] = React.useState('settings');
   const [settings, setSettings] = React.useState(pluginData.settings || {});
   const [saving, setSaving] = React.useState(false);
+  const [proRuntime, setProRuntime] = React.useState(getCciBlogProRuntime);
+  React.useEffect(() => {
+    const refresh = () => setProRuntime(getCciBlogProRuntime());
+    window.addEventListener('cci-blog:pro-runtime-ready', refresh);
+    return () => window.removeEventListener('cci-blog:pro-runtime-ready', refresh);
+  }, []);
   const [diagnostics, setDiagnostics] = React.useState(
     () => pluginData.diagnostics || buildFallbackDiagnostics(pluginData),
   );
@@ -37,14 +45,20 @@ export default function BlogSettingsPanel({ setNotice }) {
   };
 
   const commentsProvider = settings.CCB_COMMENTS_PROVIDER === 'native' ? 'native' : 'disqus';
+  const tocCanEdit = Boolean(
+    proRuntime.canUse && proRuntime.features?.includes('advanced_layout_blocks'),
+  );
   const owlAssetsSource =
     settings.CCB_OWL_ASSETS_SOURCE ||
     (settings.CCB_LOAD_OWL_LIBRARY || settings.CCB_LOAD_OWL_STYLES ? 'module' : 'theme');
   const owlAssetsHelp =
     owlAssetsSource === 'module'
-      ? __('The blog loads Owl Carousel JS and CSS from module files on blog pages.', 'cci-blog')
+      ? __(
+          'Reuse the site library first. Load the selected library from the module only when needed.',
+          'cci-blog',
+        )
       : __(
-          'Use this when the active theme or another module already loads Owl Carousel JS and CSS.',
+          'Use only the Owl Carousel or Swiper exposed by the theme. Without an available library, products remain scrollable.',
           'cci-blog',
         );
   const updateOwlAssetsSource = (value) => {
@@ -220,6 +234,114 @@ export default function BlogSettingsPanel({ setNotice }) {
               }
             />
           </Field>
+          <Field
+            label={
+              <span className="tw-inline-flex tw-items-center tw-gap-2">
+                {__('Table of contents layout', 'cci-blog')} <ProBadge />
+              </span>
+            }
+          >
+            <Select
+              value={settings.CCB_TABLE_OF_CONTENTS_LAYOUT || 'inline'}
+              onValueChange={(value) => update('CCB_TABLE_OF_CONTENTS_LAYOUT', value)}
+              options={[
+                { value: 'inline', label: __('Above the article', 'cci-blog') },
+                {
+                  value: 'sidebar',
+                  label: __('Article sidebar', 'cci-blog'),
+                  disabled: !tocCanEdit,
+                },
+                {
+                  value: 'sticky',
+                  label: __('Sticky article sidebar', 'cci-blog'),
+                  disabled: !tocCanEdit,
+                },
+              ]}
+            />
+            <p className="tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
+              {__(
+                'Sidebar layouts use the article side column for reading navigation. On smaller screens the contents return above the text.',
+                'cci-blog',
+              )}
+            </p>
+          </Field>
+          {settings.CCB_TABLE_OF_CONTENTS_LAYOUT === 'sticky' && (
+            <Field label={__('Gap below the sticky header (px)', 'cci-blog')}>
+              <Input
+                type="number"
+                min="8"
+                max="80"
+                disabled={!tocCanEdit}
+                value={settings.CCB_TABLE_OF_CONTENTS_STICKY_GAP || 16}
+                onChange={(event) =>
+                  update('CCB_TABLE_OF_CONTENTS_STICKY_GAP', Number(event.target.value))
+                }
+              />
+            </Field>
+          )}
+          {['sidebar', 'sticky'].includes(settings.CCB_TABLE_OF_CONTENTS_LAYOUT) && (
+            <div className="tw-grid tw-grid-cols-1 tw-gap-3 lg:tw-col-span-3 lg:tw-grid-cols-2">
+              <Field
+                label={
+                  <span className="tw-inline-flex tw-items-center tw-gap-2">
+                    {__('Content below the table of contents', 'cci-blog')} <ProBadge />
+                  </span>
+                }
+              >
+                <Select
+                  disabled={!tocCanEdit}
+                  value={settings.CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT || 'none'}
+                  onValueChange={(value) => update('CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT', value)}
+                  options={[
+                    { value: 'none', label: __('Table of contents only', 'cci-blog') },
+                    { value: 'widgets', label: __('Blog search, categories and tags', 'cci-blog') },
+                    {
+                      value: 'hook',
+                      label: __('Selected hook', 'cci-blog'),
+                      disabled: !proRuntime.features?.includes('hook_blocks'),
+                    },
+                    {
+                      value: 'widgets_hook',
+                      label: __('Blog widgets and selected hook', 'cci-blog'),
+                      disabled: !proRuntime.features?.includes('hook_blocks'),
+                    },
+                  ]}
+                />
+                <p className="tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
+                  {__(
+                    'Extra sidebar content appears below the article on smaller screens.',
+                    'cci-blog',
+                  )}
+                </p>
+              </Field>
+              {['hook', 'widgets_hook'].includes(
+                settings.CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT,
+              ) && (
+                <Field label={__('Article sidebar hook', 'cci-blog')}>
+                  <Select
+                    disabled={!tocCanEdit || !proRuntime.features?.includes('hook_blocks')}
+                    value={
+                      settings.CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK || 'displayCciBlogArticleSidebar'
+                    }
+                    onValueChange={(value) => update('CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK', value)}
+                    options={getContentHookOptions(
+                      settings.CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK || 'displayCciBlogArticleSidebar',
+                    )}
+                  />
+                  <p className="tw-m-0 tw-text-xs tw-leading-5 tw-text-cci-blog-muted">
+                    {__(
+                      'Attach a module to this hook in Design / Positions. Empty hooks add no content.',
+                      'cci-blog',
+                    )}{' '}
+                    <code>
+                      {settings.CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK ||
+                        'displayCciBlogArticleSidebar'}
+                    </code>
+                  </p>
+                </Field>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="tw-grid tw-grid-cols-1 tw-gap-3 tw-border-0 tw-border-t tw-border-solid tw-border-cci-blog-border tw-bg-white tw-p-4 lg:tw-grid-cols-3">
@@ -283,13 +405,13 @@ export default function BlogSettingsPanel({ setNotice }) {
             />
           ))}
           <div className="lg:tw-col-span-3">
-            <Field label={__('Owl Carousel assets', 'cci-blog')}>
+            <Field label={__('Carousel libraries', 'cci-blog')}>
               <Select
                 value={owlAssetsSource}
                 onValueChange={updateOwlAssetsSource}
                 options={[
-                  { value: 'module', label: __('Load from module', 'cci-blog') },
-                  { value: 'theme', label: __('Use existing site assets', 'cci-blog') },
+                  { value: 'module', label: __('Reuse first, load missing library', 'cci-blog') },
+                  { value: 'theme', label: __('Use existing site assets only', 'cci-blog') },
                 ]}
               />
               <p className="tw-m-0 tw-mt-1.5 tw-text-xs tw-leading-relaxed tw-text-cci-blog-muted">
@@ -450,12 +572,8 @@ export default function BlogSettingsPanel({ setNotice }) {
                   ),
                 ],
                 [
-                  __('Owl JS by module', 'cci-blog'),
+                  __('Module library fallback allowed', 'cci-blog'),
                   formatBoolean(diagnostics?.settings?.owlLibraryLoadedByModule),
-                ],
-                [
-                  __('Owl CSS by module', 'cci-blog'),
-                  formatBoolean(diagnostics?.settings?.owlStylesLoadedByModule),
                 ],
               ]}
             />

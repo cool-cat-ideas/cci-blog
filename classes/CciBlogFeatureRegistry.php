@@ -37,6 +37,10 @@ class CciBlogFeatureRegistry
             'displayCciBlogAdminExtensions',
             'displayCciBlogAdminBlockExtensions',
             'displayCciBlogContentHookOptions',
+            'displayCciBlogPublicationAuditRules',
+            'actionObjectAddAfter',
+            'actionObjectUpdateAfter',
+            'actionObjectDeleteAfter',
         ];
     }
 
@@ -199,6 +203,7 @@ class CciBlogFeatureRegistry
         return match ($this->sanitizeKey($type)) {
             'columns' => 'advanced_layout_blocks',
             'product' => 'commerce_blocks',
+            'product_comparison' => 'commerce_blocks',
             'product_carousel' => 'product_carousel',
             'hook' => 'hook_blocks',
             'module_block' => 'extension_blocks',

@@ -4,15 +4,15 @@ CCI Blog registers storefront routes through PrestaShop `moduleRoutes`.
 
 ## Default routes
 
-| View | Default URL |
-| --- | --- |
-| Article list | `/blog` |
-| Single article | `/blog/{slug}` |
-| Category | `/blog/category/{slug}` |
-| Tag | `/blog/tag/{slug}` |
-| Author | `/blog/author/{slug}` |
-| Search | `/blog/search` |
-| RSS | `/blog/feed.xml` |
+| View           | Default URL             |
+| -------------- | ----------------------- |
+| Article list   | `/blog`                 |
+| Single article | `/blog/{slug}`          |
+| Category       | `/blog/category/{slug}` |
+| Tag            | `/blog/tag/{slug}`      |
+| Author         | `/blog/author/{slug}`   |
+| Search         | `/blog/search`          |
+| RSS            | `/blog/feed.xml`        |
 
 The base slug is controlled by:
 
@@ -129,3 +129,32 @@ RSS is available at:
 ```
 
 After changing the base slug, the feed URL changes with it.
+
+The feed uses stable, installation/shop/language/post identifiers, so changing an
+article slug does not create another item. XML text is escaped safely, including
+CDATA terminators and invalid control characters. `lastBuildDate` reflects the
+latest content timestamp. Readers can use ETag or Last-Modified conditional
+requests and receive HTTP 304 when the feed has not changed.
+
+## Private previews and publication states
+
+The article editor can open a private preview of its current fields and blocks
+without saving or publishing the article. This works for new and existing posts.
+The signed link is scoped to the current shop and content language and expires
+after 15 minutes. Treat it as a private link: anyone with the link can view the
+snapshot during that period. Snapshots are stored outside the web root.
+
+Preview responses use `noindex,nofollow`, `Cache-Control: private, no-store` and
+`Referrer-Policy: no-referrer`. They do not increment article views, accept
+comments or output article schema, social sharing controls or hreflang links.
+
+The editor and post table distinguish Draft, Scheduled and Published. Scheduling
+uses the existing active flag and publication date; no cron is needed to make a
+post visible once its date is reached. Dates are interpreted in the shop time
+zone. Google sitemap files still need regeneration using the normal module flow.
+
+The link dialog can search published articles and active categories by title or
+slug in the current shop and selected content language. Draft and future posts
+are excluded. The search returns at most 20 matches; narrow the query when
+necessary. Selecting a result fills the destination and preserves an existing
+link label.

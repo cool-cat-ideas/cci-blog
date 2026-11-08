@@ -6,7 +6,7 @@ integration.
 
 ## Requirements
 
-- PrestaShop 9.0.0-9.1.5.
+- PrestaShop 9.0.0-9.2.0.
 - PHP version supported by the target PrestaShop installation.
 - Optional: CCI Nice Menu when blog content should be embedded in menu
   dropdowns.
@@ -24,13 +24,61 @@ Download the module ZIP from the [Cool Cat Ideas product page](https://coolcatid
 2. Open **Modules > Module Manager > Upload a module**.
 3. Upload the CCI Blog ZIP and wait for the installation confirmation.
 4. Open **Improve > Cool Cat Ideas > CCI Blog**.
-5. Confirm that the sidebar shows Posts, Categories, Comments, Slug redirects,
+5. Confirm that the sidebar shows Dashboard, Posts, Categories, Comments, Slug redirects,
    Extensions and Settings.
 6. Clear the PrestaShop cache.
 
 If CCI Blog Pro is installed and enabled, its license controls appear in the
 module sidebar. A shop with only the base module does not need a key and should
 not show a license form.
+
+## Dashboard And Lists
+
+The module opens on **Dashboard**. It shows article and category counts, the
+five most recently edited articles, draft and scheduled article counts, and up
+to five upcoming publications. Open an article by its title, create one with
+**New post**, or use **View all posts** to open the management list.
+
+**Posts** and the other management sections use the available content width;
+the module status and news column appears on Dashboard. The recent articles
+table contains the title, update date and the employee who last saved that
+article in the current shop and content language. Older articles show **Not
+recorded** until their next save; the article author is not used as a substitute
+for the editor. The publication plan shows the publication date for scheduled
+articles instead.
+
+Empty lists show an informational message. A search with no matches has a
+separate message from a blog with no articles. When no articles are scheduled,
+the publication plan retains its counts and shows an informational message.
+Saved publication results update when an article or category is saved. There
+is no manual refresh control in list rows.
+
+## Article Versions
+
+Open a saved article and choose **Versions**. Select a version from the list to
+compare it with the currently saved article. Removed text and added text have
+separate markings. Use **Show unchanged fields** for more context or **View full
+version** to read the selected version and its settings.
+
+Versions record the employee, save time, changed fields and a full editorial
+snapshot. The article author remains a separate field. The first tracked edit
+of an existing article also preserves its previous state as a baseline; that
+baseline has no known editor. Installing or upgrading the module does not
+invent earlier versions or rewrite articles.
+
+The history is specific to the article, shop and content language. It compares
+saved data, so unsaved changes in the editor do not appear in the comparison.
+Block settings retain links, media and product configuration. Historical
+content is displayed without running storefront hooks or loading live product
+cards. Dynamic view counters and publication-check results are not versioned.
+
+Saving an article and recording its version use the same database transaction.
+A rejected save does not add a version. A save without editorial changes is
+marked accordingly. Version lists load in pages; full snapshots load only when
+you select a version. Versions remain until the article or module is deleted.
+This view provides history and comparison; it has no restore action.
+
+See [Article versions](ARTICLE_VERSIONS.md) for the storage and comparison details.
 
 ## Create And Publish The First Article
 
@@ -94,6 +142,24 @@ file up to 12 MB. Pro validates and re-encodes it into responsive variants in
 
 Choose block types and link styles from the editor controls. Normal publishing
 does not require CSS class names or HTML element IDs.
+
+## Schedule An Article
+
+1. Open the article's **Content** tab.
+2. Set **Publication status** to **Scheduled**.
+3. Choose the future **Publication date** and time, using the shop's time zone.
+4. Save the article.
+
+Until that time the article is excluded from public blog pages and RSS, and its
+public URL returns a not-found page. From the chosen time it becomes available
+on incoming requests. No cron job or second save is required: publication status
+is determined by the active flag and publication date.
+
+The **Scheduled** badge becomes **Published** when its clock check runs, every
+30 seconds while the administration page is active. Reload Dashboard to update
+the publication plan and counts. A **Draft** stays unpublished even when it has
+a future date. Automatic publication does not change the article's edit date
+or create a new editorial version.
 
 ## Author Profiles And Biographies
 

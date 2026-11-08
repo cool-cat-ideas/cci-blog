@@ -1,4 +1,5 @@
 import React from 'react';
+import { InfoCallout } from '@cci/admin-ui/blog';
 
 export function RowPrimary({ label, onOpen, actions, actionsLabel }) {
   return (
@@ -55,20 +56,24 @@ export function RowActions({ actions, ariaLabel }) {
   );
 }
 
-export function DataTable({ columns, rows }) {
+export function DataTable({ columns, rows, compact = false, label }) {
   const normalizedColumns = columns.map((column) =>
     typeof column === 'string' ? { id: column, label: column } : column,
   );
 
   return (
     <div className="tw-overflow-x-auto">
-      <table className="tw-w-full tw-min-w-[860px] tw-border-collapse">
+      <table
+        aria-label={label}
+        className={`tw-w-full tw-border-collapse ${compact ? 'tw-table-fixed' : 'tw-min-w-[860px]'}`}
+      >
         <thead className="tw-bg-cci-blog-surfaceSoft">
           <tr>
             {normalizedColumns.map((column) => (
               <th
                 key={column.id || column.label}
-                className="tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-px-4 tw-py-3 tw-text-left tw-text-xs tw-font-bold tw-uppercase tw-text-cci-blog-muted"
+                className={`tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-py-3 tw-text-left tw-text-xs tw-font-bold tw-uppercase tw-text-cci-blog-muted ${compact ? 'tw-break-words tw-px-2 sm:tw-px-4' : 'tw-px-4'} ${column.className || ''}`}
+                scope="col"
               >
                 {column.sortable ? (
                   <button
@@ -98,7 +103,7 @@ export function DataTable({ columns, rows }) {
               {row.map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className="tw-px-4 tw-py-4 tw-align-middle tw-text-sm tw-text-cci-blog-text"
+                  className={`tw-align-middle tw-text-sm tw-text-cci-blog-text ${compact ? 'tw-break-words tw-px-2 tw-py-3 sm:tw-px-4' : 'tw-px-4 tw-py-4'}`}
                 >
                   {cell}
                 </td>
@@ -113,8 +118,8 @@ export function DataTable({ columns, rows }) {
 
 export function EmptyState({ label }) {
   return (
-    <div className="tw-grid tw-min-h-44 tw-place-items-center tw-p-8 tw-text-center tw-text-sm tw-text-cci-blog-muted">
-      {label}
+    <div className="tw-p-4">
+      <InfoCallout tone="info">{label}</InfoCallout>
     </div>
   );
 }

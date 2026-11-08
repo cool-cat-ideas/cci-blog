@@ -16,6 +16,8 @@ class ObjectModel
 
 class Context
 {
+    public object $shop;
+    public object $language;
 }
 
 class Db
@@ -61,6 +63,7 @@ class Hook
 }
 
 require_once __DIR__ . '/../classes/CciBlogPost.php';
+require_once __DIR__ . '/../classes/CciBlogArticleSidebar.php';
 
 function assertTrue(bool $condition, string $message): void
 {
@@ -71,6 +74,8 @@ function assertTrue(bool $condition, string $message): void
 }
 
 $context = new Context();
+$context->shop = (object) ['id' => 7];
+$context->language = (object) ['id' => 2];
 
 Hook::$executed = [];
 $unknown = CciBlogPost::renderBlocksToHtml([
@@ -93,4 +98,14 @@ $external = CciBlogPost::renderBlocksToHtml([
 assertTrue(str_contains($external, 'displayDemoExtensionBlogHook'), 'Extension-declared hook should render output.');
 assertTrue(in_array('displayDemoExtensionBlogHook', Hook::$executed, true), 'Extension-declared hook should be executed.');
 
-echo "OK: hook allowlist smoke test passed.\n";
+Hook::$executed = [];
+$sidebar = CciBlogArticleSidebar::renderHook('displayCciBlogArticleSidebar', 10, $context);
+assertTrue(str_contains($sidebar, 'displayCciBlogArticleSidebar'), 'The dedicated sidebar hook must use the allowed block renderer.');
+$unknownSidebar = CciBlogArticleSidebar::renderHook('actionDeleteShop', 10, $context);
+assertTrue($unknownSidebar === '' && !in_array('actionDeleteShop', Hook::$executed, true), 'Sidebar configuration must never execute an unsafe hook.');
+foreach (['none', 'widgets', 'hook', 'widgets_hook', 'unknown'] as $mode) {
+    $normalized = CciBlogArticleSidebar::normalizeContent($mode);
+    assertTrue(CciBlogArticleSidebar::showsWidgets($normalized) === in_array($mode, ['widgets', 'widgets_hook'], true), 'Sidebar widget visibility is incorrect.');
+    assertTrue(CciBlogArticleSidebar::showsHook($normalized) === in_array($mode, ['hook', 'widgets_hook'], true), 'Sidebar hook visibility is incorrect.');
+}
+echo "OK: article and sidebar hook allowlists and sidebar content modes passed.\n";

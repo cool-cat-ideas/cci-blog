@@ -9,6 +9,11 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
 $rootDir = dirname(__DIR__, 3);
 
 require_once $rootDir . '/config/config.inc.php';
@@ -146,7 +151,12 @@ function cciBlogDemoConfigureBlog(): void
 
 function cciBlogDemoSetupContext(int $shopId, int $langId): void
 {
+    require_once _PS_ROOT_DIR_ . '/app/AppKernel.php';
+    require_once _PS_ROOT_DIR_ . '/app/FrontKernel.php';
+    $kernel = new FrontKernel(_PS_MODE_DEV_ ? 'dev' : 'prod', (bool) _PS_MODE_DEV_);
+    $kernel->boot();
     $context = Context::getContext();
+    $context->container = $kernel->getContainer();
     $context->shop = new Shop($shopId);
     $context->language = new Language($langId);
     $currencyId = (int) Configuration::get('PS_CURRENCY_DEFAULT');
@@ -154,6 +164,12 @@ function cciBlogDemoSetupContext(int $shopId, int $langId): void
         $context->currency = new Currency($currencyId);
     }
     $context->link = new Link();
+    $context->cart = new Cart();
+    $context->cart->id = 0;
+    $context->customer = new Customer();
+    $context->customer->id = 0;
+    $context->country = new Country((int) Configuration::get('PS_COUNTRY_DEFAULT'));
+    $context->currentLocale = Tools::getContextLocale($context);
 }
 
 function cciBlogDemoEmployeeId(Db $db): int
@@ -875,7 +891,25 @@ function cciBlogDemoBlocks(
         ],
     ];
 
-    if ($linkedImage !== '') {
+    $productCardsEnabled = false;
+    if (Module::isEnabled('cci_blog_pro')) {
+        $pro = Module::getInstanceByName('cci_blog_pro');
+        foreach ($pro ? $pro->hookDisplayCciBlogFeatures(['shop_id' => $shopId]) : [] as $feature) {
+            if ($feature['key'] === 'product_carousel' && !empty($feature['enabled'])) {
+                $productCardsEnabled = true;
+            }
+        }
+    }
+    if ($productCardsEnabled && $productIds) {
+        $blocks[] = [
+            'type' => 'product_carousel',
+            'presentation' => 'card',
+            'layout' => 'grid',
+            'title' => $isPl ? 'Produkty z poradnika' : 'Products from this guide',
+            'ids' => implode(', ', array_map('intval', $productIds)),
+            'options' => ['items_desktop' => 3, 'items_tablet' => 2, 'items_mobile' => 1, 'margin' => 16],
+        ];
+    } elseif ($linkedImage !== '') {
         $blocks[] = [
             'type' => 'image',
             'src' => $linkedImage,

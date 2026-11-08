@@ -10,6 +10,10 @@ This keeps the module native to PrestaShop while allowing an admin experience si
 
 ## Admin shell
 
+Publication checks have one PHP implementation shared by drafts, saves and
+explicit refreshes. Lists read saved per-language results and do not run checks. React requests and displays those results. See
+[the engine contract and custom-rule guide](PUBLICATION_AUDIT.md).
+
 Use one shared admin layout:
 
 - left navigation: Posts, Categories, Comments, Media, Settings

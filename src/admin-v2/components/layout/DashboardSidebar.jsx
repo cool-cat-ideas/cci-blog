@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FilePenLine,
+  LayoutDashboard,
   MessageSquare,
   Route,
   Settings,
@@ -20,7 +21,8 @@ import ConfirmLicenseDeactivateModal from '../licensing/ConfirmLicenseDeactivate
 import { Button } from '../ui/button';
 
 const items = [
-  { id: 'dashboard', label: 'Posts', icon: FilePenLine },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'posts', label: 'Posts', icon: FilePenLine },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
   { id: 'redirects', label: 'Slug redirects', icon: Route },

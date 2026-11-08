@@ -5,6 +5,17 @@ export const defaultContentHookName = 'displayCciBlogPostMiddle';
 
 const fallbackHookOptions = [
   {
+    name: 'displayCciBlogArticleSidebar',
+    label: 'displayCciBlogArticleSidebar',
+    description: __(
+      'Rendered below the article table of contents when selected in Blog settings. Attach a module to this hook in Design / Positions.',
+      'cci-blog',
+    ),
+    moduleName: 'cci_blog',
+    moduleCount: 0,
+    sourceType: 'blog',
+  },
+  {
     name: 'displayCciBlogPostTop',
     label: 'displayCciBlogPostTop',
     description: __('Rendered before the main article content.', 'cci-blog'),

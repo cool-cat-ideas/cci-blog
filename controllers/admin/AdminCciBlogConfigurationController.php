@@ -7,9 +7,15 @@ if (!defined('_PS_VERSION_')) {
 
 require_once dirname(__DIR__, 2) . '/classes/CciSharedLicenseEnvironment.php';
 require_once dirname(__DIR__, 2) . '/classes/CciBlogFeatureRegistry.php';
+require_once dirname(__DIR__, 2) . '/classes/CciBlogArticleSidebar.php';
+require_once dirname(__DIR__, 2) . '/classes/CciBlogPublicationAudit.php';
+require_once dirname(__DIR__, 2) . '/classes/CciBlogPublicationAuditService.php';
+require_once dirname(__DIR__, 2) . '/classes/CciBlogPostHistory.php';
 
 class AdminCciBlogConfigurationController extends ModuleAdminController
 {
+    private ?CciBlogPublicationAuditService $publicationAuditService = null;
+
     private const PRODUCT_HOME_URL = 'https://coolcatideas.com/products/cci-blog';
     private const MARKETPLACE_API_BASE = 'https://coolcatideas.com';
     private const MARKETPLACE_API_BASE_OVERRIDE = 'CCI_MARKETPLACE_API_BASE';
@@ -25,6 +31,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         'CCB_COMMENTS_MODERATION' => 'bool',
         'CCB_TABLE_OF_CONTENTS_ENABLED' => 'bool',
         'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS' => 'int',
+        'CCB_TABLE_OF_CONTENTS_LAYOUT' => 'toc_layout',
+        'CCB_TABLE_OF_CONTENTS_STICKY_GAP' => 'int',
+        'CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT' => 'toc_sidebar_content',
+        'CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK' => 'string',
         'CCB_RELATED_POSTS' => 'int',
         'CCB_RELATED_PRODUCTS' => 'bool',
         'CCB_BREADCRUMB' => 'bool',
@@ -156,7 +166,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                     (int) Tools::getValue('id_post', 0),
                     (int) Tools::getValue('id_lang', 0)
                 ),
+                'post:audit' => $this->auditDraft(is_array($payload) ? $payload : []),
                 'post:save' => $this->savePost(is_array($payload) ? $payload : []),
+                'post:history', 'post:revision' => $this->getPostHistory($action, is_array($payload) ? $payload : []),
+                'post:preview' => $this->previewPost(is_array($payload) ? $payload : []),
                 'post:delete' => $this->deletePost(is_array($payload) ? $payload : []),
                 'categories:list' => ['success' => true, 'categories' => $this->getAdminCategories()],
                 'category:get' => $this->getCategoryPayload(
@@ -171,6 +184,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 'comments:list' => ['success' => true, 'comments' => $this->getAdminComments()],
                 'comment:update-status' => $this->updateCommentStatus(is_array($payload) ? $payload : []),
                 'catalog:products' => $this->getCatalogProductsPayload(is_array($payload) ? $payload : []),
+                'catalog:comparison-fields' => $this->getComparisonFieldsPayload(is_array($payload) ? $payload : []),
+                'catalog:links' => $this->getBlogLinksPayload(is_array($payload) ? $payload : []),
                 'media:list' => $this->getLocalMediaLibraryPayload(is_array($payload) ? $payload : []),
                 'media:upload' => $this->uploadLocalMedia(),
                 'license:get' => ['success' => true, 'license' => $this->getLicensePayload()],
@@ -180,6 +195,9 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 'review-feedback:save' => $this->saveReviewFeedback(is_array($payload) ? $payload : []),
                 default => ['success' => false, 'error' => $this->module->l('Unknown admin action.')],
             };
+            if (!empty($response['success']) && in_array($action, ['redirect:update', 'redirect:delete', 'multistore:post:assign-shops', 'multistore:category:assign-shops'], true)) {
+                CciBlogPublicationAuditStorage::invalidate();
+            }
         } catch (Throwable $exception) {
             $response = [
                 'success' => false,
@@ -196,8 +214,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         return match ($action) {
             'dashboard:get', 'diagnostics:get', 'posts:list', 'redirects:list', 'post:get',
             'categories:list', 'category:get', 'multistore:context', 'comments:list',
-            'catalog:products', 'media:list', 'license:get' => 'view',
-            'post:save' => (int) ($payload['id_post'] ?? 0) > 0 ? 'edit' : 'add',
+            'catalog:products', 'catalog:comparison-fields', 'post:audit', 'post:history', 'post:revision', 'media:list', 'license:get' => 'view',
+            'post:save', 'post:preview' => (int) ($payload['id_post'] ?? 0) > 0 ? 'edit' : 'add',
             'category:save' => (int) ($payload['id_category'] ?? 0) > 0 ? 'edit' : 'add',
             'post:delete', 'category:delete', 'redirect:delete' => 'delete',
             'comment:update-status' => ($payload['status'] ?? '') === 'deleted' ? 'delete' : 'edit',
@@ -230,6 +248,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 }
             }
         }
+
         return true;
     }
 
@@ -264,6 +283,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'language' => $this->getAdminContentLanguagePayload(),
             'languages' => $this->getAdminContentLanguages(),
             'adminDate' => $this->getAdminDateConfig(),
+            'serverTime' => time(),
             'adminLinks' => $this->getAdminLinks(),
             'diagnostics' => $this->getDiagnosticsPayload(),
             'i18n' => $this->getI18n(),
@@ -476,6 +496,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
     private function getStats(): array
     {
+        CciBlogPostHistory::ensureSchema();
         $db = Db::getInstance();
         $langId = $this->getDefaultShopLanguageId();
         $shopId = (int) $this->context->shop->id;
@@ -494,9 +515,25 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
              INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_category_shop` cs
                 ON cs.id_category = c.id_category AND cs.id_shop = ' . $shopId;
 
+        $now = (new DateTimeImmutable('now', new DateTimeZone(
+            (string) (Configuration::get('PS_TIMEZONE') ?: date_default_timezone_get())
+        )))->format('Y-m-d H:i:s');
+        $scheduled = ' WHERE p.active = 1 AND p.date_published > "' . pSQL($now) . '"';
+        $overviewColumns = 'SELECT DISTINCT p.id_post, p.active, p.date_published, p.date_upd, pl.title';
+        $recentColumns = 'SELECT DISTINCT p.id_post, p.active, p.date_published, '
+            . 'COALESCE(h.date_add, p.date_upd) AS date_upd, pl.title, h.employee_name AS modified_by_name';
+        $historyJoin = ' LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_post_revision` h ON h.id_revision = ('
+            . 'SELECT MAX(r.id_revision) FROM `' . _DB_PREFIX_ . 'cci_blog_post_revision` r'
+            . ' WHERE r.id_post = p.id_post AND r.id_shop = ' . $shopId . ' AND r.id_lang = ' . $langId
+            . ' AND r.event_type = "save")';
+
         return [
             'posts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope),
             'activePosts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope . ' WHERE p.active = 1'),
+            'draftPosts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope . ' WHERE p.active = 0'),
+            'scheduledPosts' => (int) $db->getValue('SELECT COUNT(DISTINCT p.id_post)' . $postScope . $scheduled),
+            'recentPosts' => $db->executeS($recentColumns . $postScope . $historyJoin . ' ORDER BY date_upd DESC, p.id_post DESC LIMIT 5') ?: [],
+            'upcomingPosts' => $db->executeS($overviewColumns . $postScope . $scheduled . ' ORDER BY p.date_published ASC, p.id_post ASC LIMIT 5') ?: [],
             'categories' => (int) $db->getValue('SELECT COUNT(DISTINCT c.id_category)' . $categoryScope),
             'activeCategories' => (int) $db->getValue('SELECT COUNT(DISTINCT c.id_category)' . $categoryScope . ' WHERE c.active = 1'),
             'pendingComments' => (int) $db->getValue(
@@ -591,8 +628,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         }
 
         $selectSql = 'SELECT p.id_post, p.id_category, p.id_author, p.active, p.featured, p.allow_comments, p.views, p.date_published, p.date_add, p.date_upd,
-                    pl.title, pl.slug, pl.intro, pl.content_blocks,
-                    pl.meta_title, pl.meta_description, pl.focus_keyword, pl.seo_content_type, pl.seo_score,
+                    pl.id_lang, pl.title, pl.slug, pl.intro,
+                    pl.meta_title, pl.meta_description, pl.focus_keyword, pl.seo_content_type, pl.seo_score, pl.publication_audit_summary,
                     cl.name AS category_name,
                     ' . $authorExpression . ' AS author_name,
                     ' . $categoryNamesExpression . ' AS category_names,
@@ -654,349 +691,50 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function hydrateAdminPostTableRows(array &$posts): void
     {
         foreach ($posts as &$post) {
-            $post['blocks'] = $this->decodeBlocks((string) ($post['content_blocks'] ?? ''));
-            unset($post['content_blocks']);
-            $post['seo_score'] = max(0, min(100, (int) ($post['seo_score'] ?? 0)));
+            $post['id_lang'] = (int) ($post['id_lang'] ?? 0) ?: $this->getDefaultShopLanguageId();
+            $post['publication_audit'] = $this->auditService()->storedResult($post, $post['id_lang']);
+            $post['seo_score'] = $post['publication_audit']['score'];
+            unset($post['publication_audit_summary']);
         }
         unset($post);
     }
 
-    private function calculateAdminPostSeoScore(array $post): int
+    private function auditService(): CciBlogPublicationAuditService
     {
-        $keyword = trim((string) ($post['focus_keyword'] ?? ''));
-        $title = trim((string) (($post['meta_title'] ?? '') ?: ($post['title'] ?? '')));
-        $meta = trim((string) ($post['meta_description'] ?? ''));
-        $slug = trim((string) (($post['slug'] ?? '') ?: ($post['title'] ?? '')));
-        $content = $this->extractAdminPostSeoContent($post);
-        $words = $this->splitSeoWords($content['text']);
-        $keywordWords = $this->splitSeoWords($keyword);
-        $slugWords = $this->splitSeoWords(str_replace('-', ' ', $slug));
-        $titleLength = Tools::strlen($title);
-        $metaLength = Tools::strlen($meta);
-        $h1Count = ((string) ($post['title'] ?? '') !== '' ? 1 : 0) + (int) ($content['h1_count'] ?? 0);
-        $earned = 0.0;
-        $total = 0;
-
-        $add = static function (string $status, int $weight) use (&$earned, &$total): void {
-            $total += $weight;
-            $earned += $weight * match ($status) {
-                'good' => 1.0,
-                'warning' => 0.5,
-                'info' => 0.35,
-                default => 0.0,
-            };
-        };
-
-        $keywordInTitle = $this->containsSeoKeyword($title, $keywordWords);
-        $keywordInMeta = $this->containsSeoKeyword($meta, $keywordWords);
-        $keywordInSlug = $this->containsSeoKeyword(str_replace('-', ' ', $slug), $keywordWords);
-        $keywordInFirstParagraph = $this->containsSeoKeyword((string) ($content['first_paragraph'] ?? ''), $keywordWords);
-        $keywordInH2 = false;
-        foreach (($content['h2'] ?? []) as $heading) {
-            if ($this->containsSeoKeyword((string) $heading, $keywordWords)) {
-                $keywordInH2 = true;
-                break;
-            }
-        }
-
-        $add($keyword !== '' ? 'good' : 'bad', 8);
-        $add($keyword !== '' && $keywordInTitle ? 'good' : 'bad', 12);
-        $add($keyword !== '' ? ($keywordInMeta ? 'good' : 'warning') : 'bad', 8);
-        $add($keyword !== '' ? ($keywordInSlug ? 'good' : 'warning') : 'bad', 8);
-        $add($keyword !== '' ? ($keywordInFirstParagraph ? 'good' : 'warning') : 'bad', 8);
-        $add($keyword !== '' ? ($keywordInH2 ? 'good' : 'warning') : 'bad', 8);
-        $add($titleLength >= 45 && $titleLength <= 65 ? 'good' : ($titleLength >= 30 && $titleLength <= 75 ? 'warning' : 'bad'), 12);
-        $add($keyword !== '' && $keywordInTitle && $this->keywordStartsEarly($title, $keywordWords) ? 'good' : ($keywordInTitle ? 'warning' : 'bad'), 6);
-        $add($metaLength >= 120 && $metaLength <= 158 ? 'good' : ($metaLength >= 90 && $metaLength <= 175 ? 'warning' : 'bad'), 10);
-        $add($meta !== '' && preg_match('/[.!?]$/u', $meta) ? 'good' : ($meta !== '' ? 'warning' : 'bad'), 4);
-        $add($slug !== '' && Tools::strlen($slug) <= 75 && count($slugWords) <= 8 ? 'good' : ($slug !== '' ? 'warning' : 'bad'), 6);
-        $add('good', 2);
-        $add($this->contentLengthStatus(count($words)), 8);
-        $add($h1Count === 1 ? 'good' : 'bad', 8);
-        $add($this->hasValidSeoHeadingHierarchy($content['headings'] ?? []) ? 'good' : 'warning', 8);
-        $add($keyword !== '' ? ($this->keywordDensityStatus($words, $keywordWords) ?: 'bad') : 'bad', 4);
-        $add(((int) ($content['internal_links'] ?? 0)) > 0 ? 'good' : 'warning', 6);
-        $add(((int) ($content['external_links'] ?? 0)) > 0 ? 'good' : 'info', 4);
-        $add(((int) ($content['images'] ?? 0)) === 0 ? 'info' : (((int) ($content['missing_alt'] ?? 0)) === 0 ? 'good' : 'bad'), 6);
-        $add(((int) ($content['images'] ?? 0)) === 0 ? 'info' : 'good', 4);
-        $add('info', 5);
-
-        return $total > 0 ? max(0, min(100, (int) round(($earned / $total) * 100))) : 0;
+        return $this->publicationAuditService ??= new CciBlogPublicationAuditService($this->context);
     }
 
-    private function extractAdminPostSeoContent(array $post): array
+    private function publicationAudit(array $post): array
     {
-        $blocks = is_array($post['blocks'] ?? null) ? $post['blocks'] : [];
-        $parts = [];
-        $paragraphs = [];
-        $headings = [];
-        $h2 = [];
-        $images = 0;
-        $missingAlt = 0;
-        $internalLinks = 0;
-        $externalLinks = 0;
+        $langId = (int) ($post['id_lang'] ?? 0) ?: $this->getDefaultShopLanguageId();
 
-        $walk = function ($block) use (&$walk, &$parts, &$paragraphs, &$headings, &$h2, &$images, &$missingAlt, &$internalLinks, &$externalLinks): void {
-            if (!is_array($block)) {
-                return;
-            }
-
-            $type = $this->adminSeoScalarString($block['type'] ?? $block['kind'] ?? '');
-            $text = trim(strip_tags($this->firstAdminSeoScalarString($block, ['text', 'content', 'caption'])));
-            if ($text !== '') {
-                $parts[] = $text;
-                if ($type === 'paragraph' || $type === '') {
-                    $paragraphs[] = $text;
-                }
-            }
-
-            if ($type === 'heading') {
-                $level = (int) ($block['level'] ?? 2);
-                $headings[] = ['level' => $level, 'text' => $text];
-                if ($level === 2) {
-                    $h2[] = $text;
-                }
-            }
-
-            $src = $this->firstAdminSeoScalarString($block, ['src', 'image', 'image_url']);
-            if ($src === '' && $type === 'image') {
-                $src = $this->adminSeoHrefString($block['url'] ?? '');
-            }
-            if ($type === 'image' || $src !== '') {
-                ++$images;
-                if (trim($this->adminSeoScalarString($block['alt'] ?? '')) === '') {
-                    ++$missingAlt;
-                }
-            }
-
-            foreach (['href', 'url', 'link', 'button_url'] as $linkKey) {
-                $href = $this->adminSeoHrefString($block[$linkKey] ?? '');
-                if ($href === '') {
-                    continue;
-                }
-                if (preg_match('#^https?://#i', $href)) {
-                    $host = parse_url($href, PHP_URL_HOST);
-                    if ($host && isset($this->context->shop) && stripos($host, (string) $this->context->shop->domain) === false) {
-                        ++$externalLinks;
-                    } else {
-                        ++$internalLinks;
-                    }
-                } else {
-                    ++$internalLinks;
-                }
-            }
-
-            foreach (['items', 'children', 'blocks', 'columns'] as $childrenKey) {
-                if (!empty($block[$childrenKey]) && is_array($block[$childrenKey])) {
-                    foreach ($block[$childrenKey] as $child) {
-                        $walk($child);
-                    }
-                }
-            }
-        };
-
-        foreach ($blocks as $block) {
-            $walk($block);
-        }
-
-        if ($parts === []) {
-            $html = (string) ($post['content'] ?? '');
-            $plainText = trim(strip_tags($html));
-            if ($plainText !== '') {
-                $parts[] = $plainText;
-
-                if (preg_match('/<p\b[^>]*>(.*?)<\/p>/is', $html, $match)) {
-                    $firstParagraph = trim(strip_tags((string) ($match[1] ?? '')));
-                    $paragraphs[] = $firstParagraph !== '' ? $firstParagraph : $plainText;
-                } else {
-                    $paragraphs[] = $plainText;
-                }
-
-                if (preg_match_all('/<h([1-6])\b[^>]*>(.*?)<\/h\1>/is', $html, $matches, PREG_SET_ORDER)) {
-                    foreach ($matches as $match) {
-                        $level = (int) ($match[1] ?? 2);
-                        $text = trim(strip_tags((string) ($match[2] ?? '')));
-                        $headings[] = ['level' => $level, 'text' => $text];
-                        if ($level === 2) {
-                            $h2[] = $text;
-                        }
-                    }
-                }
-
-                if (preg_match_all('/<img\b[^>]*>/i', $html, $matches)) {
-                    $images = count($matches[0]);
-                    foreach ($matches[0] as $imageTag) {
-                        if (!preg_match('/\salt\s*=\s*["\'][^"\']+["\']/i', (string) $imageTag)) {
-                            ++$missingAlt;
-                        }
-                    }
-                }
-
-                if (preg_match_all('/<a\b[^>]*\shref\s*=\s*["\']([^"\']+)["\']/i', $html, $matches)) {
-                    foreach ($matches[1] as $href) {
-                        if (preg_match('#^https?://#i', (string) $href)) {
-                            $host = parse_url((string) $href, PHP_URL_HOST);
-                            if ($host && isset($this->context->shop) && stripos($host, (string) $this->context->shop->domain) === false) {
-                                ++$externalLinks;
-                            } else {
-                                ++$internalLinks;
-                            }
-                        } else {
-                            ++$internalLinks;
-                        }
-                    }
-                }
-            }
-        }
-
-        return [
-            'text' => implode(' ', $parts),
-            'first_paragraph' => (string) ($paragraphs[0] ?? ''),
-            'headings' => $headings,
-            'h1_count' => count(array_filter($headings, static fn (array $heading): bool => (int) ($heading['level'] ?? 0) === 1)),
-            'h2' => $h2,
-            'images' => $images,
-            'missing_alt' => $missingAlt,
-            'internal_links' => $internalLinks,
-            'external_links' => $externalLinks,
-        ];
+        return $this->auditService()->audit($post, $langId);
     }
 
-    private function firstAdminSeoScalarString(array $source, array $keys): string
+    private function auditDraft(array $payload): array
     {
-        foreach ($keys as $key) {
-            if (array_key_exists($key, $source)) {
-                $value = $this->adminSeoScalarString($source[$key]);
-                if ($value !== '') {
-                    return $value;
-                }
-            }
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405);
+
+            return ['success' => false, 'error' => $this->module->l('Use POST for a draft audit.')];
+        }
+        if (strlen((string) json_encode($payload)) > 1000000) {
+            return ['success' => false, 'error' => $this->module->l('The draft is too large to audit.')];
+        }
+        $category = ($payload['seo_content_type'] ?? '') === 'category';
+        $entity = $category ? 'category' : 'post';
+        $id = (int) ($payload[$category ? 'id_category' : 'id_post'] ?? 0);
+        if ($id > 0 && !$this->canAccessEntity($entity, $id)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available in this shop.')];
+        }
+        $payload = array_intersect_key($payload, array_flip(['id_post', 'id_category', 'id_author', 'id_lang', 'title', 'slug', 'intro', 'content', 'blocks', 'meta_title', 'meta_description', 'focus_keyword', 'seo_content_type', 'allow_comments', 'active']));
+        $payload['id_shop'] = (int) $this->context->shop->id;
+
+        if (is_array($payload['blocks'] ?? null)) {
+            unset($payload['content']);
         }
 
-        return '';
-    }
-
-    private function adminSeoHrefString($value): string
-    {
-        $scalarValue = $this->adminSeoScalarString($value);
-        if ($scalarValue !== '') {
-            return $scalarValue;
-        }
-
-        if (!is_array($value)) {
-            return '';
-        }
-
-        foreach (['href', 'url', 'link', 'button_url'] as $key) {
-            if (array_key_exists($key, $value)) {
-                $href = $this->adminSeoHrefString($value[$key]);
-                if ($href !== '') {
-                    return $href;
-                }
-            }
-        }
-
-        return '';
-    }
-
-    private function adminSeoScalarString($value): string
-    {
-        if (is_scalar($value)) {
-            return trim((string) $value);
-        }
-
-        if (is_object($value) && method_exists($value, '__toString')) {
-            return trim((string) $value);
-        }
-
-        return '';
-    }
-
-    private function splitSeoWords(string $text): array
-    {
-        $text = function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
-        preg_match_all('/[\p{L}\p{N}]+/u', $text, $matches);
-
-        return array_values(array_filter($matches[0] ?? [], static fn (string $word): bool => Tools::strlen($word) > 1));
-    }
-
-    private function containsSeoKeyword(string $text, array $keywordWords): bool
-    {
-        if (!$keywordWords) {
-            return false;
-        }
-
-        $haystack = ' ' . implode(' ', $this->splitSeoWords($text)) . ' ';
-        $needle = ' ' . implode(' ', $keywordWords) . ' ';
-
-        return strpos($haystack, $needle) !== false;
-    }
-
-    private function keywordStartsEarly(string $text, array $keywordWords): bool
-    {
-        if (!$keywordWords) {
-            return false;
-        }
-
-        $words = $this->splitSeoWords($text);
-        $needle = implode(' ', $keywordWords);
-
-        return strpos(' ' . implode(' ', array_slice($words, 0, 6)) . ' ', ' ' . $needle . ' ') !== false;
-    }
-
-    private function contentLengthStatus(int $wordCount): string
-    {
-        if ($wordCount >= 900) {
-            return 'good';
-        }
-
-        if ($wordCount >= 600) {
-            return 'warning';
-        }
-
-        return 'bad';
-    }
-
-    private function keywordDensityStatus(array $words, array $keywordWords): string
-    {
-        if (!$words || !$keywordWords) {
-            return 'bad';
-        }
-
-        $needle = implode(' ', $keywordWords);
-        $occurrences = 0;
-        $windowSize = count($keywordWords);
-        $max = count($words) - $windowSize;
-        for ($index = 0; $index <= $max; ++$index) {
-            if (implode(' ', array_slice($words, $index, $windowSize)) === $needle) {
-                ++$occurrences;
-            }
-        }
-
-        $density = ($occurrences / count($words)) * 100;
-
-        if ($density >= 0.3 && $density <= 2.5) {
-            return 'good';
-        }
-
-        return $density > 0 ? 'warning' : 'bad';
-    }
-
-    private function hasValidSeoHeadingHierarchy(array $headings): bool
-    {
-        $previous = 1;
-        foreach ($headings as $heading) {
-            $level = (int) ($heading['level'] ?? 0);
-            if ($level <= 0) {
-                continue;
-            }
-            if ($level > $previous + 1) {
-                return false;
-            }
-            $previous = $level;
-        }
-
-        return true;
+        return ['success' => true, 'audit' => $this->publicationAudit($payload)];
     }
 
     private function getAdminSlugRedirects(): array
@@ -1114,6 +852,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         if (!$redirect || !$this->canAccessEntity((string) $redirect['entity_type'], (int) $redirect['id_' . $redirect['entity_type']], true)) {
             return [];
         }
+
         return $redirect;
     }
 
@@ -1151,6 +890,9 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             $post = $this->getEmptyPost();
             $post['id_lang'] = $langId;
 
+            $post['publication_audit'] = $this->auditService()->storedResult($post, $langId);
+            $post['seo_score'] = $post['publication_audit']['score'];
+
             return ['success' => true, 'post' => $post];
         }
 
@@ -1168,7 +910,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                     COALESCE(pl.meta_keywords, pl_default.meta_keywords, "") AS meta_keywords,
                     COALESCE(pl.focus_keyword, pl_default.focus_keyword, "") AS focus_keyword,
                     COALESCE(pl.seo_content_type, pl_default.seo_content_type, "article") AS seo_content_type,
-                    COALESCE(pl.seo_score, pl_default.seo_score, 0) AS seo_score,
+                    pl.seo_score AS seo_score,
+                    pl.publication_audit_summary AS publication_audit_summary,
                     COALESCE(pl.og_title, pl_default.og_title, "") AS og_title,
                     COALESCE(pl.og_description, pl_default.og_description, "") AS og_description,
                     COALESCE(
@@ -1204,8 +947,103 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $post['tags'] = implode(', ', array_map(static fn (array $tag): string => (string) $tag['name'], $tags));
         $post['category_ids'] = $this->getPostCategoryIds($postId, (int) ($post['id_category'] ?? 0));
         $post['id_lang'] = $langId;
+        $post['publication_audit'] = $this->auditService()->storedResult($post, $langId);
+        $post['seo_score'] = $post['publication_audit']['score'];
+
+        unset($post['publication_audit_summary']);
 
         return ['success' => true, 'post' => $post];
+    }
+
+    private function previewPost(array $payload): array
+    {
+        $guard = $this->guardTranslationWrite($payload) ?? $this->guardPostFeatureAccess($payload);
+        if ($guard !== null) {
+            return $guard;
+        }
+        $postId = (int) ($payload['id_post'] ?? 0);
+        if ($postId > 0 && !$this->canAccessEntity('post', $postId)) {
+            return ['success' => false, 'error' => $this->module->l('Post not found.')];
+        }
+        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+        $shopId = (int) $this->context->shop->id;
+        $base = $postId > 0 ? ($this->getPostPayload($postId, $langId)['post'] ?? null) : $this->getEmptyPost();
+        if ($base === null || trim((string) ($payload['title'] ?? '')) === '') {
+            return ['success' => false, 'error' => $this->module->l('Post title is required.')];
+        }
+        $allowed = array_fill_keys([
+            'title', 'slug', 'intro', 'id_author', 'id_category', 'active', 'featured', 'cover_image',
+            'og_image', 'date_published', 'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description',
+        ], true);
+        $post = array_merge($base, array_intersect_key($payload, $allowed));
+        $post['views'] = (int) ($base['views'] ?? 0);
+        $post['slug'] = Tools::str2url((string) ($post['slug'] ?: $post['title']));
+        $post['cover_image'] = $this->sanitizeImageUrl((string) $post['cover_image']);
+        $post['og_image'] = $this->sanitizeImageUrl((string) $post['og_image']);
+        $blocks = is_array($payload['blocks'] ?? null) ? $payload['blocks'] : [];
+        $post['content_blocks'] = json_encode($blocks, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $post['content'] = CciBlogPost::renderBlocksToHtml($blocks, $this->context);
+        $post['allow_comments'] = 0;
+        $post['tags'] = array_map(static fn (string $tag): array => ['name' => $tag], array_values(array_filter(array_map('trim', explode(',', (string) ($payload['tags'] ?? ''))))));
+        $author = Db::getInstance()->getRow(
+            'SELECT COALESCE(NULLIF(a.display_name, ""), CONCAT(e.firstname, " ", e.lastname)) AS author_name,'
+            . ' a.avatar AS author_avatar, al.bio AS author_bio FROM `' . _DB_PREFIX_ . 'employee` e'
+            . ' LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_author` a ON a.id_employee = e.id_employee AND a.active = 1'
+            . ' LEFT JOIN `' . _DB_PREFIX_ . 'cci_blog_author_lang` al ON al.id_author = a.id_author AND al.id_lang = ' . $langId
+            . ' WHERE e.id_employee = ' . (int) $post['id_author']
+        ) ?: [];
+        $post = array_merge($post, $author);
+        $post['author_slug'] = Tools::str2url((string) ($post['author_name'] ?? ''));
+        $post['category_name'] = '';
+        $post['category_slug'] = '';
+        foreach ($this->getAdminCategories($langId) as $category) {
+            if ((int) $category['id_category'] === (int) $post['id_category']) {
+                $post['category_name'] = (string) $category['name'];
+                $post['category_slug'] = (string) $category['slug'];
+                break;
+            }
+        }
+        $token = CciBlogPostPreview::create($post, $shopId, $langId);
+
+        return ['success' => true, 'url' => $this->context->link->getModuleLink('cci_blog', 'post', [
+            'slug' => $post['slug'], 'cci_blog_preview' => $token,
+        ], true, $langId, $shopId), 'expiresIn' => CciBlogPostPreview::LIFETIME];
+    }
+
+    private function getBlogLinksPayload(array $payload): array
+    {
+        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+        $shopId = (int) $this->context->shop->id;
+        $query = Tools::substr(trim((string) ($payload['query'] ?? '')), 0, 120);
+        $type = (string) ($payload['type'] ?? 'all');
+        $items = [];
+        foreach (['post', 'category'] as $entity) {
+            if ($type !== 'all' && $type !== $entity) {
+                continue;
+            }
+            $title = $entity === 'post' ? 'title' : 'name';
+            $sql = 'SELECT e.id_' . $entity . ' AS id, l.' . $title . ' AS title, l.slug'
+                . ' FROM `' . _DB_PREFIX_ . 'cci_blog_' . $entity . '` e'
+                . ' INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_' . $entity . '_lang` l ON l.id_' . $entity . ' = e.id_' . $entity
+                . ' AND l.id_lang = ' . $langId . ' AND l.id_shop = ' . $shopId
+                . ' INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_' . $entity . '_shop` s ON s.id_' . $entity . ' = e.id_' . $entity . ' AND s.id_shop = ' . $shopId
+                . ' WHERE e.active = 1 AND TRIM(l.slug) != "" AND TRIM(l.' . $title . ') != ""';
+            if ($entity === 'post') {
+                $sql .= ' AND (e.date_published IS NULL OR e.date_published <= "' . pSQL(date('Y-m-d H:i:s')) . '")';
+            }
+            if ($query !== '') {
+                $like = $this->sqlUtf8mb4LikePattern($query);
+                $sql .= ' AND (' . $this->sqlUtf8mb4SearchExpression('l.' . $title) . ' LIKE ' . $like
+                    . ' OR ' . $this->sqlUtf8mb4SearchExpression('l.slug') . ' LIKE ' . $like . ')';
+            }
+            foreach (Db::getInstance()->executeS($sql . ' ORDER BY l.' . $title . ' ASC LIMIT 20') ?: [] as $row) {
+                $items[] = ['id' => (int) $row['id'], 'type' => $entity, 'title' => $row['title'],
+                    'url' => $this->context->link->getModuleLink('cci_blog', $entity, ['slug' => $row['slug']], true, $langId, $shopId)];
+            }
+        }
+        usort($items, static fn (array $a, array $b): int => strnatcasecmp($a['title'], $b['title']));
+
+        return ['success' => true, 'items' => array_slice($items, 0, 20)];
     }
 
     private function getEmptyPost(): array
@@ -1241,7 +1079,71 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         ];
     }
 
+    private function getPostHistory(string $action, array $payload): array
+    {
+        $postId = (int) ($payload['id_post'] ?? 0);
+        if (!$this->canAccessEntity('post', $postId)) {
+            return ['success' => false, 'error' => $this->module->l('Post not found.')];
+        }
+        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+        $shopId = (int) $this->context->shop->id;
+        CciBlogPostHistory::ensureSchema();
+        if ($action === 'post:revision') {
+            $revision = CciBlogPostHistory::revision((int) ($payload['id_revision'] ?? 0), $postId, $shopId, $langId);
+            return $revision === null
+                ? ['success' => false, 'error' => $this->module->l('Version not found.')]
+                : ['success' => true, 'revision' => $revision, 'current' => CciBlogPostHistory::snapshot($this->getPostPayload($postId, $langId)['post'])];
+        }
+        return ['success' => true] + CciBlogPostHistory::page($postId, $shopId, $langId, (int) ($payload['before_id'] ?? 0));
+    }
+
     private function savePost(array $payload): array
+    {
+        CciBlogPostHistory::ensureSchema();
+        CciBlogPublicationAuditStorage::ensureSchema();
+        $postId = (int) ($payload['id_post'] ?? 0);
+        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+        $shopId = (int) $this->context->shop->id;
+        if ($postId > 0 && !$this->canAccessEntity('post', $postId, true)) {
+            return ['success' => false, 'error' => $this->module->l('The selected item is not available for editing in this shop.')];
+        }
+        $db = Db::getInstance();
+        $link = $db->getLink();
+        $nested = $link instanceof PDO && $link->inTransaction();
+        $savepoint = 'cci_blog_post_' . bin2hex(random_bytes(5));
+        if (!$db->execute($nested ? 'SAVEPOINT ' . $savepoint : 'START TRANSACTION')) {
+            throw new RuntimeException('Could not start the article save.');
+        }
+        $rollback = static function () use ($db, $nested, $savepoint): void {
+            $db->execute($nested ? 'ROLLBACK TO SAVEPOINT ' . $savepoint : 'ROLLBACK');
+            if ($nested) $db->execute('RELEASE SAVEPOINT ' . $savepoint);
+        };
+        try {
+            $previous = null;
+            if ($postId > 0) {
+                $db->executeS('SELECT id_post FROM `' . _DB_PREFIX_ . 'cci_blog_post` WHERE id_post = ' . $postId . ' FOR UPDATE');
+                if ($db->getValue('SELECT id_post FROM `' . _DB_PREFIX_ . 'cci_blog_post_lang` WHERE id_post = ' . $postId . ' AND id_shop = ' . $shopId . ' AND id_lang = ' . $langId)) {
+                    $previous = $this->getPostPayload($postId, $langId)['post'];
+                }
+            }
+            $response = $this->persistPost($payload);
+            if (empty($response['success'])) {
+                $rollback();
+                return $response;
+            }
+            $response['post']['history_revision_id'] = CciBlogPostHistory::record($previous, $response['post'], $shopId, $langId, $this->context->employee);
+            $response['stats'] = $this->getStats();
+            if (!$db->execute($nested ? 'RELEASE SAVEPOINT ' . $savepoint : 'COMMIT')) {
+                throw new RuntimeException('Could not commit the article version.');
+            }
+            return $response;
+        } catch (Throwable $error) {
+            $rollback();
+            throw $error;
+        }
+    }
+
+    private function persistPost(array $payload): array
     {
         $translationGuard = $this->guardTranslationWrite($payload);
         if ($translationGuard !== null) {
@@ -1304,16 +1206,6 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
         $blocksJson = json_encode($blocks, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $contentHtml = CciBlogPost::renderBlocksToHtml($blocks, $this->context);
-        $seoScore = $this->calculateAdminPostSeoScore([
-            'title' => $title,
-            'slug' => $slug,
-            'intro' => (string) ($payload['intro'] ?? ''),
-            'blocks' => $blocks,
-            'meta_title' => (string) ($payload['meta_title'] ?? ''),
-            'meta_description' => (string) ($payload['meta_description'] ?? ''),
-            'focus_keyword' => (string) ($payload['focus_keyword'] ?? ''),
-            'seo_content_type' => $this->normalizeSeoContentType((string) ($payload['seo_content_type'] ?? 'article')),
-        ]);
         $now = date('Y-m-d H:i:s');
         $existingAuthorId = $postId > 0
             ? (int) Db::getInstance()->getValue(
@@ -1354,10 +1246,14 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         ];
 
         if ($postId > 0) {
-            Db::getInstance()->update('cci_blog_post', $postData, 'id_post = ' . $postId);
+            if (!Db::getInstance()->update('cci_blog_post', $postData, 'id_post = ' . $postId)) {
+                throw new RuntimeException('Could not save the article.');
+            }
         } else {
             $postData['date_add'] = $now;
-            Db::getInstance()->insert('cci_blog_post', $postData);
+            if (!Db::getInstance()->insert('cci_blog_post', $postData)) {
+                throw new RuntimeException('Could not create the article.');
+            }
             $postId = (int) Db::getInstance()->Insert_ID();
             Db::getInstance()->insert('cci_blog_post_shop', [
                 'id_post' => $postId,
@@ -1365,7 +1261,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             ], false, true, Db::REPLACE);
         }
 
-        Db::getInstance()->insert('cci_blog_post_lang', [
+        if (!Db::getInstance()->insert('cci_blog_post_lang', [
             'id_post' => $postId,
             'id_lang' => $langId,
             'id_shop' => $shopId,
@@ -1379,10 +1275,13 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'meta_keywords' => pSQL((string) ($payload['meta_keywords'] ?? '')),
             'focus_keyword' => pSQL((string) ($payload['focus_keyword'] ?? '')),
             'seo_content_type' => pSQL($this->normalizeSeoContentType((string) ($payload['seo_content_type'] ?? 'article'))),
-            'seo_score' => $seoScore,
+            'seo_score' => null,
+            'publication_audit_summary' => null,
             'og_title' => pSQL((string) ($payload['og_title'] ?? '')),
             'og_description' => pSQL((string) ($payload['og_description'] ?? '')),
-        ], false, true, Db::REPLACE);
+        ], true, true, Db::REPLACE)) {
+            throw new RuntimeException('Could not save the article language.');
+        }
 
         Db::getInstance()->delete(
             'cci_blog_slug_redirect',
@@ -1400,11 +1299,18 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $tags = array_filter(array_map('trim', explode(',', (string) ($payload['tags'] ?? ''))));
         CciBlogTag::setPostTags($postId, $tags, $langId);
 
+        CciBlogPublicationAuditStorage::invalidate($shopId);
+        $this->publicationAuditService = new CciBlogPublicationAuditService($this->context);
+        $savedPost = $this->getPostPayload($postId, $langId)['post'];
+        $audit = $this->publicationAudit($savedPost);
+        $summary = CciBlogPublicationAuditStorage::store('post', $postId, $shopId, $langId, $audit);
+        $savedPost['publication_audit'] = $summary + ['stale' => false, 'notChecked' => false];
+        $savedPost['seo_score'] = $summary['score'];
+
         return [
             'success' => true,
-            'post' => $this->getPostPayload($postId, $langId)['post'] ?? null,
+            'post' => $savedPost,
             'posts' => $this->getAdminPosts(),
-            'stats' => $this->getStats(),
         ];
     }
 
@@ -1428,6 +1334,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             return ['success' => false, 'error' => $this->module->l('Post not found.')];
         }
 
+        $this->deleteFromTableIfExists('cci_blog_post_revision', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_comment', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_image', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_product', 'id_post = ' . $postId);
@@ -1437,6 +1344,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $this->deleteFromTableIfExists('cci_blog_post_shop', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_lang', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post', 'id_post = ' . $postId);
+        CciBlogPublicationAuditStorage::invalidate((int) $this->context->shop->id);
 
         return [
             'success' => true,
@@ -1528,18 +1436,18 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         }
     }
 
-    private function getAdminCategories(): array
+    private function getAdminCategories(int $requestedLangId = 0): array
     {
-        $langId = $this->getDefaultShopLanguageId();
+        $langId = $requestedLangId > 0 ? $this->resolveContentLanguageId($requestedLangId) : $this->getDefaultShopLanguageId();
         $shopId = (int) $this->context->shop->id;
 
         $categoryImageSelect = $this->categoryImageColumnAvailable()
             ? 'c.image_url'
             : '"" AS image_url';
 
-        return Db::getInstance()->executeS(
+        $categories = Db::getInstance()->executeS(
             'SELECT c.id_category, c.id_parent, c.id_author, c.active, c.position, c.date_add, c.date_upd, ' . $categoryImageSelect . ', cl.name, cl.slug, cl.description,
-                    cl.meta_title, cl.meta_description, cl.meta_keywords,
+                    cl.meta_title, cl.meta_description, cl.meta_keywords, cl.seo_score, cl.publication_audit_summary,
                     parent_lang.name AS parent_name,
                     COALESCE(
                         (
@@ -1568,6 +1476,14 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
              GROUP BY c.id_category
              ORDER BY c.position ASC, cl.name ASC'
         ) ?: [];
+        foreach ($categories as &$category) {
+            $category['id_lang'] = $langId;
+            $category['publication_audit'] = $this->auditService()->storedResult($category, $langId);
+            unset($category['publication_audit_summary']);
+        }
+        unset($category);
+
+        return $categories;
     }
 
     private function saveCategory(array $payload): array
@@ -1677,6 +1593,12 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             CciBlogSeo::saveCategorySlugRedirect($previousSlug, $categoryId, $langId);
         }
 
+        CciBlogPublicationAuditStorage::invalidate($shopId);
+        $this->publicationAuditService = new CciBlogPublicationAuditService($this->context);
+        $category = $this->getAdminCategory($categoryId, $langId);
+        $audit = $this->publicationAudit(CciBlogPublicationAuditService::categoryDraft($category));
+        CciBlogPublicationAuditStorage::store('category', $categoryId, $shopId, $langId, $audit);
+
         return [
             'success' => true,
             'category' => $this->getAdminCategory($categoryId, $langId),
@@ -1731,6 +1653,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $this->deleteFromTableIfExists('cci_blog_category_shop', 'id_category = ' . $categoryId);
         $this->deleteFromTableIfExists('cci_blog_slug_redirect', 'entity_type = "category" AND id_category = ' . $categoryId);
         $this->deleteFromTableIfExists('cci_blog_category', 'id_category = ' . $categoryId);
+        CciBlogPublicationAuditStorage::invalidate((int) $this->context->shop->id);
 
         return [
             'success' => true,
@@ -1889,12 +1812,23 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         ];
     }
 
+    private function getComparisonFieldsPayload(array $payload): array
+    {
+        $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if (!$pro || !class_exists('CciBlogProProductComparisonBlockRenderer')) {
+            return ['success' => false, 'error' => $this->module->l('Install CCI Blog Pro to select comparison fields.')];
+        }
+        $langId = $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0));
+
+        return ['success' => true, 'fields' => CciBlogProProductComparisonBlockRenderer::availableFields((int) $this->context->shop->id, $langId, $this->normalizeProductIds($payload['ids'] ?? []))];
+    }
+
     private function getCatalogProductsPayload(array $payload): array
     {
         $query = trim((string) ($payload['query'] ?? $payload['q'] ?? Tools::getValue('query', Tools::getValue('q', ''))));
         $ids = $this->normalizeProductIds($payload['ids'] ?? Tools::getValue('ids', ''));
         $limit = max(1, min(50, (int) ($payload['limit'] ?? Tools::getValue('limit', 30))));
-        $items = $this->searchCatalogProducts($query, $ids, $limit);
+        $items = $this->searchCatalogProducts($query, $ids, $limit, $this->resolveContentLanguageId((int) ($payload['id_lang'] ?? 0)));
 
         return [
             'success' => true,
@@ -1903,10 +1837,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         ];
     }
 
-    private function searchCatalogProducts(string $query, array $ids = [], int $limit = 30): array
+    private function searchCatalogProducts(string $query, array $ids = [], int $limit = 30, int $languageId = 0): array
     {
         $shopId = $this->resolveCatalogShopId();
-        $langId = max(1, (int) ($this->context->language->id ?: Configuration::get('PS_LANG_DEFAULT')));
+        $langId = $languageId ?: max(1, (int) ($this->context->language->id ?: Configuration::get('PS_LANG_DEFAULT')));
         $where = [
             'ps.id_shop = ' . $shopId,
             'pl.id_shop = ' . $shopId,
@@ -2028,6 +1962,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $settings['CCB_COMMENTS_PROVIDER'] = $this->normalizeCommentsProvider(
             $settings['CCB_COMMENTS_PROVIDER'] ?? ''
         );
+        $settings['CCB_TABLE_OF_CONTENTS_LAYOUT'] = in_array($settings['CCB_TABLE_OF_CONTENTS_LAYOUT'] ?? '', ['sidebar', 'sticky'], true) ? $settings['CCB_TABLE_OF_CONTENTS_LAYOUT'] : 'inline';
+        $settings['CCB_TABLE_OF_CONTENTS_STICKY_GAP'] = max(8, min(80, (int) ($settings['CCB_TABLE_OF_CONTENTS_STICKY_GAP'] ?: 16)));
+        $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT'] = CciBlogArticleSidebar::normalizeContent($settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT']);
+        $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK'] = $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK'] ?: 'displayCciBlogArticleSidebar';
 
         return $settings;
     }
@@ -2035,7 +1973,51 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function saveSettings(array $payload): array
     {
         $shopId = (int) ($this->context->shop->id ?? 0);
+        $savedLayout = (string) Configuration::get('CCB_TABLE_OF_CONTENTS_LAYOUT', null, null, $shopId);
+        $requestedLayout = $payload['CCB_TABLE_OF_CONTENTS_LAYOUT'] ?? $savedLayout;
+        $tocLayout = in_array($requestedLayout, ['sidebar', 'sticky'], true) ? $requestedLayout : 'inline';
+        $savedGap = max(8, min(80, (int) (Configuration::get('CCB_TABLE_OF_CONTENTS_STICKY_GAP', null, null, $shopId) ?: 16)));
+        $sidebarKeys = ['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT', 'CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK'];
+        $changesSidebar = false;
+        foreach ($sidebarKeys as $key) {
+            if (!array_key_exists($key, $payload)) {
+                continue;
+            }
+            $saved = (string) Configuration::get($key, null, null, $shopId);
+            $requested = trim((string) $payload[$key]);
+            if ($key === 'CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT') {
+                $saved = CciBlogArticleSidebar::normalizeContent($saved);
+                $requested = CciBlogArticleSidebar::normalizeContent($requested);
+            } else {
+                $saved = $saved ?: 'displayCciBlogArticleSidebar';
+                if ($requested !== $saved && !in_array($requested, CciBlogPost::getAllowedContentHookNames(), true)) {
+                    return ['success' => false, 'error' => $this->module->l('Select an available display hook for the article sidebar.')];
+                }
+            }
+            $changesSidebar = $changesSidebar || $requested !== $saved;
+        }
+        $changesProToc = $tocLayout !== 'inline'
+            && ($tocLayout !== $savedLayout || (array_key_exists('CCB_TABLE_OF_CONTENTS_STICKY_GAP', $payload)
+                && $this->normalizeIntegerConfig('CCB_TABLE_OF_CONTENTS_STICKY_GAP', (int) $payload['CCB_TABLE_OF_CONTENTS_STICKY_GAP']) !== $savedGap));
+        if ($changesProToc || $changesSidebar) {
+            $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+            $requiredLayout = $tocLayout === 'inline' ? 'sidebar' : $tocLayout;
+            if (!$pro || !method_exists($pro, 'getCciTableOfContentsLayout') || $pro->getCciTableOfContentsLayout($requiredLayout, $shopId, true) !== $requiredLayout) {
+                return ['success' => false, 'error' => $this->module->l('An active Pro license is required to change the table of contents layout.')];
+            }
+            $sidebarContent = CciBlogArticleSidebar::normalizeContent((string) ($payload['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT']
+                ?? Configuration::get('CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT', null, null, $shopId)));
+            if ($changesSidebar && CciBlogArticleSidebar::showsHook($sidebarContent)) {
+                $features = $this->featureMap($pro->hookDisplayCciBlogFeatures(['shop_id' => $shopId]));
+                if (empty($features['hook_blocks']['enabled'])) {
+                    return ['success' => false, 'error' => $this->module->l('An active Pro license with Hook blocks is required to change the sidebar hook.')];
+                }
+            }
+        }
         foreach (self::SETTINGS_FIELDS as $key => $type) {
+            if (in_array($key, array_merge(['CCB_TABLE_OF_CONTENTS_LAYOUT', 'CCB_TABLE_OF_CONTENTS_STICKY_GAP'], $sidebarKeys), true) && !array_key_exists($key, $payload)) {
+                continue;
+            }
             if (in_array($key, ['CCB_LOAD_OWL_LIBRARY', 'CCB_LOAD_OWL_STYLES'], true) && array_key_exists('CCB_OWL_ASSETS_SOURCE', $payload)) {
                 continue;
             }
@@ -2047,6 +2029,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 'slug' => Tools::str2url((string) $raw) ?: 'blog',
                 'owl_assets_source' => $this->normalizeOwlAssetsSource($raw, $payload),
                 'comments_provider' => $this->normalizeCommentsProvider($raw),
+                'toc_layout' => in_array($raw, ['sidebar', 'sticky'], true) ? $raw : 'inline',
+                'toc_sidebar_content' => CciBlogArticleSidebar::normalizeContent((string) $raw),
                 'disqus_shortname' => $this->normalizeDisqusShortname($raw),
                 default => pSQL((string) $raw),
             };
@@ -2751,6 +2735,14 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     {
         $defaults = [
             [
+                'name' => 'displayCciBlogArticleSidebar',
+                'label' => $this->module->l('Article sidebar'),
+                'description' => $this->module->l('Rendered below the article table of contents when selected in Blog settings. Attach a module to this hook in Design / Positions.'),
+                'moduleName' => 'cci_blog',
+                'moduleCount' => 0,
+                'sourceType' => 'blog',
+            ],
+            [
                 'name' => 'displayCciBlogPostTop',
                 'label' => $this->module->l('Top of post'),
                 'description' => $this->module->l('Rendered before the main article content.'),
@@ -2835,7 +2827,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function getI18n(): array
     {
         return [
-            'dashboard' => $this->module->l('Posts'),
+            'dashboard' => $this->module->l('Dashboard'),
             'posts' => $this->module->l('Posts'),
             'categories' => $this->module->l('Categories'),
             'comments' => $this->module->l('Comments'),
@@ -3057,6 +3049,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'CCB_RELATED_POSTS' => max(0, min(12, $value)),
             'CCB_FEED_ITEMS' => max(5, min(100, $value)),
             'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS' => max(1, min(20, $value)),
+            'CCB_TABLE_OF_CONTENTS_STICKY_GAP' => max(8, min(80, $value)),
             default => $value,
         };
     }
@@ -3170,39 +3163,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             $seoScoreColumnCreated = true;
         }
 
-        if ($seoScoreColumnCreated || (int) Configuration::get('CCB_SEO_SCORE_SCHEMA_VERSION') < 2) {
-            $this->refreshStoredPostSeoScores();
-            Configuration::updateValue('CCB_SEO_SCORE_SCHEMA_VERSION', 2);
-        }
-    }
-
-    private function refreshStoredPostSeoScores(): void
-    {
-        if (!$this->hasPostLangColumn('seo_score')) {
-            return;
-        }
-
-        $rows = Db::getInstance()->executeS(
-            'SELECT p.id_post, p.id_category, p.id_author, pl.id_lang, pl.id_shop,
-                    pl.title, pl.slug, pl.intro, pl.content, pl.content_blocks,
-                    pl.meta_title, pl.meta_description, pl.focus_keyword, pl.seo_content_type
-             FROM `' . _DB_PREFIX_ . 'cci_blog_post` p
-             INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post_lang` pl ON pl.id_post = p.id_post'
-        ) ?: [];
-
-        foreach ($rows as $row) {
-            $row['blocks'] = $this->decodeBlocks((string) ($row['content_blocks'] ?? ''));
-            unset($row['content_blocks']);
-            $score = $this->calculateAdminPostSeoScore($row);
-
-            Db::getInstance()->update(
-                'cci_blog_post_lang',
-                ['seo_score' => $score],
-                'id_post = ' . (int) ($row['id_post'] ?? 0)
-                . ' AND id_lang = ' . (int) ($row['id_lang'] ?? 0)
-                . ' AND id_shop = ' . (int) ($row['id_shop'] ?? 0)
-            );
-        }
+        CciBlogPublicationAuditStorage::ensureSchema();
     }
 
     private function ensurePostCategorySchema(): void

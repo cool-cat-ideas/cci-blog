@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS `PREFIX_cci_blog_post_image`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_post_tag`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_tag`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_post_shop`;
+DROP TABLE IF EXISTS `PREFIX_cci_blog_post_revision`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_post_lang`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_post_category`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_post`;

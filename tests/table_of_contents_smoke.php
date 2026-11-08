@@ -45,7 +45,11 @@ $single = CciBlogTableOfContents::build('<h2>Only section</h2>', 2);
 $assert($single['items'] === [], 'The minimum heading threshold must suppress a short table of contents.');
 $assert($single['content'] === '<h2>Only section</h2>', 'Suppressed output must preserve the original HTML.');
 
-$template = (string) file_get_contents(dirname(__DIR__) . '/views/templates/front/post.tpl');
+$nativeCard = CciBlogTableOfContents::build('<h2>Article section</h2><div class="cci-blog-product-tile"><article><h3>Native product title</h3></article></div>', 1);
+$assert(count($nativeCard['items']) === 1 && $nativeCard['items'][0]['children'] === [], 'Theme product headings must not enter the article outline.');
+$assert(str_contains($nativeCard['content'], '<h3>Native product title</h3>'), 'Native product heading markup must remain unchanged.');
+
+$template = (string) file_get_contents(dirname(__DIR__) . '/views/templates/front/_table_of_contents.tpl');
 $assert(
     str_contains($template, "{l s='In this article' mod='cci_blog'}"),
     'The storefront table of contents must use the "In this article" label.'
