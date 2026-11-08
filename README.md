@@ -10,6 +10,12 @@ Download the module ZIP from the [CCI Blog product page](https://coolcatideas.co
 
 ## See what you can build
 
+### Bring buying guides onto the shop homepage
+
+Show a featured article and more guides alongside your store. Readers can open an article or browse all posts from the homepage block.
+
+![CCI Blog homepage block with a featured buying guide and four more articles](docs/screenshots/cci-blog-storefront-overview-20261108.png)
+
 ### Start with the work waiting in your blog
 
 Dashboard shows recent articles, their last recorded editors and the publication plan. Open an article by its title or switch to Posts for the full management table. Empty lists use informational messages.
@@ -52,7 +58,7 @@ Keep the table of contents above the article, in the sidebar or in a sticky side
 
 ![Changing the table of contents layout in settings and checking the storefront](docs/screenshots/cci-blog-toc-layouts-20261108.gif)
 
-Administration screenshots show the base edition. Product blocks and sidebar table-of-contents examples show the PRO preview. The base edition includes article versions and comparisons, publication checks, saved results, author-written In brief blocks, internal link selection and an inline table of contents. Product blocks, columns and sidebar table-of-contents layouts require PRO, which is currently shown as a preview.
+Editor and article-list screenshots show the base edition. The dashboard capture uses a demo with PRO active. Product blocks and sidebar table-of-contents examples show the PRO preview. The base edition includes article versions and comparisons, publication checks, saved results, author-written In brief blocks, internal link selection and an inline table of contents. Product blocks, columns and sidebar table-of-contents layouts require PRO, which is currently shown as a preview.
 
 [Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
