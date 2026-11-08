@@ -20,7 +20,7 @@ Dashboard shows recent articles, their last recorded editors and the publication
 
 See who saved an article, when it was saved and which fields changed. Compare a selected version with the current saved article or open its full content and settings. History stays within the article's shop and language.
 
-![Article versions with the editor's name and highlighted text changes](docs/screenshots/cci-blog-versions-20261108.png)
+![Browsing saved article versions and comparing their text](docs/screenshots/cci-blog-article-versions.gif)
 
 ### Keep the last publication check in the article list
 
@@ -33,6 +33,12 @@ See the saved result alongside each article. A changed dependency marks the resu
 One server-side engine checks metadata, headings, links and publication settings. It explains what needs attention and distinguishes unavailable checks. The result does not predict search rankings. Add your own rules through the documented extension hook.
 
 ![Publication checks and search settings in the article editor](docs/screenshots/cci-blog-publication-checks-20261108.png)
+
+### Connect related guides
+
+Choose a published article or blog category from the internal link picker. Ordinary links can also lead to products and other shop pages.
+
+![Choosing an existing article or blog category without copying its address](docs/screenshots/cci-blog-internal-links.png)
 
 ### Recommend products in context with PRO
 
