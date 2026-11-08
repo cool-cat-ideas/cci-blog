@@ -26,7 +26,7 @@ See who saved an article, when it was saved and which fields changed. Compare a 
 
 See the saved result alongside each article. A changed dependency marks the result as needing refresh; saving updates it automatically. Opening the list does not run the checks again.
 
-![CCI Blog article list with saved publication results](docs/screenshots/cci-blog-saved-results-20261108.png)
+![Filtered CCI Blog article list with saved publication results](docs/screenshots/cci-blog-saved-results-20261108.png)
 
 ### Check publication details before publishing
 
