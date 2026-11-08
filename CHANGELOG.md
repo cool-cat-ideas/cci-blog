@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 - 2026-11-08
+## 1.1.0
 
 - Record scoped article versions with the authenticated editor, timestamp, changed fields and immutable snapshots. Add read-only history, full-version previews and text comparisons; preserve a baseline when tracking starts on an existing article. Show the last recorded editor on Dashboard.
 - Separate Dashboard from full-width management lists. Show recent articles with Title, Updated and Modified by columns, draft and scheduled counts, and upcoming publications. Use shared informational callouts for empty lists.
