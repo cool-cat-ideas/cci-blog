@@ -56,7 +56,7 @@ Place a product beside the text or between sections. Grids, carousels and compar
 
 Keep the table of contents above the article, in the sidebar or in a sticky sidebar. On phones it returns above the text. Optional blog navigation and permitted hook content can fill the sidebar below it.
 
-![Changing the table of contents layout in settings and checking the storefront](docs/screenshots/cci-blog-toc-layouts-20261108.gif)
+![Inline, sidebar and sticky tables of contents in an article](docs/screenshots/cci-blog-toc-layouts-20261108.gif)
 
 Editor and article-list screenshots show the base edition. The dashboard capture uses a demo with PRO active. Product blocks and sidebar table-of-contents examples show the PRO preview. The base edition includes article versions and comparisons, publication checks, saved results, author-written In brief blocks, internal link selection and an inline table of contents. Product blocks, columns and sidebar table-of-contents layouts require PRO, which is currently shown as a preview.
 
