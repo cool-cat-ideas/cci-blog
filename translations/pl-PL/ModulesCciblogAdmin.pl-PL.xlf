@@ -62,6 +62,74 @@
         <source>Publish articles and buying guides directly in PrestaShop. Add author profiles, tables of contents, comments, search and structured article data without running a separate blog.</source>
         <target state="final">Publikuj artykuły i poradniki bezpośrednio w PrestaShop. Dodaj profile autorów, spisy treści, komentarze, wyszukiwarkę i dane strukturalne bez prowadzenia osobnego bloga.</target>
       </trans-unit>
+      <trans-unit id="reader_3b4836a97d69d11cad15c98b1756d9a7" approved="yes">
+        <source>Section heading</source>
+        <target state="final">Nagłówek sekcji</target>
+      </trans-unit>
+      <trans-unit id="reader_f6c287c6fc44350c6b077ef250127924" approved="yes">
+        <source>Select up to six articles.</source>
+        <target state="final">Wybierz maksymalnie sześć artykułów.</target>
+      </trans-unit>
+      <trans-unit id="reader_d2500c24d11cc0ec3ac0a2b3f86c71e3" approved="yes">
+        <source>Text exceeds the allowed length.</source>
+        <target state="final">Tekst jest za długi. Skróć go i spróbuj ponownie.</target>
+      </trans-unit>
+      <trans-unit id="reader_1c913fb8f928087eba6dc2b318dced2e" approved="yes">
+        <source>A recommended article is missing or belongs to another shop or language.</source>
+        <target state="final">Jeden z polecanych artykułów jest niedostępny w tym sklepie lub języku. Wybierz go ponownie.</target>
+      </trans-unit>
+      <trans-unit id="reader_1a171910d3286bf2d5b02998b93b4865" approved="yes">
+        <source>The selected series is not available in this shop and language.</source>
+        <target state="final">Wybrana seria jest niedostępna w tym sklepie lub języku.</target>
+      </trans-unit>
+      <trans-unit id="reader_52aa12fea074634033e6de9e55f7ede0" approved="yes">
+        <source>Series not found.</source>
+        <target state="final">Nie znaleziono serii.</target>
+      </trans-unit>
+      <trans-unit id="reader_141ca177c15d1318dde984871e84b033" approved="yes">
+        <source>Enter a series title and a valid URL slug.</source>
+        <target state="final">Podaj tytuł serii i poprawny fragment adresu URL.</target>
+      </trans-unit>
+      <trans-unit id="reader_2d94e002ef40775bc24651add82936e8" approved="yes">
+        <source>This series URL is already used.</source>
+        <target state="final">Ten adres jest już przypisany do innej serii. Wybierz inny.</target>
+      </trans-unit>
+      <trans-unit id="reader_520bbfe8d581cce16a3d8399b8ab9f4c" approved="yes">
+        <source>An existing series URL cannot be changed.</source>
+        <target state="final">Adres zapisanej serii pozostaje bez zmian.</target>
+      </trans-unit>
+      <trans-unit id="reader_bdf3855d3730efb8af150e1e0e2a579f" approved="yes">
+        <source>Install CCI Blog Pro to manage series and recommendations.</source>
+        <target state="final">Zainstaluj CCI Blog Pro, aby zarządzać seriami i polecanymi artykułami.</target>
+      </trans-unit>
+      <trans-unit id="reader_84ce495ff52ca01236e07cf85dcb367c" approved="yes">
+        <source>The article is not available in this shop and language.</source>
+        <target state="final">Artykuł jest niedostępny w tym sklepie lub języku.</target>
+      </trans-unit>
+      <trans-unit id="reader_9a7dd959adea05c1eff5bb96be53e5f9" approved="yes">
+        <source>A series can contain at most 500 articles in the ordering editor.</source>
+        <target state="final">Edytor kolejności obsługuje serie do 500 artykułów.</target>
+      </trans-unit>
+      <trans-unit id="reader_fc2f657d613900279270222dd508dea0" approved="yes">
+        <source>Invalid article order.</source>
+        <target state="final">Nie udało się odczytać kolejności. Odśwież listę artykułów i spróbuj ponownie.</target>
+      </trans-unit>
+      <trans-unit id="reader_62827d06ed762501726ac9fac88d6069" approved="yes">
+        <source>An article cannot appear twice in a series.</source>
+        <target state="final">Ten sam artykuł nie może wystąpić w serii dwa razy.</target>
+      </trans-unit>
+      <trans-unit id="reader_240d64d12d3bbd217252162670be1293" approved="yes">
+        <source>This series changed. Reload its articles before saving the order.</source>
+        <target state="final">Ktoś zmienił tę serię. Odśwież listę artykułów przed zapisaniem kolejności.</target>
+      </trans-unit>
+      <trans-unit id="reader_63e207b4e6c103e9d169ec24571b5a14" approved="yes">
+        <source>The order must contain every article in this series exactly once.</source>
+        <target state="final">Lista musi zawierać wszystkie artykuły z tej serii, każdy dokładnie raz. Odśwież ją i spróbuj ponownie.</target>
+      </trans-unit>
+      <trans-unit id="reader_20d7efef30bd41f01eb9db3a9099e276" approved="yes">
+        <source>CCI Blog Pro is required to save reader engagement settings.</source>
+        <target state="final">Zapis ustawień polecanych artykułów i serii wymaga CCI Blog Pro.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

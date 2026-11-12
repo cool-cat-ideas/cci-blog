@@ -25,6 +25,7 @@ const items = [
   { id: 'posts', label: 'Posts', icon: FilePenLine },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
+  { id: 'engagement', label: 'Reader engagement', icon: MessageSquare },
   { id: 'redirects', label: 'Slug redirects', icon: Route },
   { id: 'extensions', label: 'Extensions', icon: ShoppingBag, core: true },
   { id: 'settings', label: 'Settings', icon: Settings, core: true },

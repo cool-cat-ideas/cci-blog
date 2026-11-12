@@ -78,6 +78,70 @@
         <source>Enable JavaScript to view comments powered by Disqus.</source>
         <target state="final">Włącz JavaScript, aby zobaczyć komentarze obsługiwane przez Disqus.</target>
       </trans-unit>
+      <trans-unit id="reader_434fc1652cc5b64b70c1a2029f7acdf6" approved="yes">
+        <source>Articles in this series</source>
+        <target state="final">Artykuły w tej serii</target>
+      </trans-unit>
+      <trans-unit id="reader_085c90f05da249a7074be56f9480435a" approved="yes">
+        <source>Was this article helpful?</source>
+        <target state="final">Czy ten artykuł Ci pomógł?</target>
+      </trans-unit>
+      <trans-unit id="reader_abbaf2f9d19f93744c7be1b58a324ec3" approved="yes">
+        <source>Your feedback helps us improve our guides.</source>
+        <target state="final">Dzięki Twojej opinii możemy poprawiać nasze poradniki.</target>
+      </trans-unit>
+      <trans-unit id="reader_9fae84b4d8e707e4dad52fd37322dc4d" approved="yes">
+        <source>Tell us what was missing (optional)</source>
+        <target state="final">Napisz, czego zabrakło (opcjonalnie)</target>
+      </trans-unit>
+      <trans-unit id="reader_d4abe708ed62a4fb09e58184e79a8857" approved="yes">
+        <source>What could we explain better?</source>
+        <target state="final">Co warto wyjaśnić dokładniej?</target>
+      </trans-unit>
+      <trans-unit id="reader_a02d89ae611f7405e234e9e9e019eae0" approved="yes">
+        <source>Only the shop team can read this message. Do not include personal information or order details. Messages are available to the shop team for 90 days.</source>
+        <target state="final">Wiadomość zobaczy tylko obsługa sklepu. Nie podawaj danych osobowych ani szczegółów zamówienia. Treść jest dostępna dla obsługi przez 90 dni.</target>
+      </trans-unit>
+      <trans-unit id="reader_e310db0374dc1ca0773220cf14897c42" approved="yes">
+        <source>Yes, it helped</source>
+        <target state="final">Tak, pomógł</target>
+      </trans-unit>
+      <trans-unit id="reader_9d76aca60838d896fb7754d4a890eb9d" approved="yes">
+        <source>Not yet</source>
+        <target state="final">Nie</target>
+      </trans-unit>
+      <trans-unit id="reader_e1e4a95e6abb446ef383a390ef50a8fe" approved="yes">
+        <source>Thank you. Your feedback has been saved.</source>
+        <target state="final">Dziękujemy. Twoja opinia została zapisana.</target>
+      </trans-unit>
+      <trans-unit id="reader_c32afe3eb72c8aba5359e9d55910755a" approved="yes">
+        <source>We could not save your feedback. Please try again.</source>
+        <target state="final">Nie udało się zapisać opinii. Spróbuj ponownie.</target>
+      </trans-unit>
+      <trans-unit id="reader_17a5b3ee50adea28689288b849d17995" approved="yes">
+        <source>Saving feedback...</source>
+        <target state="final">Zapisujemy opinię…</target>
+      </trans-unit>
+      <trans-unit id="reader_870628d56bbfb4c71236523f745846e1" approved="yes">
+        <source>Previous part:</source>
+        <target state="final">Poprzednia część:</target>
+      </trans-unit>
+      <trans-unit id="reader_319fa549d2f23a8e5a7b560258f28a8a" approved="yes">
+        <source>Next part:</source>
+        <target state="final">Następna część:</target>
+      </trans-unit>
+      <trans-unit id="reader_c06ed932fceb5dbc2f857c637d4d8f7d" approved="yes">
+        <source>Series pages</source>
+        <target state="final">Strony serii</target>
+      </trans-unit>
+      <trans-unit id="reader_16ded2dc32322d80ce2362a47f4d7ef4" approved="yes">
+        <source>Previous page</source>
+        <target state="final">Poprzednia strona</target>
+      </trans-unit>
+      <trans-unit id="reader_374bea6cf8bd1e8fd64570b629cc6562" approved="yes">
+        <source>Next page</source>
+        <target state="final">Następna strona</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

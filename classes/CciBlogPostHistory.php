@@ -15,7 +15,7 @@ final class CciBlogPostHistory
         'title', 'slug', 'intro', 'content', 'blocks', 'id_author', 'id_category', 'category_ids',
         'active', 'featured', 'allow_comments', 'cover_image', 'og_image', 'date_published',
         'meta_title', 'meta_description', 'meta_keywords', 'focus_keyword', 'seo_content_type',
-        'og_title', 'og_description', 'tags',
+        'og_title', 'og_description', 'tags', 'engagement',
     ];
 
     public static function ensureSchema(): void
@@ -46,13 +46,17 @@ final class CciBlogPostHistory
                 $value = (int) $value;
             } elseif ($field === 'category_ids') {
                 $value = array_values(array_unique(array_map('intval', is_array($value) ? $value : [])));
-            } elseif ($field === 'blocks') {
+            } elseif ($field === 'blocks' || $field === 'engagement') {
                 $value = is_array($value) ? $value : [];
             } else {
                 $value = (string) $value;
             }
+            if ($field === 'engagement' && is_array($value)) {
+                unset($value['position']);
+            }
             $snapshot[$field] = $value;
         }
+
         return $snapshot;
     }
 
@@ -77,6 +81,7 @@ final class CciBlogPostHistory
                 $changed[] = $field;
             }
         }
+
         return self::insert($postId, $shopId, $langId, (int) $employee->id,
             trim((string) $employee->firstname . ' ' . (string) $employee->lastname),
             'save', $changed, $after);
@@ -96,6 +101,7 @@ final class CciBlogPostHistory
             $row['changed_fields'] = json_decode((string) $row['changed_fields'], true) ?: [];
         }
         unset($row);
+
         return ['revisions' => $rows, 'next_before_id' => $more ? (int) end($rows)['id_revision'] : null];
     }
 
@@ -109,6 +115,7 @@ final class CciBlogPostHistory
         }
         $row['snapshot'] = json_decode((string) $row['snapshot'], true, 512, JSON_THROW_ON_ERROR);
         $row['changed_fields'] = json_decode((string) $row['changed_fields'], true) ?: [];
+
         return $row;
     }
 
@@ -117,6 +124,7 @@ final class CciBlogPostHistory
         if ($postId <= 0 || $shopId <= 0 || $langId <= 0) {
             throw new InvalidArgumentException('Invalid article history scope.');
         }
+
         return 'id_post = ' . $postId . ' AND id_shop = ' . $shopId . ' AND id_lang = ' . $langId;
     }
 
@@ -132,6 +140,7 @@ final class CciBlogPostHistory
         ])) {
             throw new RuntimeException('Could not save the article version.');
         }
+
         return (int) $db->Insert_ID();
     }
 }

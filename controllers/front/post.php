@@ -201,7 +201,30 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             : '';
         $commentFormStartedAt = time();
 
+        $engagement = [];
+        $readerPro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if (!$this->isPreview && $readerPro && method_exists($readerPro, 'getCciReaderEngagementFront')) {
+            $engagement = $readerPro->getCciReaderEngagementFront((int) $post['id_post'], $shopId, $langId);
+            if (!empty($engagement['series'])) {
+                $adjacentPosts = ['previous' => $engagement['series']['previous'], 'next' => $engagement['series']['next']];
+            }
+            if ((int) Configuration::get('CCB_RELATED_POSTS') > 0 && !empty($engagement['related'])) {
+                $selected = array_column($engagement['related'], 'id_post');
+                $related = array_slice(array_merge($engagement['related'], array_values(array_filter($related,
+                    static fn (array $item): bool => !in_array($item['id_post'], $selected)))), 0, max(count($selected), min(6, (int) Configuration::get('CCB_RELATED_POSTS'))));
+            }
+            if (empty($engagement['related'])) {
+                unset($engagement['related_title'], $engagement['related_intro']);
+            }
+        }
+
+        $readerFeedbackEnabled = Configuration::get('CCB_READER_FEEDBACK_ENABLED') === false || (bool) Configuration::get('CCB_READER_FEEDBACK_ENABLED');
         $this->context->smarty->assign([
+            'ccb_reader_feedback_enabled' => $readerFeedbackEnabled,
+            'ccb_reader_engagement' => $engagement,
+            'ccb_reader_feedback_token' => $this->isPreview || !$readerFeedbackEnabled ? '' : CciBlogReaderFeedback::token((int) $post['id_post'], $this->context),
+            'ccb_reader_feedback_status' => in_array(Tools::getValue('feedback'), ['saved', 'error'], true) ? Tools::getValue('feedback') : '',
+            'ccb_reader_feedback_message' => !$this->isPreview && $readerPro && method_exists($readerPro, 'canUseCciReaderEngagement') && $readerPro->canUseCciReaderEngagement($shopId),
             'ccb_post' => $post,
             'ccb_preview' => $this->isPreview,
             'ccb_social_enabled' => !$this->isPreview && (bool) Configuration::get('CCB_OG_TAGS'),

@@ -112,6 +112,9 @@
   {/if}
 
   {* --- Content --- *}
+  {if !empty($ccb_reader_engagement.series)}
+    {include file='module:cci_blog/views/templates/front/_reader_series.tpl' series=$ccb_reader_engagement.series}
+  {/if}
   <div class="cci-blog-post-body" itemprop="articleBody">
     {$ccb_post.content nofilter}
   </div>
@@ -205,7 +208,8 @@
   {* --- Related Posts --- *}
   {if $ccb_related}
   <section class="cci-blog-post-related">
-    <h2>{l s='You might also like' mod='cci_blog'}</h2>
+    <h2>{if !empty($ccb_reader_engagement.related_title)}{$ccb_reader_engagement.related_title|escape:'html'}{else}{l s='You might also like' mod='cci_blog'}{/if}</h2>
+    {if !empty($ccb_reader_engagement.related_intro)}<p>{$ccb_reader_engagement.related_intro|escape:'html'}</p>{/if}
     <div class="cci-blog-grid cci-blog-grid-3">
       {foreach from=$ccb_related item=rel}
       {include file='module:cci_blog/views/templates/front/_post_card.tpl' post=$rel heading_level=3}
@@ -215,6 +219,9 @@
   {/if}
 
   {* --- Comments --- *}
+  {if !$ccb_preview && $ccb_reader_feedback_enabled}
+    {include file='module:cci_blog/views/templates/front/_reader_feedback.tpl'}
+  {/if}
   {if $ccb_comments_on}
     {if $ccb_comments_provider == 'disqus'}
       {* Disqus integration *}

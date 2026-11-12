@@ -324,3 +324,31 @@
   window.cciBlogInitDisqus = initDisqus;
   window.cciBlogInitProductCarousels = initProductCarousels;
 })();
+
+/* Reader feedback progressively enhances a regular POST form. */
+document.addEventListener('submit', async function (event) {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement) || !form.matches('[data-cci-reader-feedback]') || !event.submitter) return;
+  event.preventDefault();
+  if (form.getAttribute('aria-busy') === 'true') return;
+  const submitter = event.submitter;
+  const data = new FormData(form);
+  data.set('helpful', submitter.value);
+  const status = form.querySelector('[data-feedback-status]');
+  const buttons = form.querySelectorAll('button[type="submit"]');
+  form.setAttribute('aria-busy', 'true');
+  buttons.forEach((button) => { button.disabled = true; });
+  status.textContent = status.dataset.sending;
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), 15000);
+  try {
+    const response = await fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: timeout.signal });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error('Feedback rejected');
+    buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === submitter)));
+    status.textContent = status.dataset.success;
+    const details = form.querySelector('details');
+    if (details) details.open = false;
+  } catch (_) { status.textContent = status.dataset.error; }
+  finally { clearTimeout(timer); form.removeAttribute('aria-busy'); buttons.forEach((button) => { button.disabled = false; }); }
+});

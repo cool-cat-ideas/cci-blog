@@ -382,6 +382,7 @@ export default function BlogSettingsPanel({ setNotice }) {
           )}
           {[
             ['CCB_COMMENTS_ENABLED', __('Enable comments globally', 'cci-blog')],
+            ['CCB_READER_FEEDBACK_ENABLED', __('Show article usefulness ratings', 'cci-blog')],
             ['CCB_TABLE_OF_CONTENTS_ENABLED', __('Show table of contents in articles', 'cci-blog')],
             ['CCB_SHOW_AUTHOR', __('Show author', 'cci-blog')],
             ['CCB_SHOW_DATE', __('Show date', 'cci-blog')],

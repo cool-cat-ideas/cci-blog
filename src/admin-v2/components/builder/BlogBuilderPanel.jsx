@@ -2,9 +2,11 @@ import { formatAdminDateTime, ResourceListHeader } from '@cci/admin-ui';
 import React from 'react';
 import BlogDashboardWork from '../posts/BlogDashboardWork';
 import PostHistoryPanel from '../posts/PostHistoryPanel';
+import PostEngagementPanel from '../posts/PostEngagementPanel';
 import { StatusBadge as SharedStatusBadge } from '@cci/admin-ui';
 import {
   ArrowLeft,
+  BookOpen,
   ChevronDown,
   ChevronRight,
   FilePenLine,
@@ -62,6 +64,7 @@ import {
 const editorTabs = [
   { value: 'content', label: __('Content', 'cci-blog'), icon: Layers },
   { value: 'seo', label: __('SEO', 'cci-blog'), icon: Link2 },
+  { value: 'engagement', label: __('Reader engagement', 'cci-blog'), icon: BookOpen },
 ];
 
 const columnGapUnits = ['px', 'rem', 'em', '%'];
@@ -228,6 +231,25 @@ export default function BlogBuilderPanel({
   );
   const defaultContentLanguageId = Number(pluginData.language?.id || contentLanguages[0]?.id || 0);
   const translationsEnabled = Boolean(pluginData.enabledFeatures?.includes?.('translations'));
+
+  React.useEffect(() => {
+    if (overviewOnly || section !== 'dashboard') return undefined;
+    const params = new URLSearchParams(window.location.search);
+    const postId = Number(params.get('reader_post') || 0);
+    if (!Number.isSafeInteger(postId) || postId <= 0) return undefined;
+    let cancelled = false;
+    setSaving(true);
+    apiFetch('/post/get', { params: { id_post: postId, id_lang: Number(params.get('reader_lang') || defaultContentLanguageId) } })
+      .then((response) => {
+        if (cancelled) return;
+        setWorking(normalizePost(response.post)); setEditorTab('content'); setView('editor');
+        const url = new URL(window.location.href); url.searchParams.delete('reader_post'); url.searchParams.delete('reader_lang');
+        window.history.replaceState(null, '', url.toString());
+      })
+      .catch((error) => { if (!cancelled) notify({ type: 'error', message: error.message }); })
+      .finally(() => { if (!cancelled) setSaving(false); });
+    return () => { cancelled = true; };
+  }, [overviewOnly, section, defaultContentLanguageId, notify]);
 
   const openPost = (post, languageId = defaultContentLanguageId) => {
     setSaving(true);
@@ -985,6 +1007,9 @@ function PostEditor({
                 onChange={change}
                 onLockedFeatureClick={openProFeature}
               />
+            </TabsPanel>
+            <TabsPanel value="engagement" className="tw-m-0 tw-border-0 tw-bg-transparent">
+              {tab === 'engagement' && <PostEngagementPanel key={`${post.id_post}:${post.id_lang}`} post={post} onChange={onChange} isPro={isPro} />}
             </TabsPanel>
             <TabsPanel value="history" className="tw-m-0 tw-border-0 tw-bg-transparent">
               {tab === 'history' && (

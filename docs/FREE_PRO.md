@@ -1,7 +1,7 @@
 # CCI Blog Free / Pro Feature Matrix
 
 Use this table as the source copy for product pages and comparison blocks. It
-describes shipped capabilities for the initial 1.0.0 release.
+describes capabilities in CCI Blog 1.1.1 and CCI Blog Pro 1.0.0.
 
 | Feature | Free | Pro |
 | --- | --- | --- |
@@ -11,6 +11,11 @@ describes shipped capabilities for the initial 1.0.0 release.
 | Public employee author profiles with biography, display name, avatar and social links | Yes | Yes |
 | Author biography language scope | Default shop language only | All shop languages |
 | Draft/unpublished posts through active state and publish date | Yes | Yes |
+| Automatic related articles | Yes | Yes |
+| Ordered manual recommendations with a heading and introduction | No | Yes |
+| Article series, series archives and ordered part navigation | No | Yes |
+| Article usefulness ratings and basic vote totals | Yes | Yes |
+| Private written feedback and reports by article and primary category | No | Yes |
 | Primary category per post | Yes | Yes |
 | Additional categories per post | No | Yes |
 | Nested category tree | Yes | Yes |

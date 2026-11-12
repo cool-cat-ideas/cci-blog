@@ -1,0 +1,233 @@
+import React from 'react';
+import { apiFetch } from '../../api/api';
+import { __ } from '../../i18n/i18n';
+import { Field, FieldLabel } from '../ui/field';
+import { Input, Textarea } from '../ui/input';
+import { Select } from '../ui/select';
+import { Card, CardContent, CardHeader } from '../ui/card';
+import ProBadge from '../licensing/ProBadge';
+import SeriesOrderEditor from './SeriesOrderEditor';
+import SortableArticleList from './SortableArticleList';
+
+export default function PostEngagementPanel({ post, onChange, isPro }) {
+  const [query, setQuery] = React.useState('');
+  const [options, setOptions] = React.useState({ posts: [], series: [] });
+  const [loading, setLoading] = React.useState(Boolean(isPro));
+  const [error, setError] = React.useState('');
+  const data = post.engagement || {
+    related_ids: [],
+    related_title: '',
+    related_intro: '',
+    id_series: 0,
+    position: 0,
+  };
+  const ids = data.related_ids || [];
+  const change = (patch) => onChange({ ...post, engagement: { ...data, ...patch } });
+  const selectedKey = ids.join(',');
+
+  React.useEffect(() => {
+    if (!isPro) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      setError('');
+      apiFetch('/engagement/options', {
+        body: JSON.stringify({
+          id_lang: post.id_lang,
+          query,
+          selected_ids: selectedKey.split(',').filter(Boolean).map(Number),
+        }),
+      })
+        .then((response) => {
+          if (!cancelled) setOptions(response);
+        })
+        .catch((failure) => {
+          if (!cancelled) setError(failure.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [post.id_lang, query, selectedKey, isPro]);
+
+  if (!isPro)
+    return (
+      <Card>
+        <CardContent className="tw-p-5">
+          <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
+            {__('Recommendations and series', 'cci-blog')} <ProBadge />
+          </h2>
+          <p>
+            {__(
+              'An active Pro license lets you choose recommended articles and organize guides into a series. Existing published content remains visible when an eligible license expires.',
+              'cci-blog',
+            )}
+          </p>
+        </CardContent>
+      </Card>
+    );
+
+  return (
+    <div className="tw-grid tw-items-start tw-gap-4 xl:tw-grid-cols-2">
+      {error && (
+        <p role="alert" className="tw-text-cci-blog-dangerText">
+          {error}
+        </p>
+      )}
+      <Card>
+        <CardHeader>
+          <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
+            {__('Recommended articles', 'cci-blog')}
+          </h2>
+        </CardHeader>
+        <CardContent className="tw-grid tw-gap-4 tw-p-5">
+          <p className="tw-m-0 tw-text-cci-blog-muted">
+            {__(
+              'Choose up to six articles in reading order. Only published articles in this shop and language appear to readers. Automatic recommendations fill remaining places when enabled in settings.',
+              'cci-blog',
+            )}
+          </p>
+          <Field>
+            <FieldLabel htmlFor="reader-related-heading">
+              {__('Section heading', 'cci-blog')}
+            </FieldLabel>
+            <Input
+              id="reader-related-heading"
+              maxLength={180}
+              value={data.related_title}
+              onChange={(event) => change({ related_title: event.target.value })}
+              placeholder={__('You might also like', 'cci-blog')}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="reader-related-intro">
+              {__('Why read these articles?', 'cci-blog')}
+            </FieldLabel>
+            <Textarea
+              id="reader-related-intro"
+              maxLength={512}
+              rows={2}
+              value={data.related_intro}
+              onChange={(event) => change({ related_intro: event.target.value })}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="reader-related-search">
+              {__('Find an article', 'cci-blog')}
+            </FieldLabel>
+            <Input
+              id="reader-related-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="reader-related-add">
+              {__('Add a recommendation', 'cci-blog')}
+            </FieldLabel>
+            <Select
+              id="reader-related-add"
+              ariaLabel={__('Add a recommendation', 'cci-blog')}
+              value=""
+              disabled={loading || ids.length >= 6}
+              placeholder={
+                loading
+                  ? __('Loading articles...', 'cci-blog')
+                  : __('Choose an article', 'cci-blog')
+              }
+              onValueChange={(value) => {
+                if (value) change({ related_ids: [...ids, Number(value)] });
+              }}
+              options={options.posts
+                .filter(
+                  (item) =>
+                    Number(item.id_post) !== Number(post.id_post) &&
+                    !ids.includes(Number(item.id_post)),
+                )
+                .map((item) => ({ value: String(item.id_post), label: item.title }))}
+            />
+          </Field>
+          {!!ids.length && (
+            <SortableArticleList
+              label={__('Recommendation order', 'cci-blog')}
+              disabled={loading}
+              items={ids.map((id) => ({
+                id,
+                title:
+                  options.posts.find((item) => Number(item.id_post) === id)?.title ||
+                  (loading
+                    ? __('Loading articles...', 'cci-blog')
+                    : __('Unavailable article', 'cci-blog')),
+              }))}
+              onChange={(items) => change({ related_ids: items.map((item) => item.id) })}
+              onRemove={(id) => change({ related_ids: ids.filter((value) => value !== id) })}
+            />
+          )}
+          {!ids.length && (
+            <p className="tw-m-0 tw-text-cci-blog-muted">
+              {__(
+                'No manual recommendations. Automatic recommendations remain in use.',
+                'cci-blog',
+              )}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
+            {__('Article series', 'cci-blog')}
+          </h2>
+        </CardHeader>
+        <CardContent className="tw-grid tw-gap-4 tw-p-5">
+          <p className="tw-m-0 tw-text-cci-blog-muted">
+            {__(
+              'Create series in Reader engagement, then assign this article and arrange the parts below.',
+              'cci-blog',
+            )}
+          </p>
+          <Field>
+            <FieldLabel htmlFor="reader-article-series">{__('Series', 'cci-blog')}</FieldLabel>
+            <Select
+              id="reader-article-series"
+              ariaLabel={__('Series', 'cci-blog')}
+              value={String(data.id_series || 0)}
+              onValueChange={(value) =>
+                change({ id_series: Number(value), series_order: undefined })
+              }
+              options={[
+                { value: '0', label: __('Not part of a series', 'cci-blog') },
+                ...options.series.map((item) => ({
+                  value: String(item.id_series),
+                  label: `${item.title}${Number(item.active) ? '' : ` (${__('Hidden', 'cci-blog')})`}`,
+                })),
+              ]}
+            />
+          </Field>
+          {Number(data.id_series) > 0 && (
+            <SeriesOrderEditor
+              seriesId={Number(data.id_series)}
+              languageId={Number(post.id_lang)}
+              articleId={Number(post.id_post || 0)}
+              refreshKey={post.date_upd}
+              articleTitle={post.title}
+              value={data.series_order}
+              onChange={(series_order) => change({ series_order })}
+            />
+          )}
+          <p className="tw-m-0 tw-text-sm tw-text-cci-blog-muted">
+            {__(
+              'Recommendations, series membership and article order are saved with the main Save button.',
+              'cci-blog',
+            )}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -62,6 +62,18 @@ Editor and article-list screenshots show the base edition. The dashboard capture
 
 [Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
+### Help readers find the next useful guide
+
+Recommend related articles, organize a topic into a series and see which guides
+readers found useful. The base edition includes usefulness votes. The Pro preview
+adds curated recommendations, series and private written feedback.
+
+[Reader engagement workflows](docs/READER_ENGAGEMENT.md)
+
+This preview shows Pro 1.0.0 in preparation with CCI Blog 1.1.1.
+
+![Pro preview: recommendations and series ordering in the article editor](docs/screenshots/cci-blog-reader-curation-20261112.png)
+
 ## Start publishing
 
 1. Download the current CCI Blog ZIP from the product page and install it in **Modules > Module Manager**.

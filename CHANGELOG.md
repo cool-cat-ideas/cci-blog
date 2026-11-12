@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Add article usefulness ratings without requiring a customer account, with visitor-bound form tokens, duplicate protection and private scoped storage.
+- Add a Reader engagement workspace using shared tables and controls, with basic vote totals and an optional storefront display setting.
+- Integrate CCI Blog Pro 1.0.0 article series, ordered recommendations and private reader feedback. Keep series navigation and recommended articles limited to published content in the current shop and language.
+- Record article engagement settings in scoped version history. Add an idempotent upgrade without rewriting existing articles.
+
 ## 1.1.0
 
 - Record scoped article versions with the authenticated editor, timestamp, changed fields and immutable snapshots. Add read-only history, full-version previews and text comparisons; preserve a baseline when tracking starts on an existing article. Show the last recorded editor on Dashboard.

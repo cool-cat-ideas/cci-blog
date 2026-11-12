@@ -2,6 +2,7 @@ import { AdminShell, AdminWorkspace, AdminPageHeader, AdminColumns } from '@cci/
 import React, { useCallback, useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import BlogBuilderPanel from '../components/builder/BlogBuilderPanel';
+import ReaderEngagementPanel from '../components/posts/ReaderEngagementPanel';
 import BlogExtensionsPanel from '../components/extensions/BlogExtensionsPanel';
 import BlogSettingsPanel from '../components/settings/BlogSettingsPanel';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
@@ -44,7 +45,7 @@ function normalizeLicense(license = {}) {
 export default function App() {
   const [activeSection, setActiveSection] = useState(() => {
     const section = new URLSearchParams(window.location.search).get('section');
-    return ['posts', 'categories', 'comments', 'redirects', 'extensions', 'settings'].includes(
+    return ['posts', 'categories', 'comments', 'engagement', 'redirects', 'extensions', 'settings'].includes(
       section,
     )
       ? section
@@ -197,6 +198,7 @@ export default function App() {
 
 function getPageHeader(activeSection) {
   const pages = {
+    engagement: { title: __('Reader engagement', 'cci-blog'), description: __('Review reader feedback and organize article series.', 'cci-blog') },
     dashboard: { title: __('Dashboard', 'cci-blog') },
     posts: {
       title: __('Posts', 'cci-blog'),
@@ -246,6 +248,8 @@ function DashboardSection({
   onSelectSection,
 }) {
   const [editorActive, setEditorActive] = useState(false);
+
+  if (activeSection === 'engagement') return <ReaderEngagementPanel isPro={isPro} />;
 
   if (activeSection === 'settings') {
     return (

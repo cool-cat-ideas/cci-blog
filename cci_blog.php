@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/classes/CciBlogPost.php';
+require_once __DIR__ . '/classes/CciBlogReaderFeedback.php';
 require_once __DIR__ . '/classes/CciBlogPostHistory.php';
 require_once __DIR__ . '/classes/CciBlogPostPreview.php';
 require_once __DIR__ . '/classes/CciBlogFeed.php';
@@ -33,7 +34,7 @@ require_once __DIR__ . '/classes/CciBlogFeatureRegistry.php';
 
 class Cci_Blog extends Module
 {
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.1.1';
     private const ADMIN_PARENT_TAB_CLASS = 'AdminCciParent';
     private const ADMIN_TABS = [
         'AdminCciBlog',
@@ -93,7 +94,7 @@ class Cci_Blog extends Module
             }
         }
 
-        return true;
+        return CciBlogReaderFeedback::install();
     }
 
     private function uninstallDb(): bool
@@ -671,6 +672,7 @@ class Cci_Blog extends Module
             'CCB_SHOW_VIEWS' => 1,
             'CCB_SHOW_READ_TIME' => 1,
             'CCB_COMMENTS_ENABLED' => 1,
+            'CCB_READER_FEEDBACK_ENABLED' => 1,
             'CCB_COMMENTS_PROVIDER' => 'disqus',
             'CCB_COMMENTS_MODERATION' => 1,
             'CCB_TABLE_OF_CONTENTS_ENABLED' => 1,
@@ -711,7 +713,7 @@ class Cci_Blog extends Module
     {
         $keys = [
             'CCB_POSTS_PER_PAGE', 'CCB_SHOW_AUTHOR', 'CCB_SHOW_DATE',
-            'CCB_SHOW_VIEWS', 'CCB_SHOW_READ_TIME', 'CCB_COMMENTS_ENABLED',
+            'CCB_SHOW_VIEWS', 'CCB_SHOW_READ_TIME', 'CCB_COMMENTS_ENABLED', 'CCB_READER_FEEDBACK_ENABLED',
             'CCB_COMMENTS_PROVIDER', 'CCB_COMMENTS_MODERATION',
             'CCB_TABLE_OF_CONTENTS_ENABLED', 'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS',
             'CCB_TABLE_OF_CONTENTS_LAYOUT', 'CCB_TABLE_OF_CONTENTS_STICKY_GAP',
@@ -797,6 +799,12 @@ class Cci_Blog extends Module
             'module-cci_blog-tag' => [
                 'controller' => 'tag',
                 'rule' => $base . '/tag/{slug}',
+                'keywords' => $slugKeyword,
+                'params' => ['fc' => 'module', 'module' => 'cci_blog'],
+            ],
+            'module-cci_blog-series' => [
+                'controller' => 'series',
+                'rule' => $base . '/series/{slug}',
                 'keywords' => $slugKeyword,
                 'params' => ['fc' => 'module', 'module' => 'cci_blog'],
             ],
@@ -908,6 +916,8 @@ class Cci_Blog extends Module
         $posts = CciBlogSeo::getSitemapEntries($langId, $shopId);
         $categories = CciBlogSeo::getSitemapCategoryEntries($langId, $shopId);
         $lastModified = $this->latestSitemapUpdate($posts, $categories);
+        $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        $seriesLinks = $pro && method_exists($pro, 'getCciReaderSeriesLinks') ? $pro->getCciReaderSeriesLinks($shopId, $langId) : [];
         $links = [[
             'link' => $this->context->link->getModuleLink($this->name, 'list', [], null, $langId, $shopId),
             'page' => 'cms',
@@ -946,6 +956,10 @@ class Cci_Blog extends Module
                 'lastmod' => (string) ($post['date_upd'] ?? ''),
                 'image' => $imageUrl !== '' ? ['link' => $imageUrl] : false,
             ];
+        }
+
+        foreach ($seriesLinks as $series) {
+            $links[] = ['link' => $series['url'], 'page' => 'cms', 'image' => false];
         }
 
         return $links;
@@ -1005,6 +1019,12 @@ class Cci_Blog extends Module
             ];
         }
 
+        $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if ($pro && method_exists($pro, 'getCciReaderSeriesLinks')) {
+            foreach ($pro->getCciReaderSeriesLinks($shopId, $langId) as $series) {
+                $links[] = ['id' => 'cci-blog-series-' . (int) $series['id_series'], 'label' => $series['title'], 'url' => $series['url']];
+            }
+        }
         $params['urls']['cci_blog'] = [
             'name' => $this->l('Blog'),
             'links' => $links,

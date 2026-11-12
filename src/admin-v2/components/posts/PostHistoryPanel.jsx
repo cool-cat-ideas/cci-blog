@@ -33,6 +33,7 @@ const fieldLabels = () => ({
   og_title: __('Open Graph title', 'cci-blog'),
   og_description: __('Open Graph description', 'cci-blog'),
   tags: __('Tags', 'cci-blog'),
+  engagement: __('Reader engagement', 'cci-blog'),
 });
 const date = (value) => formatAdminDateTime(value, pluginData.adminDate) || '-';
 
@@ -285,7 +286,7 @@ function valueText(field, value, authors, categories) {
     );
   if (field === 'category_ids')
     return (value || []).map((id) => valueText('id_category', id, authors, categories)).join(', ');
-  if (field === 'blocks') return JSON.stringify(value, null, 2);
+  if (field === 'blocks' || field === 'engagement') return JSON.stringify(value, null, 2);
   if (field === 'content' || field === 'intro') {
     const template = document.createElement('template');
     template.innerHTML = sanitizeDraftHtml(String(value));

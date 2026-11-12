@@ -15,3 +15,5 @@ DROP TABLE IF EXISTS `PREFIX_cci_blog_post`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_category_shop`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_category_lang`;
 DROP TABLE IF EXISTS `PREFIX_cci_blog_category`;
+
+DROP TABLE IF EXISTS `PREFIX_cci_blog_reader_feedback`;

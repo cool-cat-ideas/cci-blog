@@ -2256,3 +2256,49 @@ body[id^='module-cci_blog-'] #main .page-content {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Reader engagement inherits the shop theme's typography and action styles. */
+.cci-blog-reader-series,
+.cci-blog-reader-feedback {
+  margin-block: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--cci-blog-border);
+  border-radius: var(--cci-blog-radius);
+  background: var(--cci-blog-bg);
+  color: var(--cci-blog-text);
+  min-width: 0;
+}
+.cci-blog-reader-series h2,
+.cci-blog-reader-feedback h2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+.cci-blog-reader-series summary,
+.cci-blog-reader-feedback summary { cursor: pointer; padding-block: 0.5rem; }
+.cci-blog-reader-series li { margin-block: 0.5rem; }
+.cci-blog-reader-series [aria-current="page"] { font-weight: 700; }
+.cci-blog-reader-series-links,
+.cci-blog-reader-feedback-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 1rem; }
+.cci-blog-reader-series-links a { flex: 1 1 14rem; overflow-wrap: anywhere; }
+.cci-blog-reader-series a { text-decoration: underline; text-underline-offset: 0.2em; }
+.cci-blog-reader-series a:hover { text-decoration-thickness: 2px; }
+.cci-blog-reader-series a:focus-visible,
+.cci-blog-reader-series summary:focus-visible,
+.cci-blog-reader-feedback summary:focus-visible,
+.cci-blog-reader-feedback button:focus-visible { outline: 3px solid var(--cci-blog-primary); outline-offset: 3px; }
+.cci-blog-reader-feedback-details { max-width: 42rem; margin-bottom: 1rem; }
+.cci-blog-reader-feedback-details label { display: block; margin-block: 0.75rem 0.5rem; }
+.cci-blog-reader-feedback-privacy { font-size: 0.875rem; color: var(--cci-blog-muted); margin-top: 0.5rem; }
+.cci-blog-reader-feedback [data-feedback-status]:empty { display: none; }
+.cci-blog-reader-feedback [data-feedback-status] { margin: 1rem 0 0; }
+.cci-blog-reader-feedback button[aria-pressed="true"] { background: var(--cci-blog-primary); color: #fff; }
+@media (max-width: 575px) {
+  .cci-blog-reader-series, .cci-blog-reader-feedback { padding: 1rem; }
+  .cci-blog-reader-feedback-actions > button { flex: 1 1 10rem; }
+}
+
+.cci-blog-reader-series-archive .cci-blog-posts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}

@@ -27,6 +27,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         'CCB_SHOW_VIEWS' => 'bool',
         'CCB_SHOW_READ_TIME' => 'bool',
         'CCB_COMMENTS_ENABLED' => 'bool',
+        'CCB_READER_FEEDBACK_ENABLED' => 'bool',
         'CCB_COMMENTS_PROVIDER' => 'comments_provider',
         'CCB_COMMENTS_MODERATION' => 'bool',
         'CCB_TABLE_OF_CONTENTS_ENABLED' => 'bool',
@@ -95,6 +96,11 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $this->ensureBlockSchema();
         $this->ensurePostCategorySchema();
         $this->ensureCategoryAuthorSchema();
+        CciBlogReaderFeedback::install();
+        $engagementPro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if ($engagementPro && method_exists($engagementPro, 'ensureCciReaderEngagementSchema')) {
+            $engagementPro->ensureCciReaderEngagementSchema();
+        }
         if (method_exists($this->module, 'ensureIntegrationHooks')) {
             $this->module->ensureIntegrationHooks();
         }
@@ -149,6 +155,11 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $this->ensureBlockSchema();
         $this->ensurePostCategorySchema();
         $this->ensureCategoryAuthorSchema();
+        CciBlogReaderFeedback::install();
+        $engagementPro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if ($engagementPro && method_exists($engagementPro, 'ensureCciReaderEngagementSchema')) {
+            $engagementPro->ensureCciReaderEngagementSchema();
+        }
         if (method_exists($this->module, 'ensureIntegrationHooks')) {
             $this->module->ensureIntegrationHooks();
         }
@@ -156,6 +167,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         try {
             $response = match ($action) {
                 'dashboard:get' => ['success' => true, 'payload' => $this->buildInitialPayload()],
+                'engagement:report', 'engagement:options', 'engagement:series:save', 'engagement:series:order', 'engagement:feedback:delete' => $this->readerEngagementAction($action, is_array($payload) ? $payload : []),
                 'diagnostics:get' => ['success' => true, 'diagnostics' => $this->getDiagnosticsPayload()],
                 'settings:save' => $this->saveSettings(is_array($payload) ? $payload : []),
                 'posts:list' => $this->getAdminPostsPayload(is_array($payload) ? $payload : []),
@@ -217,10 +229,41 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'catalog:products', 'catalog:comparison-fields', 'post:audit', 'post:history', 'post:revision', 'media:list', 'license:get' => 'view',
             'post:save', 'post:preview' => (int) ($payload['id_post'] ?? 0) > 0 ? 'edit' : 'add',
             'category:save' => (int) ($payload['id_category'] ?? 0) > 0 ? 'edit' : 'add',
-            'post:delete', 'category:delete', 'redirect:delete' => 'delete',
+            'engagement:report', 'engagement:options', 'engagement:series:order' => 'view',
+            'engagement:series:save' => (int) ($payload['id_series'] ?? 0) > 0 ? 'edit' : 'add',
+            'post:delete', 'category:delete', 'redirect:delete', 'engagement:feedback:delete' => 'delete',
             'comment:update-status' => ($payload['status'] ?? '') === 'deleted' ? 'delete' : 'edit',
             default => 'edit',
         };
+    }
+
+    private function readerEngagementAction(string $action, array $input): array
+    {
+        $shopId = (int) $this->context->shop->id;
+        $langId = $this->resolveContentLanguageId((int) ($input['id_lang'] ?? 0));
+        $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        $detailed = $pro && method_exists($pro, 'canUseCciReaderEngagement') && $pro->canUseCciReaderEngagement($shopId, true);
+        if ($action === 'engagement:report') {
+            return ['success' => true, 'report' => CciBlogReaderFeedback::report($shopId, $langId, max(1, min(10000, (int) ($input['page'] ?? 1))), (bool) $detailed), 'canEdit' => (bool) $detailed];
+        }
+        if ($action === 'engagement:feedback:delete') {
+            if (!$detailed) {
+                return ['success' => false, 'error' => $this->module->l('An active Pro license is required.')];
+            }
+            $ok = Db::getInstance()->update('cci_blog_reader_feedback', ['message' => ''],
+                'id_feedback=' . (int) ($input['id_feedback'] ?? 0) . ' AND id_shop=' . $shopId . ' AND id_lang=' . $langId);
+
+            return ['success' => (bool) $ok];
+        }
+        if (!$pro || !method_exists($pro, 'handleCciReaderEngagementAction')) {
+            return ['success' => false, 'error' => $this->module->l('Install CCI Blog Pro to manage series and recommendations.')];
+        }
+
+        try {
+            return ['success' => true] + $pro->handleCciReaderEngagementAction(substr($action, 11), $shopId, $langId, $input);
+        } catch (InvalidArgumentException $error) {
+            return ['success' => false, 'error' => $this->module->l($error->getMessage())];
+        }
     }
 
     private function canAccessEntity(string $entity, int $id, bool $write = false): bool
@@ -947,6 +990,10 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $post['tags'] = implode(', ', array_map(static fn (array $tag): string => (string) $tag['name'], $tags));
         $post['category_ids'] = $this->getPostCategoryIds($postId, (int) ($post['id_category'] ?? 0));
         $post['id_lang'] = $langId;
+        $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+        if ($pro && method_exists($pro, 'getCciReaderEngagementPost')) {
+            $post['engagement'] = $pro->getCciReaderEngagementPost($postId, $shopId, $langId);
+        }
         $post['publication_audit'] = $this->auditService()->storedResult($post, $langId);
         $post['seo_score'] = $post['publication_audit']['score'];
 
@@ -1090,10 +1137,12 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         CciBlogPostHistory::ensureSchema();
         if ($action === 'post:revision') {
             $revision = CciBlogPostHistory::revision((int) ($payload['id_revision'] ?? 0), $postId, $shopId, $langId);
+
             return $revision === null
                 ? ['success' => false, 'error' => $this->module->l('Version not found.')]
                 : ['success' => true, 'revision' => $revision, 'current' => CciBlogPostHistory::snapshot($this->getPostPayload($postId, $langId)['post'])];
         }
+
         return ['success' => true] + CciBlogPostHistory::page($postId, $shopId, $langId, (int) ($payload['before_id'] ?? 0));
     }
 
@@ -1116,8 +1165,11 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         }
         $rollback = static function () use ($db, $nested, $savepoint): void {
             $db->execute($nested ? 'ROLLBACK TO SAVEPOINT ' . $savepoint : 'ROLLBACK');
-            if ($nested) $db->execute('RELEASE SAVEPOINT ' . $savepoint);
+            if ($nested) {
+                $db->execute('RELEASE SAVEPOINT ' . $savepoint);
+            }
         };
+
         try {
             $previous = null;
             if ($postId > 0) {
@@ -1129,6 +1181,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             $response = $this->persistPost($payload);
             if (empty($response['success'])) {
                 $rollback();
+
                 return $response;
             }
             $response['post']['history_revision_id'] = CciBlogPostHistory::record($previous, $response['post'], $shopId, $langId, $this->context->employee);
@@ -1136,9 +1189,13 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             if (!$db->execute($nested ? 'RELEASE SAVEPOINT ' . $savepoint : 'COMMIT')) {
                 throw new RuntimeException('Could not commit the article version.');
             }
+
             return $response;
         } catch (Throwable $error) {
             $rollback();
+            if ($error instanceof InvalidArgumentException) {
+                return ['success' => false, 'error' => $this->module->l($error->getMessage())];
+            }
             throw $error;
         }
     }
@@ -1296,6 +1353,14 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
         $this->savePostCategories($postId, $primaryCategoryId, $categoryIds);
 
+        if (array_key_exists('engagement', $payload)) {
+            $pro = Module::isEnabled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
+            if (!$pro || !method_exists($pro, 'saveCciReaderEngagementPost') || !is_array($payload['engagement'])) {
+                throw new InvalidArgumentException('CCI Blog Pro is required to save reader engagement settings.');
+            }
+            $pro->saveCciReaderEngagementPost($postId, $shopId, $langId, $payload['engagement']);
+        }
+
         $tags = array_filter(array_map('trim', explode(',', (string) ($payload['tags'] ?? ''))));
         CciBlogTag::setPostTags($postId, $tags, $langId);
 
@@ -1335,6 +1400,8 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         }
 
         $this->deleteFromTableIfExists('cci_blog_post_revision', 'id_post = ' . $postId);
+        $this->deleteFromTableIfExists('cci_blog_reader_feedback', 'id_post = ' . $postId);
+        $this->deleteFromTableIfExists('cci_blog_pro_post_engagement', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_comment', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_image', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_product', 'id_post = ' . $postId);
