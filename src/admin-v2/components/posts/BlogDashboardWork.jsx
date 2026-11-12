@@ -5,33 +5,27 @@ import { pluginData } from '../../api/api';
 import { Button } from '../ui/button';
 import { Card, CardHeader } from '../ui/card';
 import { DataTable, EmptyState, RowPrimary } from './AdminDataTable';
+import BlogPublicationPlan from './BlogPublicationPlan';
 
 export default function BlogDashboardWork({ stats, onCreate, onOpen, onManage }) {
   const recent = stats.recentPosts || [];
-  const upcoming = stats.upcomingPosts || [];
   const date = (value) => formatAdminDateTime(value, pluginData.adminDate) || '-';
-  const entries = (items, scheduled = false) => (
+  const entries = (items) => (
     <DataTable
       compact
-      label={
-        scheduled ? __('Publication plan', 'cci-blog') : __('Recently edited posts', 'cci-blog')
-      }
+      label={__('Recently edited posts', 'cci-blog')}
       columns={[
         { id: 'title', label: __('Title', 'cci-blog') },
         {
           id: 'date',
-          label: scheduled ? __('Publication date', 'cci-blog') : __('Updated', 'cci-blog'),
+          label: __('Updated', 'cci-blog'),
           className: 'tw-w-[30%] sm:tw-w-36',
         },
-        ...(!scheduled
-          ? [
-              {
-                id: 'modifiedBy',
-                label: __('Modified by', 'cci-blog'),
-                className: 'tw-w-[30%] sm:tw-w-32',
-              },
-            ]
-          : []),
+        {
+          id: 'modifiedBy',
+          label: __('Modified by', 'cci-blog'),
+          className: 'tw-w-[30%] sm:tw-w-32',
+        },
       ]}
       rows={items.map((post) => [
         <RowPrimary
@@ -43,22 +37,18 @@ export default function BlogDashboardWork({ stats, onCreate, onOpen, onManage })
         <time
           key="date"
           className="tw-text-xs tw-text-cci-blog-muted"
-          dateTime={(scheduled ? post.date_published : post.date_upd)?.replace(' ', 'T')}
+          dateTime={post.date_upd?.replace(' ', 'T')}
         >
-          {date(scheduled ? post.date_published : post.date_upd)}
+          {date(post.date_upd)}
         </time>,
-        ...(!scheduled
-          ? [
-              <span key="modifiedBy" className="tw-text-xs tw-text-cci-blog-muted">
-                {post.modified_by_name || __('Not recorded', 'cci-blog')}
-              </span>,
-            ]
-          : []),
+        <span key="modifiedBy" className="tw-text-xs tw-text-cci-blog-muted">
+          {post.modified_by_name || __('Not recorded', 'cci-blog')}
+        </span>,
       ])}
     />
   );
   return (
-    <>
+    <div className="tw-grid tw-grid-cols-[repeat(auto-fit,minmax(min(100%,28rem),1fr))] tw-items-start tw-gap-4">
       <Card>
         <ResourceListHeader
           title={__('Recently edited posts', 'cci-blog')}
@@ -88,12 +78,8 @@ export default function BlogDashboardWork({ stats, onCreate, onOpen, onManage })
             <dd className="tw-m-0 tw-text-2xl tw-font-semibold">{stats.scheduledPosts ?? '-'}</dd>
           </div>
         </dl>
-        {upcoming.length ? (
-          entries(upcoming, true)
-        ) : (
-          <EmptyState label={__('No scheduled posts.', 'cci-blog')} />
-        )}
+        <BlogPublicationPlan onOpen={onOpen} />
       </Card>
-    </>
+    </div>
   );
 }

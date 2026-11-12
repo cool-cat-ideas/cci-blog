@@ -180,3 +180,5 @@ $_MODULE['<{cci_blog}prestashop>series_374bea6cf8bd1e8fd64570b629cc6562'] = 'Nas
 $_MODULE['<{cci_blog}prestashop>cci_blog_10ba42315064e14dcde9c6e33af635a6'] = 'Zmiana polecanych artykułów lub serii wymaga aktywnej licencji Pro.';
 
 $_MODULE['<{cci_blog}prestashop>cci_blog_14f9b6b1b1866c4460d693125c3f3dc8'] = 'Zarządzanie seriami i polecanymi artykułami wymaga aktywnej licencji Pro.';
+
+$_MODULE['<{cci_blog}prestashop>cci_blog_50393e08770af6d362cb204d3c61a123'] = 'Wybierz poprawny status publikacji.';

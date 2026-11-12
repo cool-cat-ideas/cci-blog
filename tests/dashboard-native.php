@@ -19,6 +19,9 @@ $lang = $type->getMethod('getDefaultShopLanguageId')->invoke($controller);
 $shop = (int) $context->shop->id;
 $db = Db::getInstance();
 $before = $stats();
+if ($type->getMethod('actionPermission')->invoke($controller, 'dashboard:calendar', []) !== 'view') {
+    throw new RuntimeException('The read-only calendar must use the existing view permission.');
+}
 $assert = static function (bool $ok, string $message): void {
     if (!$ok) throw new RuntimeException($message);
 };

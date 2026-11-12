@@ -11,6 +11,7 @@ export default function SeriesOrderEditor({
   languageId,
   articleId,
   articleTitle,
+  currentArticle,
   refreshKey,
   value,
   onChange,
@@ -22,6 +23,8 @@ export default function SeriesOrderEditor({
   const pending = React.useRef(value);
   pending.current = value;
   const hadDraft = React.useRef(Boolean(value));
+  const current = React.useRef(currentArticle);
+  current.current = currentArticle;
   const title = React.useRef(articleTitle);
   title.current = articleTitle;
   React.useEffect(() => {
@@ -44,6 +47,7 @@ export default function SeriesOrderEditor({
           !items.some((item) => Number(item.id_post) === Number(articleId))
         )
           items.push({
+            ...current.current,
             id_post: currentId,
             title: title.current || __('Untitled article', 'cci-blog'),
           });
@@ -66,6 +70,10 @@ export default function SeriesOrderEditor({
   }, [seriesId, languageId, articleId, refreshKey, retry]);
   if (loading) return <LoadingState label={__('Loading articles...', 'cci-blog')} />;
   const items = order.items.map((item) => ({
+    ...item,
+    ...(item.id_post === 'current' || Number(item.id_post) === Number(articleId)
+      ? currentArticle
+      : {}),
     id: item.id_post === 'current' ? 'current' : Number(item.id_post),
     title:
       (item.id_post === 'current' || Number(item.id_post) === Number(articleId)) && articleTitle
@@ -80,7 +88,7 @@ export default function SeriesOrderEditor({
         </p>
       )}
       <p className="tw-m-0 tw-text-sm tw-text-cci-blog-muted">
-        {__('Drag articles to arrange the series, or use the move buttons.', 'cci-blog')}
+        {__('Drag articles to change their order.', 'cci-blog')}
       </p>
       {items.length ? (
         <SortableArticleList

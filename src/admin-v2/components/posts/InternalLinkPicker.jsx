@@ -26,10 +26,13 @@ export function BlogContentPicker({
   loadItems = searchBlogLinks,
   disabled = false,
   onLoadingChange,
+  showStatusFilter = false,
+  renderMetadata,
 }) {
   const [open, setOpen] = React.useState(inline);
   const [query, setQuery] = React.useState('');
   const [type, setType] = React.useState('all');
+  const [status, setStatus] = React.useState('published');
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -45,7 +48,7 @@ export function BlogContentPicker({
     setItems([]);
     setError('');
     const timer = window.setTimeout(() => {
-      loadItems({ query, type, languageId, signal: controller.signal })
+      loadItems({ query, type, status, languageId, signal: controller.signal })
         .then((results) => {
           if (!controller.signal.aborted) setItems(results);
         })
@@ -64,7 +67,7 @@ export function BlogContentPicker({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [open, query, type, languageId, attempt, loadItems, onLoadingChange]);
+  }, [open, query, type, status, languageId, attempt, loadItems, onLoadingChange]);
 
   return (
     <div className="tw-grid tw-min-w-0 tw-gap-3">
@@ -86,7 +89,9 @@ export function BlogContentPicker({
         <div id={id} className="tw-grid tw-min-w-0 tw-gap-3">
           <div
             className={
-              includeCategories ? 'tw-grid tw-gap-3 sm:tw-grid-cols-2' : 'tw-grid tw-gap-3'
+              includeCategories || showStatusFilter
+                ? 'tw-grid tw-gap-3 sm:tw-grid-cols-2'
+                : 'tw-grid tw-gap-3'
             }
           >
             <Field
@@ -110,6 +115,22 @@ export function BlogContentPicker({
                 autoFocus={!inline}
               />
             </Field>
+            {showStatusFilter && (
+              <Field label={__('Publication status', 'cci-blog')}>
+                <Select
+                  ariaLabel={__('Publication status', 'cci-blog')}
+                  value={status}
+                  onValueChange={setStatus}
+                  disabled={disabled}
+                  options={[
+                    { value: 'published', label: __('Published', 'cci-blog') },
+                    { value: 'draft', label: __('Draft', 'cci-blog') },
+                    { value: 'scheduled', label: __('Scheduled', 'cci-blog') },
+                    { value: 'all', label: __('All statuses', 'cci-blog') },
+                  ]}
+                />
+              </Field>
+            )}
             {includeCategories && (
               <Field label={__('Content type', 'cci-blog')}>
                 <Select
@@ -174,6 +195,7 @@ export function BlogContentPicker({
                     }}
                   >
                     <span className="tw-break-words">{item.title}</span>
+                    {renderMetadata?.(item)}
                     {includeCategories && (
                       <span className="tw-text-xs tw-font-normal tw-text-cci-blog-muted">
                         {item.type === 'post'
@@ -196,7 +218,9 @@ export function BlogContentPicker({
                 ? __('No published content matches your search.', 'cci-blog')
                 : disabled
                   ? __('Six recommendations selected.', 'cci-blog')
-                  : __('No articles match your search.', 'cci-blog')}
+                  : showStatusFilter
+                    ? __('No articles match this search and publication status.', 'cci-blog')
+                    : __('No articles match your search.', 'cci-blog')}
             </p>
           )}
         </div>

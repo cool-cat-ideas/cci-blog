@@ -10,9 +10,12 @@ import { Select } from '../ui/select';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import ProBadge from '../licensing/ProBadge';
 import SeriesOrderEditor from './SeriesOrderEditor';
+import ArticleMetadata from './ArticleMetadata';
 import SortableArticleList from './SortableArticleList';
+import ConfirmDeleteModal from '../feedback/ConfirmDeleteModal';
 
 export default function PostEngagementPanel({ post, onChange, isPro }) {
+  const [pendingRemoval, setPendingRemoval] = React.useState(null);
   const [options, setOptions] = React.useState({ posts: [], series: [] });
   const [loading, setLoading] = React.useState(Boolean(isPro));
   const data = post.engagement || {
@@ -27,11 +30,12 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
   const selectedKey = [...ids].sort((a, b) => a - b).join(',');
   const automaticEnabled = Number(pluginData.settings?.CCB_RELATED_POSTS ?? 3) > 0;
   const searchArticles = React.useCallback(
-    async ({ query, signal }) => {
+    async ({ query, status, signal }) => {
       const response = await apiFetch('/engagement/options', {
         body: JSON.stringify({
           id_lang: post.id_lang,
           query,
+          status,
           selected_ids: selectedKey.split(',').filter(Boolean).map(Number),
         }),
         signal,
@@ -52,7 +56,7 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
             Number(item.id_post) !== Number(post.id_post) &&
             !selected.includes(Number(item.id_post)),
         )
-        .map((item) => ({ id: Number(item.id_post), type: 'post', title: item.title }));
+        .map((item) => ({ ...item, id: Number(item.id_post), type: 'post', title: item.title }));
     },
     [post.id_lang, post.id_post, selectedKey],
   );
@@ -76,6 +80,21 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
 
   return (
     <div className="tw-grid tw-items-start tw-gap-4 xl:tw-grid-cols-2">
+      <ConfirmDeleteModal
+        open={pendingRemoval !== null}
+        title={__('Remove recommendation?', 'cci-blog')}
+        itemLabel={options.posts.find((item) => Number(item.id_post) === pendingRemoval)?.title}
+        suffix={__(
+          'from this article’s recommendations. The article itself is not deleted.',
+          'cci-blog',
+        )}
+        confirmLabel={__('Remove recommendation', 'cci-blog')}
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={() => {
+          change({ related_ids: ids.filter((id) => id !== pendingRemoval) });
+          setPendingRemoval(null);
+        }}
+      />
       <Card>
         <CardHeader>
           <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
@@ -115,6 +134,8 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
           </Field>
           <BlogContentPicker
             inline
+            showStatusFilter
+            renderMetadata={(item) => <ArticleMetadata article={item} />}
             includeCategories={false}
             languageId={post.id_lang}
             loadItems={searchArticles}
@@ -126,13 +147,14 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
             <SortableArticleList
               label={__('Recommendation order', 'cci-blog')}
               items={ids.map((id) => ({
+                ...options.posts.find((item) => Number(item.id_post) === id),
                 id,
                 title:
                   options.posts.find((item) => Number(item.id_post) === id)?.title ||
                   __('Unavailable article', 'cci-blog'),
               }))}
               onChange={(items) => change({ related_ids: items.map((item) => item.id) })}
-              onRemove={(id) => change({ related_ids: ids.filter((value) => value !== id) })}
+              onRemove={setPendingRemoval}
             />
           )}
           {(!ids.length || !automaticEnabled) && (
@@ -193,6 +215,12 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
               articleId={Number(post.id_post || 0)}
               refreshKey={post.date_upd}
               articleTitle={post.title}
+              currentArticle={{
+                ...post,
+                author_name:
+                  pluginData.authors?.find((author) => Number(author.id) === Number(post.id_author))
+                    ?.name || post.author_name,
+              }}
               value={data.series_order}
               onChange={(series_order) => change({ series_order })}
             />

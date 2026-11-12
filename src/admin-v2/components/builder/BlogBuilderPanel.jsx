@@ -2,6 +2,7 @@ import { formatAdminDateTime, ResourceListHeader } from '@cci/admin-ui';
 import React from 'react';
 import BlogDashboardWork from '../posts/BlogDashboardWork';
 import PostHistoryPanel from '../posts/PostHistoryPanel';
+import PublicationStatusBadge from '../posts/PublicationStatusBadge';
 import PostEngagementPanel from '../posts/PostEngagementPanel';
 import { StatusBadge as SharedStatusBadge } from '@cci/admin-ui';
 import {
@@ -2428,30 +2429,6 @@ function StatusBadge({ active }) {
   );
 }
 
-function PublicationStatusBadge({ post }) {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const status = publicationStatus(
-    post,
-    new Date(now + serverClockOffset),
-    pluginData.adminDate?.timeZone || 'UTC',
-  );
-  return (
-    <SharedStatusBadge
-      tone={status === 'scheduled' ? 'info' : status === 'published' ? 'success' : 'neutral'}
-      data-publication-status={status}
-    >
-      {status === 'scheduled'
-        ? __('Scheduled', 'cci-blog')
-        : status === 'published'
-          ? __('Published', 'cci-blog')
-          : __('Draft', 'cci-blog')}
-    </SharedStatusBadge>
-  );
-}
 
 function createBlock(typeValue) {
   const [type, level] = String(typeValue || 'paragraph').split(':');

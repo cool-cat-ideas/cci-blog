@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/classes/CciBlogArticleSidebar.php';
 require_once dirname(__DIR__, 2) . '/classes/CciBlogPublicationAudit.php';
 require_once dirname(__DIR__, 2) . '/classes/CciBlogPublicationAuditService.php';
 require_once dirname(__DIR__, 2) . '/classes/CciBlogPostHistory.php';
+require_once dirname(__DIR__, 2) . '/classes/CciBlogPublicationCalendar.php';
 
 class AdminCciBlogConfigurationController extends ModuleAdminController
 {
@@ -167,6 +168,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         try {
             $response = match ($action) {
                 'dashboard:get' => ['success' => true, 'payload' => $this->buildInitialPayload()],
+                'dashboard:calendar' => ['success' => true, 'calendar' => CciBlogPublicationCalendar::month((int) $this->context->shop->id, $this->getDefaultShopLanguageId(), (string) ($payload['month'] ?? ''))],
                 'engagement:report', 'engagement:options', 'engagement:series:save', 'engagement:series:order', 'engagement:feedback:delete' => $this->readerEngagementAction($action, is_array($payload) ? $payload : []),
                 'diagnostics:get' => ['success' => true, 'diagnostics' => $this->getDiagnosticsPayload()],
                 'settings:save' => $this->saveSettings(is_array($payload) ? $payload : []),
@@ -224,7 +226,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
     private function actionPermission(string $action, array $payload): string
     {
         return match ($action) {
-            'dashboard:get', 'diagnostics:get', 'posts:list', 'redirects:list', 'post:get',
+            'dashboard:get', 'dashboard:calendar', 'diagnostics:get', 'posts:list', 'redirects:list', 'post:get',
             'categories:list', 'category:get', 'multistore:context', 'comments:list',
             'catalog:products', 'catalog:comparison-fields', 'post:audit', 'post:history', 'post:revision', 'media:list', 'license:get' => 'view',
             'post:save', 'post:preview' => (int) ($payload['id_post'] ?? 0) > 0 ? 'edit' : 'add',

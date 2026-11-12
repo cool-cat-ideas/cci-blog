@@ -13,49 +13,63 @@ export default function ConfirmDeleteModal({
   onCancel,
   onConfirm,
 }) {
+  const dialog = React.useRef(null);
+  const cancel = React.useRef(null);
+  React.useEffect(() => {
+    const element = dialog.current;
+    if (!open || !element) return;
+    element.showModal();
+    cancel.current?.focus();
+    return () => {
+      if (element.open) element.close();
+    };
+  }, [open]);
+
   if (!open) {
     return null;
   }
 
   const modal = (
-    <div
-      className="tw-fixed tw-inset-0 tw-z-[100000] tw-grid tw-place-items-center tw-bg-slate-950/35 tw-p-4"
-      role="presentation"
+    <dialog
+      ref={dialog}
+      className="tw-fixed tw-m-auto tw-w-[calc(100%-2rem)] tw-max-w-md tw-overflow-hidden tw-rounded-lg tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-p-0 tw-text-cci-blog-text tw-shadow-2xl backdrop:tw-bg-slate-950/35"
+      aria-labelledby="cci-blog-delete-dialog-title"
+      aria-describedby="cci-blog-delete-dialog-description"
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
     >
-      <div
-        className="tw-w-full tw-max-w-md tw-overflow-hidden tw-rounded-lg tw-border tw-border-solid tw-border-cci-blog-border tw-bg-white tw-shadow-2xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cci-blog-delete-dialog-title"
-      >
-        <div className="tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-px-5 tw-py-4">
-          <h2
-            id="cci-blog-delete-dialog-title"
-            className="tw-m-0 tw-text-lg tw-font-semibold tw-leading-tight tw-text-cci-blog-text"
-          >
-            {title}
-          </h2>
-          <p className="tw-m-0 tw-mt-1 tw-text-sm tw-leading-5 tw-text-cci-blog-muted">
-            {__('This removes', 'cci-blog')}{' '}
-            {itemLabel ? (
-              <strong className="tw-text-cci-blog-text">{itemLabel}</strong>
-            ) : (
-              __('this item', 'cci-blog')
-            )}{' '}
-            {suffix}
-          </p>
-        </div>
-        <div className="tw-flex tw-justify-end tw-gap-2 tw-p-5">
-          <Button variant="secondary" type="button" onClick={onCancel}>
-            {__('Cancel', 'cci-blog')}
-          </Button>
-          <Button variant="danger" type="button" onClick={onConfirm}>
-            <Trash2 aria-hidden="true" />
-            {confirmLabel}
-          </Button>
-        </div>
+      <div className="tw-border-0 tw-border-b tw-border-solid tw-border-cci-blog-border tw-px-5 tw-py-4">
+        <h2
+          id="cci-blog-delete-dialog-title"
+          className="tw-m-0 tw-text-lg tw-font-semibold tw-leading-tight tw-text-cci-blog-text"
+        >
+          {title}
+        </h2>
+        <p
+          id="cci-blog-delete-dialog-description"
+          className="tw-m-0 tw-mt-1 tw-text-sm tw-leading-5 tw-text-cci-blog-muted"
+        >
+          {__('This removes', 'cci-blog')}{' '}
+          {itemLabel ? (
+            <strong className="tw-text-cci-blog-text">{itemLabel}</strong>
+          ) : (
+            __('this item', 'cci-blog')
+          )}{' '}
+          {suffix}
+        </p>
       </div>
-    </div>
+      <div className="tw-flex tw-justify-end tw-gap-2 tw-p-5">
+        <Button ref={cancel} variant="secondary" type="button" onClick={onCancel}>
+          {__('Cancel', 'cci-blog')}
+        </Button>
+        <Button variant="danger" type="button" onClick={onConfirm}>
+          <Trash2 aria-hidden="true" />
+          {confirmLabel}
+        </Button>
+      </div>
+    </dialog>
   );
 
   if (typeof document === 'undefined' || !document.body) {

@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli') {
 require '/var/www/html/config/config.inc.php';
 require_once _PS_MODULE_DIR_ . 'cci_blog/cci_blog.php';
 require_once _PS_MODULE_DIR_ . 'cci_blog_pro/cci_blog_pro.php';
+require_once _PS_MODULE_DIR_ . 'cci_blog/classes/CciBlogPublicationCalendar.php';
 
 $context = Context::getContext();
 $shop = (int) $context->shop->id;
@@ -40,11 +41,60 @@ try {
             'title' => 'Reader engagement integration fixture ' . $i, 'slug' => 'reader-fixture-' . $id,
             'intro' => 'Integration test', 'content' => '<p>Guide content.</p>']);
     }
+    $calendarIds = [];
+    for ($index = 0; $index < 10; ++$index) {
+        $db->insert('cci_blog_post', ['id_category' => 1, 'id_author' => 0, 'active' => $index === 8 ? 0 : 1,
+            'allow_comments' => 0, 'date_add' => '2032-02-01 00:00:00', 'date_upd' => '2032-02-01 00:00:00',
+            'date_published' => $index === 7 ? '2032-03-01 00:00:00' : '2032-02-29 12:30:00']);
+        $calendarId = (int) $db->Insert_ID();
+        if ($index < 7) {
+            $calendarIds[] = $calendarId;
+        }
+        if ($index !== 9) {
+            $db->insert('cci_blog_post_shop', ['id_post' => $calendarId, 'id_shop' => $shop]);
+        }
+        $db->insert('cci_blog_post_lang', ['id_post' => $calendarId, 'id_shop' => $shop, 'id_lang' => $lang,
+            'title' => 'Calendar fixture ' . $index, 'slug' => 'calendar-fixture-' . $calendarId,
+            'intro' => '', 'content' => '<p>Calendar fixture.</p>']);
+    }
+    $month = CciBlogPublicationCalendar::month($shop, $lang, '2032-02');
+    $found = array_values(array_intersect(array_column($month['posts'], 'id_post'), $calendarIds));
+    $assert(count($found) === 7, 'Calendar includes every publication, not only the first five.');
+    $assert(count(array_filter($month['posts'], static fn ($post) => str_starts_with($post['title'], 'Calendar fixture '))) === 7, 'Calendar excludes drafts, other months and unassigned shops.');
+    $assert(CciBlogPublicationCalendar::month($shop, 999999, '2032-02')['posts'] === [], 'Calendar respects the selected content language.');
+    $rejects(fn () => CciBlogPublicationCalendar::month($shop, $lang, '2032-13'), 'Invalid months must be rejected.');
+    $rejects(fn () => CciBlogPublicationCalendar::month($shop, $lang, '2032-2'), 'Month strings must use a strict canonical format.');
     $search = CciBlogProReaderEngagement::options($shop, $lang, 'integration fixture 2', [$ids[1]]);
     $searchIds = array_map('intval', array_column($search['posts'], 'id_post'));
     $assert(in_array($ids[1], $searchIds, true) && in_array($ids[2], $searchIds, true), 'Search must return matching articles as well as selected recommendations.');
     $slugSearch = CciBlogProReaderEngagement::options($shop, $lang, 'reader-fixture-' . $ids[2], [$ids[1]]);
     $assert(in_array($ids[2], array_map('intval', array_column($slugSearch['posts'], 'id_post')), true), 'Article search supports the URL slug as well as the title.');
+    $fixtureQuery = 'Reader engagement integration fixture';
+    foreach (['published' => [$ids[0], $ids[1]], 'draft' => [$ids[3]], 'scheduled' => [$ids[2]], 'all' => $ids] as $status => $expected) {
+        $result = CciBlogProReaderEngagement::options($shop, $lang, $fixtureQuery, [], $status);
+        $actual = array_map('intval', array_column($result['posts'], 'id_post'));
+        sort($actual);
+        sort($expected);
+        $assert($actual === $expected, 'Search respects the selected publication status: ' . $status);
+        foreach ($result['posts'] as $row) {
+            $assert(array_key_exists('author_name', $row) && array_key_exists('date_upd', $row) && array_key_exists('date_add', $row), 'Search supplies author and date metadata.');
+        }
+    }
+    $shopNow = new DateTimeImmutable('now', new DateTimeZone((string) Configuration::get('PS_TIMEZONE')));
+    $db->update('cci_blog_post', ['date_published' => $shopNow->modify('-1 minute')->format('Y-m-d H:i:s')], 'id_post=' . $ids[0]);
+    $originalZone = date_default_timezone_get();
+
+    try {
+        date_default_timezone_set('Pacific/Honolulu');
+        $recent = CciBlogProReaderEngagement::options($shop, $lang, 'Reader engagement integration fixture 0', [], 'published');
+        $assert(in_array($ids[0], array_map('intval', array_column($recent['posts'], 'id_post')), true), 'Publication filters use the shop time zone even when the PHP process uses another one.');
+        $assert(CciBlogReaderFeedback::isPublished($ids[0], $shop, $lang), 'Recently published articles accept feedback using the same shop clock.');
+    } finally {
+        date_default_timezone_set($originalZone);
+    }
+    $preserved = CciBlogProReaderEngagement::options($shop, $lang, $fixtureQuery, [$ids[3]], 'published');
+    $assert(in_array($ids[3], array_map('intval', array_column($preserved['posts'], 'id_post')), true), 'Existing draft recommendations retain metadata while searching published articles.');
+    $rejects(fn () => CciBlogProReaderEngagement::options($shop, $lang, '', [], 'invalid'), 'Unknown publication filters must be rejected.');
     $series = CciBlogProReaderEngagement::saveSeries($shop, $lang, ['title' => 'Integration series', 'slug' => 'reader-fixture-' . $ids[0], 'active' => 1]);
     $settings = ['related_ids' => [$ids[2], $ids[1]], 'related_title' => 'Continue learning', 'related_intro' => 'A useful next step.', 'id_series' => (int) $series['id_series'], 'position' => 1];
     CciBlogProReaderEngagement::savePost($ids[0], $shop, $lang, $settings);
@@ -73,6 +123,10 @@ try {
     CciBlogProReaderEngagement::saveArticle($ids[2], $shop, $lang, CciBlogProReaderEngagement::normalize(['id_series' => $series['id_series']]), ['id_series' => $series['id_series'], 'post_ids' => ['current', $ids[0], $ids[1]], 'revision' => $order['revision']]);
     $order = CciBlogProReaderEngagement::order((int) $series['id_series'], $shop, $lang);
     $assert((int) $order['items'][0]['id_post'] === $ids[2], 'An article can join a series and receive its order in the same save.');
+    CciBlogProReaderEngagement::savePost($ids[3], $shop, $lang, ['id_series' => $series['id_series'], 'position' => 4]);
+    $allParts = CciBlogProReaderEngagement::order((int) $series['id_series'], $shop, $lang)['items'];
+    $assert(in_array($ids[3], array_map('intval', array_column($allParts, 'id_post')), true), 'Series ordering retains draft parts.');
+    $assert(array_key_exists('author_name', $allParts[0]) && array_key_exists('date_upd', $allParts[0]), 'Series ordering includes the same metadata as search.');
     $assert(CciBlogProReaderEngagement::archive($series['slug'], $shop + 999, $lang, 1) === [], 'Series cannot leak between shops.');
     $assert(CciBlogProReaderEngagement::archive($series['slug'], $shop, $lang + 999, 1) === [], 'Series cannot leak between languages.');
     $assert(!CciBlogReaderFeedback::isPublished($ids[2], $shop, $lang), 'Future articles do not accept public votes.');

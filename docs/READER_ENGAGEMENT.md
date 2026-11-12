@@ -23,9 +23,14 @@ CCI Blog Pro 1.0.0.
 
 1. Open a post and select **Reader engagement**.
 2. Type a title or URL slug in **Add a recommendation**. Choose an article
-   directly from the search results. You can select up to six articles.
-3. Drag the article rows into reading order. The move buttons provide the same
-   operation on a keyboard or phone. Remove detaches the recommendation; it
+   directly from the search results. Results start with **Published**; use
+   **Publication status** to include drafts, scheduled articles or all statuses.
+   Status, author and publication date identify each result. Drafts show their
+   last update instead. You can select up to six articles.
+3. Drag the article rows into reading order. For keyboard control, focus the handle, press Space,
+   use the arrow keys and press Space again to drop. Escape restores the original
+   order. You can also select a handle and then select the destination without
+   dragging. Confirm removal when prompted. Remove detaches the recommendation; it
    does not delete the article.
 4. Optionally enter a section heading and explain why these articles are useful.
 5. Use the main **Save** button at the top of the editor.
@@ -43,7 +48,7 @@ while editing but remain absent from public recommendations until publication.
 2. Enter a title, URL slug and description. Keep **Visible to readers** selected
    when the series is ready for publication. Save the series.
 3. Open each article, select its **Reader engagement** tab and choose the series.
-4. Arrange the parts by dragging their rows or using the move buttons.
+4. Arrange the parts by dragging their rows or using the keyboard controls on the handle.
 5. Use the article editor's main **Save** button. Membership, recommendations
    and the order are committed together; there is no separate order-save action.
 
@@ -129,8 +134,18 @@ form tokens, field names, escaped text and accessible labels intact.
 These captures show Pro 1.0.0 in preparation on the default PrestaShop theme,
 with the shared CCI administration components and fictional shop content.
 
-![Pro preview: recommendations and series order saved with the article](screenshots/cci-blog-reader-curation-search-20261112.png)
+![Pro preview: recommendations and series order saved with the article](screenshots/cci-blog-reader-metadata-20261112.png)
 
 ![Pro preview: private reader feedback and topic report](screenshots/cci-blog-reader-report-20261112.png)
 
 ![Pro preview: published articles in a series](screenshots/cci-blog-reader-series-20261112.png)
+
+## Review the publication calendar
+
+Dashboard’s **Publication plan** displays the current month in the shop time zone.
+Use the previous and next month controls or **Today** to navigate. Dates with
+publications show an article count. Select a date to see its articles and open
+them for editing. Published and scheduled active articles are included; drafts
+stay outside the calendar. Articles without a publication date have no calendar entry. The calendar is
+read-only: change publication dates in the article editor and use its main Save
+button.

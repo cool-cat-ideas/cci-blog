@@ -2,6 +2,9 @@
 
 ## 1.1.1
 
+- Show a month-by-month publication calendar on Dashboard with shop-local dates, article counts and links to edit each day’s published or scheduled articles.
+- Show publication status, author and date in recommendation search and series rows. Filter search by publication status and confirm recommendation removal without deleting the article.
+
 - Add article usefulness ratings without requiring a customer account, with visitor-bound form tokens, duplicate protection and private scoped storage.
 - Add a Reader engagement workspace using shared tables and controls, with basic vote totals and an optional storefront display setting.
 - Integrate CCI Blog Pro 1.0.0 article series, ordered recommendations and private reader feedback. Keep series navigation and recommended articles limited to published content in the current shop and language.

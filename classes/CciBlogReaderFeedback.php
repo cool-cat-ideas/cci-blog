@@ -91,11 +91,13 @@ final class CciBlogReaderFeedback
 
     public static function isPublished(int $postId, int $shopId, int $langId): bool
     {
+        $now = (new DateTimeImmutable('now', new DateTimeZone((string) (Configuration::get('PS_TIMEZONE') ?: date_default_timezone_get()))))->format('Y-m-d H:i:s');
+
         return (bool) Db::getInstance()->getValue('SELECT p.id_post FROM `' . _DB_PREFIX_ . 'cci_blog_post` p
             INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post_shop` ps ON ps.id_post=p.id_post AND ps.id_shop=' . $shopId . '
             INNER JOIN `' . _DB_PREFIX_ . 'cci_blog_post_lang` pl ON pl.id_post=p.id_post AND pl.id_shop=' . $shopId . ' AND pl.id_lang=' . $langId . '
             WHERE p.id_post=' . $postId . ' AND p.active=1 AND pl.title<>"" AND pl.slug<>""
-            AND (p.date_published IS NULL OR p.date_published<=NOW())');
+            AND (p.date_published IS NULL OR p.date_published<="' . pSQL($now) . '")');
     }
 
     public static function report(int $shopId, int $langId, int $page, bool $detailed): array
