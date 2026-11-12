@@ -8,10 +8,11 @@ import PublicationCalendar from '../calendar/PublicationCalendar';
 import LoadingState from '../feedback/LoadingState';
 import PublicationStatusBadge from './PublicationStatusBadge';
 import { RowPrimary, EmptyState } from './AdminDataTable';
-import { shopDateTime } from '../builder/model/publication';
+import { publicationStatus, shopDateTime } from '../builder/model/publication';
 import { usePublicationClock } from './usePublicationClock';
 
 export default function BlogPublicationPlan({ onOpen }) {
+  const agendaHeading = React.useRef(null);
   const now = usePublicationClock();
   const today = shopDateTime(new Date(now), pluginData.adminDate?.timeZone || 'UTC').slice(0, 10);
   const [month, setMonth] = React.useState(today.slice(0, 7));
@@ -41,6 +42,11 @@ export default function BlogPublicationPlan({ onOpen }) {
     id: post.id_post,
     date: post.date_published,
     title: post.title,
+    statusLabel:
+      publicationStatus(post, new Date(now), pluginData.adminDate?.timeZone || 'UTC') ===
+      'scheduled'
+        ? __('Scheduled', 'cci-blog')
+        : __('Published', 'cci-blog'),
   }));
   const selectedPosts = posts.filter((post) => post.date_published.startsWith(selected));
   const changeMonth = (next) => {
@@ -55,6 +61,15 @@ export default function BlogPublicationPlan({ onOpen }) {
         locale={pluginData.adminDate?.locale || 'en-US'}
         selectedDate={selected}
         onSelectDate={setSelected}
+        onShowDate={() =>
+          requestAnimationFrame(() => {
+            agendaHeading.current?.focus({ preventScroll: true });
+            agendaHeading.current?.scrollIntoView({ block: 'nearest' });
+          })
+        }
+        onOpenEvent={(item) =>
+          onOpen(posts.find((post) => Number(post.id_post) === Number(item.id)))
+        }
         onMonthChange={changeMonth}
         events={events}
         busy={loading}
@@ -62,6 +77,7 @@ export default function BlogPublicationPlan({ onOpen }) {
           today: __('Today', 'cci-blog'),
           previousMonth: __('Previous month', 'cci-blog'),
           nextMonth: __('Next month', 'cci-blog'),
+          moreEvents: (count) => `+${count} ${__('more', 'cci-blog')}`,
           eventCount: (count) => `${__('Articles', 'cci-blog')}: ${count}`,
         }}
       />
@@ -83,7 +99,11 @@ export default function BlogPublicationPlan({ onOpen }) {
           </div>
         ) : (
           <>
-            <h3 className="!tw-m-0 !tw-px-5 !tw-py-3 !tw-text-sm !tw-font-semibold">
+            <h3
+              ref={agendaHeading}
+              tabIndex={-1}
+              className="!tw-m-0 !tw-px-5 !tw-py-3 !tw-text-sm !tw-font-semibold"
+            >
               {formatAdminDateTime(`${selected} 00:00:00`, pluginData.adminDate, false)}
             </h3>
             {selectedPosts.length ? (

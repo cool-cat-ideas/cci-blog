@@ -20,7 +20,7 @@ Show a featured article and more guides alongside your store. Readers can open a
 
 Dashboard shows recent articles, their last recorded editors and the publication plan. Open an article by its title or switch to Posts for the full management table. Empty lists use informational messages.
 
-![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-publication-calendar-refined-20261112.png)
+![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-publication-month-20261112.png)
 
 ### Review saved article versions
 

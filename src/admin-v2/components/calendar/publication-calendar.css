@@ -1,0 +1,215 @@
+/* Scoped month-view geometry; shared buttons and CCI semantic tokens remain authoritative. */
+.cci-blog-publication-calendar {
+  container-type: inline-size;
+  min-width: 0;
+}
+.cci-blog-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+}
+.cci-blog-calendar-navigation,
+.cci-blog-calendar-arrows {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cci-blog-calendar-navigation {
+  gap: 12px;
+}
+.cci-blog-publication-calendar .cci-blog-calendar-month {
+  margin: 0 !important;
+  font: inherit;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 28px !important;
+  color: var(--cci-blog-text);
+}
+.cci-blog-publication-calendar .cci-blog-calendar-grid {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0;
+  background: var(--cci-blog-surface);
+}
+.cci-blog-calendar-grid th {
+  height: 32px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: var(--cci-blog-surface) !important;
+}
+.cci-blog-calendar-grid th > span {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--cci-blog-muted);
+}
+.cci-blog-calendar-grid td {
+  padding: 0 !important;
+  vertical-align: top;
+  border: 1px solid var(--cci-blog-border-soft) !important;
+}
+.cci-blog-calendar-grid td:first-child {
+  border-left: 0 !important;
+}
+.cci-blog-calendar-grid td:last-child {
+  border-right: 0 !important;
+}
+.cci-blog-calendar-grid tr:last-child td {
+  border-bottom: 0 !important;
+}
+.cci-blog-calendar-grid td[data-outside-month] {
+  background: var(--cci-blog-surface-soft);
+}
+.cci-blog-calendar-grid td[data-selected] {
+  background: var(--cci-blog-brand-soft);
+}
+.cci-blog-calendar-cell {
+  display: flex;
+  min-width: 0;
+  min-height: 96px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 4px;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-date {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  flex: 0 0 auto;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent;
+  color: var(--cci-blog-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-date:hover {
+  background: var(--cci-blog-border-soft);
+}
+.cci-blog-calendar-grid td[data-outside-month] .cci-blog-calendar-date {
+  color: var(--cci-blog-muted);
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-date[aria-pressed='true'] {
+  background: var(--cci-blog-brand-border);
+  color: var(--cci-blog-text);
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-date[aria-current='date'] {
+  background: var(--cci-blog-brand);
+  color: white;
+  font-weight: 600;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-date[aria-current='date']:hover {
+  background: var(--cci-blog-brand-hover);
+}
+.cci-blog-calendar-events {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-event {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  margin: 0 !important;
+  padding: 2px 4px !important;
+  border: 0 !important;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--cci-blog-text);
+}
+.cci-blog-calendar-event-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--cci-blog-brand);
+}
+.cci-blog-calendar-event time {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.cci-blog-calendar-event-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-event:hover,
+.cci-blog-publication-calendar button.cci-blog-calendar-event:focus-visible {
+  background: var(--cci-blog-brand-border);
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-more {
+  min-height: 24px;
+  margin: 0 !important;
+  padding: 2px 6px !important;
+  border: 0 !important;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cci-blog-muted);
+  font-size: 11px;
+  text-align: left;
+}
+.cci-blog-publication-calendar button.cci-blog-calendar-more:hover {
+  background: var(--cci-blog-border-soft);
+  color: var(--cci-blog-text);
+}
+.cci-blog-calendar-mobile-count {
+  display: none;
+}
+@container (max-width: 580px) {
+  .cci-blog-calendar-toolbar {
+    gap: 12px;
+    padding: 12px;
+  }
+  .cci-blog-publication-calendar .cci-blog-calendar-month {
+    font-size: 16px !important;
+    line-height: 24px !important;
+  }
+  .cci-blog-calendar-cell {
+    min-height: 62px;
+    gap: 2px;
+    padding: 5px 2px;
+  }
+  .cci-blog-calendar-events {
+    display: none;
+  }
+  .cci-blog-calendar-mobile-count {
+    display: block;
+    align-self: center;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--cci-blog-brand);
+    color: white;
+    text-align: center;
+    font-size: 10px;
+    line-height: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cci-blog-publication-calendar button {
+    transition: none !important;
+  }
+}

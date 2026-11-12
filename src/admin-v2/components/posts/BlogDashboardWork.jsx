@@ -48,7 +48,25 @@ export default function BlogDashboardWork({ stats, onCreate, onOpen, onManage })
     />
   );
   return (
-    <div className="tw-grid tw-grid-cols-[repeat(auto-fit,minmax(min(100%,28rem),1fr))] tw-items-start tw-gap-4">
+    <div className="tw-grid tw-items-start tw-gap-4">
+      <Card>
+        <CardHeader className="tw-flex tw-flex-row tw-flex-wrap tw-items-center tw-justify-between tw-gap-3">
+          <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
+            {__('Publication plan', 'cci-blog')}
+          </h2>
+          <div className="tw-flex tw-gap-4 tw-text-sm tw-text-cci-blog-muted">
+            <span>
+              {__('Drafts', 'cci-blog')}:{' '}
+              <strong className="tw-text-cci-blog-text">{stats.draftPosts ?? '-'}</strong>
+            </span>
+            <span>
+              {__('Scheduled', 'cci-blog')}:{' '}
+              <strong className="tw-text-cci-blog-text">{stats.scheduledPosts ?? '-'}</strong>
+            </span>
+          </div>
+        </CardHeader>
+        <BlogPublicationPlan onOpen={onOpen} />
+      </Card>
       <Card>
         <ResourceListHeader
           title={__('Recently edited posts', 'cci-blog')}
@@ -61,24 +79,6 @@ export default function BlogDashboardWork({ stats, onCreate, onOpen, onManage })
             {__('View all posts', 'cci-blog')}
           </Button>
         </div>
-      </Card>
-      <Card>
-        <CardHeader>
-          <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
-            {__('Publication plan', 'cci-blog')}
-          </h2>
-        </CardHeader>
-        <dl className="tw-m-0 tw-grid tw-grid-cols-2 tw-gap-4 tw-px-5 tw-py-4">
-          <div>
-            <dt className="tw-text-sm tw-text-cci-blog-muted">{__('Drafts', 'cci-blog')}</dt>
-            <dd className="tw-m-0 tw-text-2xl tw-font-semibold">{stats.draftPosts ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className="tw-text-sm tw-text-cci-blog-muted">{__('Scheduled', 'cci-blog')}</dt>
-            <dd className="tw-m-0 tw-text-2xl tw-font-semibold">{stats.scheduledPosts ?? '-'}</dd>
-          </div>
-        </dl>
-        <BlogPublicationPlan onOpen={onOpen} />
       </Card>
     </div>
   );

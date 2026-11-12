@@ -1000,4 +1000,5 @@ return [
     'Next month' => 'Następny miesiąc',
     'No publications on this date.' => 'Na ten dzień nie ma publikacji.',
     'Retry' => 'Spróbuj ponownie',
+    'more' => 'więcej',
 ];

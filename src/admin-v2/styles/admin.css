@@ -1,5 +1,6 @@
 @import '@cci/admin-ui/src/admin-layout.css';
 @import '@cci/admin-ui/src/builder.css';
+@import '../components/calendar/publication-calendar.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

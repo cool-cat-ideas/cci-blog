@@ -143,9 +143,13 @@ with the shared CCI administration components and fictional shop content.
 ## Review the publication calendar
 
 Dashboard’s **Publication plan** displays the current month in the shop time zone.
-Use the previous and next month controls or **Today** to navigate. Dates with
-publications show an article count. Select a date to see its articles and open
-them for editing. Published and scheduled active articles are included; drafts
+Use the previous and next month controls or **Today** to navigate. The desktop month grid shows publication times and article titles. Select an
+article to edit it, or select a date to review its full list below the grid.
+Busy dates show two entries and a link to the remaining articles. On narrow
+screens, dates show article counts and the selected day’s list remains below.
+Today has a filled circle; a separate pale highlight identifies the selected
+day. Arrow keys move between dates, Home and End move within the week, and
+Page Up and Page Down change months. Published and scheduled active articles are included; drafts
 stay outside the calendar. Articles without a publication date have no calendar entry. The calendar is
 read-only: change publication dates in the article editor and use its main Save
 button.
