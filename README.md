@@ -18,9 +18,9 @@ Show a featured article and more guides alongside your store. Readers can open a
 
 ### Start with the work waiting in your blog
 
-Dashboard shows recent articles, their last recorded editors and the publication plan. Open an article by its title or switch to Posts for the full management table. Empty lists use informational messages.
+Review publication dates and article titles in a month grid, then open an article directly. The selected day shows its full article list. Dashboard also keeps recent work and the last recorded editors together.
 
-![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-publication-month-20261112.png)
+![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-publication-planning-20261112.png)
 
 ### Review saved article versions
 
@@ -58,21 +58,51 @@ Keep the table of contents above the article, in the sidebar or in a sticky side
 
 ![Inline, sidebar and sticky tables of contents in an article](docs/screenshots/cci-blog-toc-layouts-20261108.gif)
 
-Editor and article-list screenshots show the base edition. The dashboard capture uses a demo with PRO active. Product blocks and sidebar table-of-contents examples show the PRO preview. The base edition includes article versions and comparisons, publication checks, saved results, author-written In brief blocks, internal link selection and an inline table of contents. Product blocks, columns and sidebar table-of-contents layouts require PRO, which is currently shown as a preview.
+The base edition includes article versions and comparisons, publication checks, summaries and an inline table of contents. The publication calendar and usefulness ratings require CCI Blog 1.1.1 or later. Pro adds product blocks, multilingual content, recommendations, article series and private reader messages.
 
 [Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
 ### Help readers find the next useful guide
 
-Recommend related articles, organize a topic into a series and see which guides
-readers found useful. The base edition includes usefulness votes. The Pro preview
-adds curated recommendations, series and private written feedback.
+Choose up to six recommended articles, set a heading and introduction, then drag
+articles into reading order. Filter the picker by publication status and identify
+results by their author and date. Automatic suggestions fill remaining places
+when enabled.
+
+![Recommendations and series ordering in the article editor](docs/screenshots/cci-blog-pro-recommendations-20261112.png)
+
+Connect a longer topic into a series with its own page and previous/next links.
+Only published parts appear to readers. The article editor's main Save button
+saves recommendations, membership and the complete series order together.
+
+![A series page using the active PrestaShop theme](docs/screenshots/cci-blog-pro-article-series-20261112.png)
+
+### Find explanations that need more work
+
+Readers can vote on usefulness without an account. Pro adds an optional private
+message and reports by article and primary category. Shop staff can remove a
+message without deleting its anonymous vote. Text is kept for 90 days and votes
+for one year.
+
+![Private reader messages and topic reports](docs/screenshots/cci-blog-pro-reader-feedback-20261112.png)
+
+![Usefulness voting with an optional private message](docs/screenshots/cci-blog-reader-usefulness-20261112.png)
 
 [Reader engagement workflows](docs/READER_ENGAGEMENT.md)
 
-This preview shows Pro 1.0.0 in preparation with CCI Blog 1.1.1.
+## Compare editions
 
-![Pro preview: recommendations and series ordering in the article editor](docs/screenshots/cci-blog-reader-metadata-20261112.png)
+| Capability | Base edition | Pro |
+| --- | --- | --- |
+| Block editor, publication checks and article history | Included | Included |
+| Automatic related articles | Included | Included |
+| Publication calendar and usefulness votes | From 1.1.1 | Included |
+| Up to six manually chosen recommendations | No | Included |
+| Ordered article series and public series pages | No | Included |
+| Private reader messages and reports by topic | No | Included |
+| Theme-native product blocks and multilingual content | No | Included |
+
+CCI Blog Pro 1.0.0 requires CCI Blog 1.1.1 or later.
 
 ## Start publishing
 
@@ -83,7 +113,7 @@ This preview shows Pro 1.0.0 in preparation with CCI Blog 1.1.1.
 5. Add headings and text in the visual editor, then publish the article.
 6. Open the article on the storefront and check it on desktop and mobile.
 
-To show an author box, edit the employee in **Advanced Parameters > Team > Employees**, open **CCI Blog author profile**, enable the public profile and add a biography. Free saves it in the default shop language. Pro adds a separate biography for every shop language.
+To show an author box, edit the employee in **Advanced Parameters > Team > Employees**, open **CCI Blog author profile**, enable the public profile and add a biography. The base edition saves it in the default shop language. Pro adds a separate biography for every shop language.
 
 If an article does not appear, check its active state, publication date, shop assignment, language and category. Then clear the PrestaShop cache.
 

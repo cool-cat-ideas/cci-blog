@@ -1,32 +1,44 @@
 {
   "images": [
     {
-      "filename": "cci-blog-reader-metadata-20261112.png",
-      "sha256": "81a11204cc55016355d3c538a699c4f44db9ba849bf2c1adf4ad2003e0560ad4",
-      "edition": "Pro 1.0.0 preview",
-      "baseVersion": "1.1.1",
+      "filename": "cci-blog-publication-planning-20261112.png",
+      "sha256": "9d2b250d714239bd3425dcf51ccb5ac0b1106b89c7018481361ee089caee0eec",
       "width": 1920,
-      "height": 1080
-    },
-    {
-      "filename": "cci-blog-reader-report-20261112.png",
-      "sha256": "1720dbc28adbb693ad39ff48968c470b90eefd3fc958a831e83c5032b252134b",
-      "edition": "Pro 1.0.0 preview",
+      "height": 1080,
+      "edition": "Base 1.1.1",
       "baseVersion": "1.1.1"
     },
     {
-      "filename": "cci-blog-reader-series-20261112.png",
-      "sha256": "e18214719c38a80b6fe9fb1032e115e24d519e0ec7aba26f7e49ad79247faa29",
-      "edition": "Pro 1.0.0 preview",
+      "filename": "cci-blog-pro-recommendations-20261112.png",
+      "sha256": "455f8b11a9fddb6d38cc8264bdb87d9c4b3f6569998cfc45d69fdef70daf8a2b",
+      "width": 1920,
+      "height": 1080,
+      "edition": "Pro 1.0.0",
       "baseVersion": "1.1.1"
     },
     {
-      "filename": "cci-blog-publication-month-20261112.png",
-      "sha256": "5ea8ad9b84c52f4033357cf15a60ca8cd2fe01c448555efcf300d31b035757d6",
-      "edition": "Base 1.1.1 preview with Pro active on demo",
-      "baseVersion": "1.1.1",
+      "filename": "cci-blog-pro-reader-feedback-20261112.png",
+      "sha256": "3b098256a1aa00d259f06126ce6dc93f433cbaca7c801bac49f51cfd4fb92a2d",
       "width": 1920,
-      "height": 1080
+      "height": 1080,
+      "edition": "Pro 1.0.0",
+      "baseVersion": "1.1.1"
+    },
+    {
+      "filename": "cci-blog-pro-article-series-20261112.png",
+      "sha256": "9652a47f453c2ca114a93f6ce5d5f566641d5b550aac40e94d9826150a39ab5e",
+      "width": 1425,
+      "height": 770,
+      "edition": "Pro 1.0.0",
+      "baseVersion": "1.1.1"
+    },
+    {
+      "filename": "cci-blog-reader-usefulness-20261112.png",
+      "sha256": "4b23b26c4c75bcb760d0ff6c67bfc7496bf29a2a89f60580f5fa512b52bdddae",
+      "width": 917,
+      "height": 403,
+      "edition": "Pro 1.0.0",
+      "baseVersion": "1.1.1"
     }
   ]
 }

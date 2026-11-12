@@ -131,14 +131,14 @@ form tokens, field names, escaped text and accessible labels intact.
 
 ## Interface examples
 
-These captures show Pro 1.0.0 in preparation on the default PrestaShop theme,
+These captures show CCI Blog Pro 1.0.0 on the default PrestaShop theme,
 with the shared CCI administration components and fictional shop content.
 
-![Pro preview: recommendations and series order saved with the article](screenshots/cci-blog-reader-metadata-20261112.png)
+![Pro: recommendations and series order saved with the article](screenshots/cci-blog-pro-recommendations-20261112.png)
 
-![Pro preview: private reader feedback and topic report](screenshots/cci-blog-reader-report-20261112.png)
+![Pro: private reader feedback and topic report](screenshots/cci-blog-pro-reader-feedback-20261112.png)
 
-![Pro preview: published articles in a series](screenshots/cci-blog-reader-series-20261112.png)
+![Pro: published articles in a series](screenshots/cci-blog-pro-article-series-20261112.png)
 
 ## Review the publication calendar
 
