@@ -22,7 +22,8 @@ CCI Blog Pro 1.0.0.
 ## Recommend a useful next article
 
 1. Open a post and select **Reader engagement**.
-2. Search for articles and add up to six recommendations.
+2. Type a title or URL slug in **Add a recommendation**. Choose an article
+   directly from the search results. You can select up to six articles.
 3. Drag the article rows into reading order. The move buttons provide the same
    operation on a keyboard or phone. Remove detaches the recommendation; it
    does not delete the article.
@@ -128,7 +129,7 @@ form tokens, field names, escaped text and accessible labels intact.
 These captures show Pro 1.0.0 in preparation on the default PrestaShop theme,
 with the shared CCI administration components and fictional shop content.
 
-![Pro preview: recommendations and series order saved with the article](screenshots/cci-blog-reader-curation-20261112.png)
+![Pro preview: recommendations and series order saved with the article](screenshots/cci-blog-reader-curation-search-20261112.png)
 
 ![Pro preview: private reader feedback and topic report](screenshots/cci-blog-reader-report-20261112.png)
 

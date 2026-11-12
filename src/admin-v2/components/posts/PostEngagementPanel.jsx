@@ -1,5 +1,8 @@
 import React from 'react';
-import { apiFetch } from '../../api/api';
+import { InfoCallout } from '@cci/admin-ui/blog';
+import { BlogContentPicker } from './InternalLinkPicker';
+import { TooltipHelp } from '../ui/tooltip';
+import { apiFetch, pluginData } from '../../api/api';
 import { __ } from '../../i18n/i18n';
 import { Field, FieldLabel } from '../ui/field';
 import { Input, Textarea } from '../ui/input';
@@ -10,10 +13,8 @@ import SeriesOrderEditor from './SeriesOrderEditor';
 import SortableArticleList from './SortableArticleList';
 
 export default function PostEngagementPanel({ post, onChange, isPro }) {
-  const [query, setQuery] = React.useState('');
   const [options, setOptions] = React.useState({ posts: [], series: [] });
   const [loading, setLoading] = React.useState(Boolean(isPro));
-  const [error, setError] = React.useState('');
   const data = post.engagement || {
     related_ids: [],
     related_title: '',
@@ -23,36 +24,38 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
   };
   const ids = data.related_ids || [];
   const change = (patch) => onChange({ ...post, engagement: { ...data, ...patch } });
-  const selectedKey = ids.join(',');
-
-  React.useEffect(() => {
-    if (!isPro) return;
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      setLoading(true);
-      setError('');
-      apiFetch('/engagement/options', {
+  const selectedKey = [...ids].sort((a, b) => a - b).join(',');
+  const automaticEnabled = Number(pluginData.settings?.CCB_RELATED_POSTS ?? 3) > 0;
+  const searchArticles = React.useCallback(
+    async ({ query, signal }) => {
+      const response = await apiFetch('/engagement/options', {
         body: JSON.stringify({
           id_lang: post.id_lang,
           query,
           selected_ids: selectedKey.split(',').filter(Boolean).map(Number),
         }),
-      })
-        .then((response) => {
-          if (!cancelled) setOptions(response);
-        })
-        .catch((failure) => {
-          if (!cancelled) setError(failure.message);
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [post.id_lang, query, selectedKey, isPro]);
+        signal,
+      });
+      if (signal.aborted) return [];
+      setOptions((current) => ({
+        series: response.series,
+        posts: [
+          ...new Map(
+            [...current.posts, ...response.posts].map((item) => [Number(item.id_post), item]),
+          ).values(),
+        ],
+      }));
+      const selected = selectedKey.split(',').map(Number);
+      return response.posts
+        .filter(
+          (item) =>
+            Number(item.id_post) !== Number(post.id_post) &&
+            !selected.includes(Number(item.id_post)),
+        )
+        .map((item) => ({ id: Number(item.id_post), type: 'post', title: item.title }));
+    },
+    [post.id_lang, post.id_post, selectedKey],
+  );
 
   if (!isPro)
     return (
@@ -73,11 +76,6 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
 
   return (
     <div className="tw-grid tw-items-start tw-gap-4 xl:tw-grid-cols-2">
-      {error && (
-        <p role="alert" className="tw-text-cci-blog-dangerText">
-          {error}
-        </p>
-      )}
       <Card>
         <CardHeader>
           <h2 className="!tw-m-0 !tw-text-lg !tw-font-semibold !tw-leading-6">
@@ -87,7 +85,7 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
         <CardContent className="tw-grid tw-gap-4 tw-p-5">
           <p className="tw-m-0 tw-text-cci-blog-muted">
             {__(
-              'Choose up to six articles in reading order. Only published articles in this shop and language appear to readers. Automatic recommendations fill remaining places when enabled in settings.',
+              'Choose up to six articles. Only published articles in this shop and language appear to readers.',
               'cci-blog',
             )}
           </p>
@@ -115,66 +113,45 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
               onChange={(event) => change({ related_intro: event.target.value })}
             />
           </Field>
-          <Field>
-            <FieldLabel htmlFor="reader-related-search">
-              {__('Find an article', 'cci-blog')}
-            </FieldLabel>
-            <Input
-              id="reader-related-search"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="reader-related-add">
-              {__('Add a recommendation', 'cci-blog')}
-            </FieldLabel>
-            <Select
-              id="reader-related-add"
-              ariaLabel={__('Add a recommendation', 'cci-blog')}
-              value=""
-              disabled={loading || ids.length >= 6}
-              placeholder={
-                loading
-                  ? __('Loading articles...', 'cci-blog')
-                  : __('Choose an article', 'cci-blog')
-              }
-              onValueChange={(value) => {
-                if (value) change({ related_ids: [...ids, Number(value)] });
-              }}
-              options={options.posts
-                .filter(
-                  (item) =>
-                    Number(item.id_post) !== Number(post.id_post) &&
-                    !ids.includes(Number(item.id_post)),
-                )
-                .map((item) => ({ value: String(item.id_post), label: item.title }))}
-            />
-          </Field>
-          {!!ids.length && (
+          <BlogContentPicker
+            inline
+            includeCategories={false}
+            languageId={post.id_lang}
+            loadItems={searchArticles}
+            onLoadingChange={setLoading}
+            disabled={ids.length >= 6}
+            onSelect={(item) => change({ related_ids: [...ids, item.id] })}
+          />
+          {!!ids.length && (options.posts.length > 0 || !loading) && (
             <SortableArticleList
               label={__('Recommendation order', 'cci-blog')}
-              disabled={loading}
               items={ids.map((id) => ({
                 id,
                 title:
                   options.posts.find((item) => Number(item.id_post) === id)?.title ||
-                  (loading
-                    ? __('Loading articles...', 'cci-blog')
-                    : __('Unavailable article', 'cci-blog')),
+                  __('Unavailable article', 'cci-blog'),
               }))}
               onChange={(items) => change({ related_ids: items.map((item) => item.id) })}
               onRemove={(id) => change({ related_ids: ids.filter((value) => value !== id) })}
             />
           )}
-          {!ids.length && (
-            <p className="tw-m-0 tw-text-cci-blog-muted">
-              {__(
-                'No manual recommendations. Automatic recommendations remain in use.',
-                'cci-blog',
-              )}
-            </p>
+          {(!ids.length || !automaticEnabled) && (
+            <InfoCallout tone="info">
+              <span className="tw-inline-flex tw-flex-wrap tw-items-center tw-gap-2">
+                {automaticEnabled
+                  ? __('No articles selected. Automatic recommendations are enabled.', 'cci-blog')
+                  : __(
+                      'Recommendations are hidden. Set a related-article count above zero in Settings.',
+                      'cci-blog',
+                    )}
+                <TooltipHelp
+                  text={__(
+                    'The blog suggests the newest published articles from this article’s main category, in the same shop and language. They fill remaining places after your selections. Change their number in Settings; zero hides all recommendations.',
+                    'cci-blog',
+                  )}
+                />
+              </span>
+            </InfoCallout>
           )}
         </CardContent>
       </Card>
@@ -220,12 +197,6 @@ export default function PostEngagementPanel({ post, onChange, isPro }) {
               onChange={(series_order) => change({ series_order })}
             />
           )}
-          <p className="tw-m-0 tw-text-sm tw-text-cci-blog-muted">
-            {__(
-              'Recommendations, series membership and article order are saved with the main Save button.',
-              'cci-blog',
-            )}
-          </p>
         </CardContent>
       </Card>
     </div>

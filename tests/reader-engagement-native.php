@@ -43,6 +43,8 @@ try {
     $search = CciBlogProReaderEngagement::options($shop, $lang, 'integration fixture 2', [$ids[1]]);
     $searchIds = array_map('intval', array_column($search['posts'], 'id_post'));
     $assert(in_array($ids[1], $searchIds, true) && in_array($ids[2], $searchIds, true), 'Search must return matching articles as well as selected recommendations.');
+    $slugSearch = CciBlogProReaderEngagement::options($shop, $lang, 'reader-fixture-' . $ids[2], [$ids[1]]);
+    $assert(in_array($ids[2], array_map('intval', array_column($slugSearch['posts'], 'id_post')), true), 'Article search supports the URL slug as well as the title.');
     $series = CciBlogProReaderEngagement::saveSeries($shop, $lang, ['title' => 'Integration series', 'slug' => 'reader-fixture-' . $ids[0], 'active' => 1]);
     $settings = ['related_ids' => [$ids[2], $ids[1]], 'related_title' => 'Continue learning', 'related_intro' => 'A useful next step.', 'id_series' => (int) $series['id_series'], 'position' => 1];
     CciBlogProReaderEngagement::savePost($ids[0], $shop, $lang, $settings);

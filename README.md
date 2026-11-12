@@ -72,7 +72,7 @@ adds curated recommendations, series and private written feedback.
 
 This preview shows Pro 1.0.0 in preparation with CCI Blog 1.1.1.
 
-![Pro preview: recommendations and series ordering in the article editor](docs/screenshots/cci-blog-reader-curation-20261112.png)
+![Pro preview: recommendations and series ordering in the article editor](docs/screenshots/cci-blog-reader-curation-search-20261112.png)
 
 ## Start publishing
 

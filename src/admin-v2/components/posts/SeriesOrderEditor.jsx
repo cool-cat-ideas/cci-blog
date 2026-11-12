@@ -2,6 +2,7 @@ import React from 'react';
 import { apiFetch } from '../../api/api';
 import { __ } from '../../i18n/i18n';
 import { Button } from '../ui/button';
+import LoadingState from '../feedback/LoadingState';
 import SortableArticleList from './SortableArticleList';
 
 /** Ordering is part of the surrounding article or series draft, never a separate save. */
@@ -63,12 +64,7 @@ export default function SeriesOrderEditor({
       cancelled = true;
     };
   }, [seriesId, languageId, articleId, refreshKey, retry]);
-  if (loading)
-    return (
-      <p role="status" className="tw-m-0 tw-text-sm tw-text-cci-blog-muted">
-        {__('Loading articles...', 'cci-blog')}
-      </p>
-    );
+  if (loading) return <LoadingState label={__('Loading articles...', 'cci-blog')} />;
   const items = order.items.map((item) => ({
     id: item.id_post === 'current' ? 'current' : Number(item.id_post),
     title:
@@ -84,10 +80,7 @@ export default function SeriesOrderEditor({
         </p>
       )}
       <p className="tw-m-0 tw-text-sm tw-text-cci-blog-muted">
-        {__(
-          'Drag articles to arrange the series, or use the move buttons. The main Save button keeps this order.',
-          'cci-blog',
-        )}
+        {__('Drag articles to arrange the series, or use the move buttons.', 'cci-blog')}
       </p>
       {items.length ? (
         <SortableArticleList

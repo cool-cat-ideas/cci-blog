@@ -11,6 +11,7 @@ import { CheckboxField } from '../ui/checkbox';
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '../ui/tabs';
 import { DataTable, EmptyState, RowPrimary } from './AdminDataTable';
 import ProBadge from '../licensing/ProBadge';
+import LoadingState from '../feedback/LoadingState';
 import SeriesOrderEditor from './SeriesOrderEditor';
 import { normalizeAdminSlug } from '../builder/model/text';
 
@@ -164,7 +165,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                 </div>
               </CardHeader>
               {loading ? (
-                <EmptyState label={__('Loading feedback...', 'cci-blog')} />
+                <LoadingState label={__('Loading feedback...', 'cci-blog')} />
               ) : report.rows.length ? (
                 <DataTable
                   label={__('Article usefulness', 'cci-blog')}
@@ -194,7 +195,7 @@ export default function ReaderEngagementPanel({ isPro }) {
             </Card>
             {isPro && (
               <>
-                {!!report.topics?.length && (
+                {!loading && !!report.topics?.length && (
                   <Card>
                     <CardHeader>
                       <h2 className={headingClass}>{__('Topics to review', 'cci-blog')}</h2>
@@ -224,7 +225,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                     </div>
                   </CardHeader>
                   {loading ? (
-                    <EmptyState label={__('Loading feedback...', 'cci-blog')} />
+                    <LoadingState label={__('Loading feedback...', 'cci-blog')} />
                   ) : report.messages.length ? (
                     <DataTable
                       label={__('Private reader messages', 'cci-blog')}
@@ -427,7 +428,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                   disabled={loading}
                 />
                 {loading ? (
-                  <EmptyState label={__('Loading series...', 'cci-blog')} />
+                  <LoadingState label={__('Loading series...', 'cci-blog')} />
                 ) : series.length ? (
                   <DataTable
                     label={__('Article series', 'cci-blog')}
