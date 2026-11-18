@@ -2,7 +2,7 @@
 
 ## 1.1.1
 
-- Add support for PrestaShop 9.2.1.
+- Allow installation on PrestaShop 9.2 patch releases, including 9.2.1.
 - Show a month-by-month publication calendar on Dashboard with shop-local dates, publication times and article titles in the month grid. Open an article directly, review busy days and use a compact count-and-agenda view on narrow screens.
 - Show publication status, author and date in recommendation search and series rows. Filter search by publication status and confirm recommendation removal without deleting the article.
 

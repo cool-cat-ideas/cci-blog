@@ -49,7 +49,7 @@ class Cci_Blog extends Module
         $this->author = 'Cool Cat Ideas';
         $this->need_instance = 0;
         $this->bootstrap = true;
-        $this->ps_versions_compliancy = ['min' => '9.0.0', 'max' => '9.2.1'];
+        $this->ps_versions_compliancy = ['min' => '9.0.0', 'max' => '9.2.999'];
 
         parent::__construct();
 

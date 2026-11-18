@@ -6,7 +6,7 @@ integration.
 
 ## Requirements
 
-- PrestaShop 9.0.0-9.2.1.
+- PrestaShop 9.0 through 9.2, including patch releases.
 - PHP version supported by the target PrestaShop installation.
 - Optional: CCI Nice Menu when blog content should be embedded in menu
   dropdowns.
