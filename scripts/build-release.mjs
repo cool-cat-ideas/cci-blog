@@ -32,6 +32,7 @@ const forbidden = [
   /(?:^|\/)(?:\.[^/]+|node_modules|__pycache__|test-results|coverage)(?:\/|$)/,
   /^(?:AGENTS|PROJECT_GUIDE|README|CONTRIBUTING|MARKETPLACE-CHECKLIST)\.(?:md|markdown|rst)$/i,
   /^(?:package(?:-lock)?\.json|composer\.lock|pnpm-lock\.yaml|yarn\.lock)$/,
+  /^sql\/(?:reset_|seed_)/,
   /^(?:(?:webpack|tailwind|postcss|eslint|vite|vitest|playwright|jest)\.config\.|tsconfig|tmp-)/,
   /\.(?:map|log|pyc|tsbuildinfo|code-workspace)$/,
   /:Zone\.Identifier$/,
