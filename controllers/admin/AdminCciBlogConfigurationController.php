@@ -304,6 +304,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $featureMap = $this->featureMap($features);
         $marketplaceFeedEndpoint = $this->getMarketplaceFeedEndpoint();
         $postsPayload = $this->getAdminPostsPayload();
+        $proModule = Module::isInstalled('cci_blog_pro') ? Module::getInstanceByName('cci_blog_pro') : null;
 
         return [
             'stats' => $this->getStats(),
@@ -315,6 +316,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             'categories' => $this->getAdminCategories(),
             'comments' => $this->getAdminComments(),
             'settings' => $this->getSettings(),
+            'proVersion' => $proModule instanceof Module ? (string) $proModule->version : '',
             'license' => $license,
             'features' => $features,
             'enabledFeatures' => $license['enabledFeatures'] ?? [],

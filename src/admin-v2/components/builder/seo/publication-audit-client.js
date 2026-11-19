@@ -66,6 +66,7 @@ export function usePublicationAudit(post) {
     'seo_content_type',
     'allow_comments',
     'active',
+    'cover_image',
     'blocks',
   ];
   const input = Object.fromEntries(

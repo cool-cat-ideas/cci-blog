@@ -17,6 +17,9 @@ $post = ['title' => 'Zażółć gęślą jaźń', 'intro' => 'Useful page descri
 $plain = $engine->evaluate($post, $context);
 auditCheck($plain['score'] === 100, 'A useful short article must not need a focus phrase, images or links.');
 auditCheck($plain['metrics']['wordCount'] === 7, 'Unicode words and one-letter Polish words must be counted correctly.');
+$withCover = $engine->evaluate($post + ['cover_image' => '/img/blog/cover.webp'], $context);
+auditCheck($plain['metrics']['images'] === 0 && $withCover['metrics']['images'] === 1, 'A cover is counted even without images in the article body.');
+auditCheck($withCover['score'] === $plain['score'], 'Counting a cover does not change the numerical score.');
 $withKeyword = $engine->evaluate($post + ['focus_keyword' => 'inna fraza'], $context);
 auditCheck($withKeyword['score'] === $plain['score'], 'A focus phrase must not change the default score.');
 $news = $engine->evaluate($post + ['seo_content_type' => 'news'], $context);

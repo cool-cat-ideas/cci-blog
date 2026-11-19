@@ -13,7 +13,7 @@ require_once __DIR__ . '/CciBlogComparisonFields.php';
 final class CciBlogPublicationAudit
 {
     public const VERSION = '1';
-    public const POLICY_REVISION = '2';
+    public const POLICY_REVISION = '3';
     private const STATUSES = ['good', 'warning', 'bad', 'info', 'not_applicable', 'unavailable'];
     private array $rules;
     private array $configurationWarnings = [];
@@ -367,6 +367,11 @@ final class CciBlogPublicationAudit
         }
         foreach ($xpath->query('//a[@href]') ?: [] as $node) {
             $facts['links'][] = ['href' => trim($node->getAttribute('href')), 'text' => trim($node->textContent) ?: trim(implode(' ', array_map(static fn (DOMElement $image): string => $image->getAttribute('alt'), iterator_to_array($node->getElementsByTagName('img')))))];
+        }
+        $cover = trim((string) ($post['cover_image'] ?? ''));
+        if ($cover !== '' && ($post['seo_content_type'] ?? '') !== 'category') {
+            // The storefront uses the article title as the cover's alt text.
+            $facts['images'][] = ['src' => $cover, 'alt' => trim((string) ($post['title'] ?? '')), 'decorative' => false];
         }
         foreach ($xpath->query('//img') ?: [] as $node) {
             $facts['images'][] = ['src' => $node->getAttribute('src'), 'alt' => trim($node->getAttribute('alt')), 'decorative' => $node->hasAttribute('data-cci-blog-audit-decorative') ? $node->getAttribute('data-cci-blog-audit-decorative') === '1' : ($node->hasAttribute('alt') && $node->getAttribute('alt') === '')];

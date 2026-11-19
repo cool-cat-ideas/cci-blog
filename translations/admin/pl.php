@@ -3,6 +3,13 @@
 declare(strict_types=1);
 
 return [
+    'Installed version is newer' => 'Zainstalowana wersja jest nowsza',
+    'The product catalog lists an older version.' => 'Katalog produktów pokazuje starszą wersję.',
+    'Pro is not installed' => 'Moduł Pro nie jest zainstalowany',
+    'Install Pro to use its features.' => 'Zainstaluj moduł Pro, aby korzystać z jego funkcji.',
+    'Not installed' => 'Nie zainstalowano',
+    'Installed version' => 'Zainstalowana wersja',
+    'Latest version' => 'Najnowsza wersja',
     'Versions' => 'Wersje',
     'Modified by' => 'Zmodyfikował(a)',
     'Not recorded' => 'Brak danych',

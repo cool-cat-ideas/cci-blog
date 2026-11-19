@@ -50,7 +50,7 @@ final class CciBlogPublicationAuditService
 
     public function audit(array $post, int $langId): array
     {
-        $post = array_intersect_key($post, array_flip(['id_post', 'id_category', 'id_author', 'id_lang', 'id_shop', 'title', 'slug', 'intro', 'content', 'blocks', 'meta_title', 'meta_description', 'focus_keyword', 'seo_content_type', 'allow_comments', 'active']));
+        $post = array_intersect_key($post, array_flip(['id_post', 'id_category', 'id_author', 'id_lang', 'id_shop', 'title', 'slug', 'intro', 'content', 'blocks', 'meta_title', 'meta_description', 'focus_keyword', 'seo_content_type', 'allow_comments', 'active', 'cover_image']));
         foreach (['id_post', 'id_category', 'id_author'] as $field) {
             if (array_key_exists($field, $post)) {
                 $post[$field] = max(0, (int) $post[$field]);
@@ -190,7 +190,7 @@ final class CciBlogPublicationAuditService
         $updated = 0;
         foreach (['post', 'category'] as $entity) {
             $lastId = $lastLanguage = 0;
-            $extra = $entity === 'post' ? ', e.id_category, e.id_author, e.allow_comments' : '';
+            $extra = $entity === 'post' ? ', e.id_category, e.id_author, e.allow_comments, e.cover_image' : '';
             do {
                 $rows = Db::getInstance()->executeS('SELECT l.*' . $extra . '
                     FROM ' . _DB_PREFIX_ . 'cci_blog_' . $entity . ' e
@@ -404,9 +404,11 @@ final class CciBlogPublicationAuditService
             $candidate['product'] = (int) $query['id_product'];
         } elseif (!empty($query['id_cms'])) {
             $candidate['cms'] = (int) $query['id_cms'];
+        } elseif (!empty($query['id_category'])) {
+            $candidate['category'] = (int) $query['id_category'];
         } elseif (preg_match('#/(\d+)(?:-\d+)?-[^/]+(?:\.html)?$#', (string) parse_url($url, PHP_URL_PATH), $match)) {
             // A number in a custom URL alone is not proof of its route type.
-            $candidate = ['product' => (int) $match[1], 'cms' => (int) $match[1]];
+            $candidate = ['product' => (int) $match[1], 'cms' => (int) $match[1], 'category' => (int) $match[1]];
         }
         foreach ($candidate as $type => $id) {
             if ($id <= 0) {
@@ -417,6 +419,10 @@ final class CciBlogPublicationAuditService
                 $row = Db::getInstance()->getRow('SELECT ps.active, ps.visibility, pl.name, pl.link_rewrite FROM ' . _DB_PREFIX_ . 'product_shop ps INNER JOIN ' . _DB_PREFIX_ . 'product_lang pl ON pl.id_product=ps.id_product AND pl.id_shop=ps.id_shop AND pl.id_lang=' . $langId . ' WHERE ps.id_product=' . $id . ' AND ps.id_shop=' . $shopId);
                 $canonical = $row ? $this->context->link->getProductLink($id, null, null, null, $langId, $shopId) : '';
                 $public = $row && $row['active'] && $row['visibility'] !== 'none' && trim((string) $row['name']) !== '';
+            } elseif ($type === 'category') {
+                $row = Db::getInstance()->getRow('SELECT c.active, cl.name, cl.link_rewrite FROM ' . _DB_PREFIX_ . 'category c INNER JOIN ' . _DB_PREFIX_ . 'category_shop cs ON cs.id_category=c.id_category AND cs.id_shop=' . $shopId . ' INNER JOIN ' . _DB_PREFIX_ . 'category_lang cl ON cl.id_category=c.id_category AND cl.id_shop=cs.id_shop AND cl.id_lang=' . $langId . ' WHERE c.id_category=' . $id);
+                $canonical = $row ? $this->context->link->getCategoryLink($id, $row['link_rewrite'], $langId, null, $shopId) : '';
+                $public = $row && $row['active'] && trim((string) $row['name']) !== '';
             } else {
                 $row = Db::getInstance()->getRow('SELECT c.active, cl.link_rewrite FROM ' . _DB_PREFIX_ . 'cms c INNER JOIN ' . _DB_PREFIX_ . 'cms_shop cs ON cs.id_cms=c.id_cms AND cs.id_shop=' . $shopId . ' INNER JOIN ' . _DB_PREFIX_ . 'cms_lang cl ON cl.id_cms=c.id_cms AND cl.id_shop=cs.id_shop AND cl.id_lang=' . $langId . ' WHERE c.id_cms=' . $id);
                 $canonical = $row ? $this->context->link->getCMSLink($id, null, null, $langId, $shopId) : '';
@@ -444,7 +450,7 @@ final class CciBlogPublicationAuditService
     {
         $parts = parse_url($url);
         parse_str((string) ($parts['query'] ?? ''), $query);
-        $query = array_intersect_key($query, array_flip(['fc', 'module', 'controller', 'slug', 'id_product', 'id_cms']));
+        $query = array_intersect_key($query, array_flip(['fc', 'module', 'controller', 'slug', 'id_product', 'id_cms', 'id_category']));
         ksort($query);
 
         return rtrim(rawurldecode((string) ($parts['path'] ?? '/')), '/') . ($query ? '?' . http_build_query($query) : '');

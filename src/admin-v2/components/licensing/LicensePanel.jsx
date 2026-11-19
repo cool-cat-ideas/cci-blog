@@ -1,4 +1,4 @@
-import { ProductStatusPanel } from '@cci/admin-ui/product-panels';
+import { ProductStatusPanel, compareProductVersions } from '@cci/admin-ui/product-panels';
 import React from 'react';
 import { ArrowRight, CheckCircle2, Crown } from 'lucide-react';
 import { isCciBlogProLicenseActive, pluginData } from '../../api/api';
@@ -17,29 +17,69 @@ export default function LicensePanel({ license: controlledLicense }) {
     Boolean(productFeed.data?.product) && productFeed.data?._meta?.source !== 'empty';
   const product = hasProductFeed ? productFeed.data?.product || {} : {};
   const upgradeUrl = readableValue(product?.pro?.url || pluginData.upgradeUrl);
-  const installedVersion = readableValue(pluginData.pluginVersion);
-  const latestVersion = readableValue(product?.latestVersion || product?.free?.version);
-  const updateUrl = readableValue(
-    product?.free?.urls?.download || product?.pro?.url || pluginData.upgradeUrl,
-  );
+  const versionFeedStale = Boolean(productFeed.error || productFeed.data?._meta?.stale);
+  const editions = [
+    {
+      name: 'CCI Blog',
+      installed: readableValue(pluginData.pluginVersion),
+      latest: readableValue(product.free?.version),
+      updateUrl: readableValue(
+        product.free?.urls?.download || product.free?.urls?.wordpress || pluginData.upgradeUrl,
+      ),
+    },
+    {
+      name: 'CCI Blog Pro',
+      installed: readableValue(pluginData.proVersion),
+      latest: readableValue(product.pro?.version),
+      updateUrl: upgradeUrl,
+      pro: true,
+    },
+  ];
   const ctaLabel = __('See CCI Blog Pro', 'cci-blog');
   const ctaIcon = <ArrowRight aria-hidden="true" />;
   return (
     <div className="tw-grid tw-content-start tw-gap-4 tw-self-start">
-      <ProductStatusPanel
-        t={(text) => __(text, 'cci-blog')}
-        isPro={isPro}
-        licenseStatus={license.status}
-        licenseMessage={license.message}
-        installedVersion={installedVersion}
-        latestVersion={latestVersion}
-        versionFeedStale={Boolean(productFeed.error || productFeed.data?._meta?.stale)}
-        updateUrl={updateUrl}
-        checkedAt={license.checkedAt}
-        nextCheckAt={license.nextCheckAt}
-        adminDate={pluginData.adminDate}
-        expires={license.expires}
-      />
+      {editions.map(({ name, installed, latest, updateUrl, pro }) => {
+        const aheadOfCatalog = compareProductVersions(latest, installed) < 0;
+        const labels = {
+          'Module status': name,
+          Installed: __('Installed version', 'cci-blog'),
+          Latest: __('Latest version', 'cci-blog'),
+          ...(aheadOfCatalog && {
+            'You are up to date': __('Installed version is newer', 'cci-blog'),
+            'Your installed version is current.': __(
+              'The product catalog lists an older version.',
+              'cci-blog',
+            ),
+          }),
+          ...(pro &&
+            !installed && {
+              'Version feed is unavailable': __('Pro is not installed', 'cci-blog'),
+              'Version information is temporarily unavailable. Please try again later.': __(
+                'Install Pro to use its features.',
+                'cci-blog',
+              ),
+            }),
+        };
+
+        return (
+          <ProductStatusPanel
+            key={name}
+            t={(text) => labels[text] || __(text, 'cci-blog')}
+            isPro={Boolean(pro)}
+            licenseStatus={pro ? license.status : undefined}
+            licenseMessage={pro ? license.message : undefined}
+            installedVersion={installed || __('Not installed', 'cci-blog')}
+            latestVersion={latest}
+            versionFeedStale={versionFeedStale}
+            updateUrl={updateUrl}
+            checkedAt={pro ? license.checkedAt : undefined}
+            nextCheckAt={pro ? license.nextCheckAt : undefined}
+            adminDate={pluginData.adminDate}
+            expires={pro ? license.expires : undefined}
+          />
+        );
+      })}
 
       {!isPro && (
         <Card className="tw-overflow-hidden tw-border-cci-blog-brandBorder tw-bg-white">
