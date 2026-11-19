@@ -34,8 +34,8 @@ export default function LicensePanel({ license: controlledLicense }) {
     },
   };
   const labels = {
-    Installed: __('Installed version', 'cci-blog'),
-    Latest: __('Latest version', 'cci-blog'),
+    Installed: pluginData.i18n?.translations?.['Version status: Installed'] || 'Installed',
+    Latest: pluginData.i18n?.translations?.['Version status: Latest'] || 'Latest',
     'Congratulations, you are using the latest version.': __(
       'Congratulations, you are using the latest version.',
       'cci-blog',

@@ -413,6 +413,8 @@ return [
     'Try again' => 'Spróbuj ponownie',
     'Updated' => 'Zaktualizowano',
     'Version' => 'Wersja',
+    'Version status: Installed' => 'Zainstalowana',
+    'Version status: Latest' => 'Najnowsza',
     'Version feed is unavailable' => 'Kanał wersji jest niedostępny',
     'Views' => 'Odsłony',
     'What worked well? What should we improve?' => 'Co działa dobrze? Co powinniśmy poprawić?',
