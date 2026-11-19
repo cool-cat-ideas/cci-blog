@@ -1,5 +1,6 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { FileText, Folder, Search } from 'lucide-react';
+import { createBuilderComponents, StatusBadge } from '@cci/admin-ui';
 import { InfoCallout } from '@cci/admin-ui/blog';
 import LoadingState from '../feedback/LoadingState';
 import { apiFetch } from '../../api/api';
@@ -8,6 +9,15 @@ import { Button } from '../ui/button';
 import { Field } from '../ui/field';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
+
+const {
+  BuilderCanvas,
+  BuilderItem,
+  BuilderItemMain,
+  BuilderItemCopy,
+  BuilderItemTitle,
+  BuilderItemDescription,
+} = createBuilderComponents('blog');
 
 const searchBlogLinks = async ({ query, type, languageId, signal }) => {
   const response = await apiFetch('/catalog/links', {
@@ -171,47 +181,63 @@ export function BlogContentPicker({
           ) : disabled && !includeCategories ? (
             <InfoCallout tone="info">{__('Six recommendations selected.', 'cci-blog')}</InfoCallout>
           ) : items.length ? (
-            <ul
-              className="tw-m-0 tw-grid tw-max-h-64 tw-list-none tw-gap-1 tw-overflow-y-auto tw-p-0"
-              aria-label={
-                includeCategories
-                  ? __('Blog link results', 'cci-blog')
-                  : __('Article search results', 'cci-blog')
-              }
-            >
-              {items.map((item) => (
-                <li key={`${item.type}-${item.id}`} className="tw-min-w-0">
-                  <Button
-                    type="button"
-                    disabled={disabled}
-                    variant="ghost"
-                    className="!tw-grid !tw-h-auto !tw-min-h-11 tw-w-full !tw-justify-start !tw-justify-items-start tw-gap-1 !tw-py-2 !tw-leading-5 tw-whitespace-normal tw-text-left"
-                    onClick={() => {
-                      onSelect(item);
-                      if (!inline) {
-                        setOpen(false);
-                        toggleRef.current?.focus();
-                      }
-                    }}
-                  >
-                    <span className="tw-break-words">{item.title}</span>
-                    {renderMetadata?.(item)}
-                    {includeCategories && (
-                      <span className="tw-text-xs tw-font-normal tw-text-cci-blog-muted">
-                        {item.type === 'post'
-                          ? __('Article', 'cci-blog')
-                          : __('Category', 'cci-blog')}
-                      </span>
-                    )}
-                    {item.url && (
-                      <span className="tw-break-all tw-text-xs tw-font-normal tw-text-cci-blog-muted">
-                        {item.url}
-                      </span>
-                    )}
-                  </Button>
-                </li>
-              ))}
-            </ul>
+            <BuilderCanvas className="tw-min-w-0">
+              <ul
+                className="tw-m-0 tw-grid tw-max-h-[min(22rem,40dvh)] tw-list-none tw-gap-2 tw-overflow-y-auto tw-overscroll-contain tw-p-1"
+                aria-label={
+                  includeCategories
+                    ? __('Blog link results', 'cci-blog')
+                    : __('Article search results', 'cci-blog')
+                }
+              >
+                {items.map((item) => {
+                  const isCategory = item.type === 'category';
+                  const Icon = isCategory ? Folder : FileText;
+                  const address =
+                    includeCategories && item.url ? new URL(item.url, window.location.href) : null;
+
+                  return (
+                    <BuilderItem as="li" key={`${item.type}-${item.id}`}>
+                      <BuilderItemMain
+                        type="button"
+                        disabled={disabled}
+                        className="tw-min-h-10 tw-cursor-pointer"
+                        onClick={() => {
+                          onSelect(item);
+                          if (!inline) {
+                            setOpen(false);
+                            toggleRef.current?.focus();
+                          }
+                        }}
+                      >
+                        <span className="tw-flex tw-h-8 tw-w-8 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-md tw-bg-cci-blog-brandSoft tw-text-cci-blog-brand">
+                          <Icon className="tw-h-4 tw-w-4" aria-hidden="true" />
+                        </span>
+                        <BuilderItemCopy>
+                          <span className="tw-flex tw-min-w-0 tw-flex-wrap tw-items-center tw-gap-x-2 tw-gap-y-1">
+                            <BuilderItemTitle>{item.title}</BuilderItemTitle>
+                            {includeCategories && (
+                              <StatusBadge tone="neutral" className="!tw-normal-case">
+                                {isCategory
+                                  ? __('Category', 'cci-blog')
+                                  : __('Article', 'cci-blog')}
+                              </StatusBadge>
+                            )}
+                          </span>
+                          {renderMetadata?.(item)}
+                          {address && (
+                            <BuilderItemDescription>
+                              {address.pathname}
+                              {address.search}
+                            </BuilderItemDescription>
+                          )}
+                        </BuilderItemCopy>
+                      </BuilderItemMain>
+                    </BuilderItem>
+                  );
+                })}
+              </ul>
+            </BuilderCanvas>
           ) : (
             <p role="status" className="tw-m-0 tw-text-sm">
               {includeCategories
