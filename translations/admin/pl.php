@@ -258,6 +258,7 @@ return [
     'Back to categories' => 'Wróć do kategorii',
     'Blog base URL slug' => 'Slug bazowego adresu bloga',
     'Blog editor extension.' => 'Rozszerzenie edytora bloga.',
+    'Translate blog content, add products to articles, and organize posts into series.' => 'Tłumacz treści bloga, dodawaj produkty do artykułów i łącz wpisy w serie.',
     'Manage add-ons and form protection for your blog.' => 'Zarządzaj dodatkami i ochroną formularzy bloga.',
     'Built-in providers and installed add-ons' => 'Wbudowane usługi i zainstalowane dodatki',
     'Blog extensions' => 'Rozszerzenia bloga',

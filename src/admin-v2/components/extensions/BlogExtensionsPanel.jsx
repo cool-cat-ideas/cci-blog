@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CaptchaSettingsDialog } from '@cci/form-captcha/settings';
 import { InfoCallout } from '@cci/admin-ui/blog';
-import { CountBadge as Counter, reconcileCatalogItems } from '@cci/admin-ui';
+import { CountBadge as Counter, catalogIdentityKeys, reconcileCatalogItems } from '@cci/admin-ui';
 import { BadgeCheck, Plug, Settings, ShoppingBag } from 'lucide-react';
 import { apiFetch, pluginData } from '../../api/api';
 import { __ } from '../../i18n/i18n';
@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 const installedTab = 'installed';
 const storeTab = 'store';
+const isBlogPro = (extension) => catalogIdentityKeys(extension).has('cci-blog-pro');
 const captchaControls = { Button, CheckboxField, Field, Input, InfoCallout };
 const t = (text) => __(text, 'cci-blog');
 const dialogPortal = () => document.querySelector('.cci-blog-admin-root') || document.body;
@@ -106,8 +107,16 @@ export default function BlogExtensionsPanel({
   const installedCount = installedExtensions.length + providers.length;
   const storeLoading = activeTab === storeTab && storeFeed.loading;
   const storeCount = reconciledStoreExtensions.length;
-  const activeExtensions =
-    activeTab === installedTab ? installedExtensions : reconciledStoreExtensions;
+  const blogProDescription =
+    storeExtensions.find(isBlogPro)?.description ||
+    t('Translate blog content, add products to articles, and organize posts into series.');
+  const activeExtensions = (
+    activeTab === installedTab ? installedExtensions : reconciledStoreExtensions
+  ).map((extension) =>
+    isBlogPro(extension)
+      ? { ...extension, title: 'CCI Blog Pro', description: blogProDescription }
+      : extension,
+  );
   const storeStatus = (
     <MarketplaceStatus
       error={storeFeed.error}
