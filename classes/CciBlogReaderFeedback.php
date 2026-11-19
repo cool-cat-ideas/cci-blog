@@ -70,6 +70,9 @@ final class CciBlogReaderFeedback
             WHERE network_hash = "' . pSQL($network) . '" AND date_add >= "' . date('Y-m-d') . ' 00:00:00"') >= 40) {
             throw new DomainException('rate_limited');
         }
+        if (!CciBlogCaptcha::verify($context, $input['captchaToken'] ?? '', 'feedback')) {
+            throw new DomainException('captcha');
+        }
         $now = date('Y-m-d H:i:s');
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'cci_blog_reader_feedback`
             (id_post,id_shop,id_lang,voter_hash,network_hash,helpful,message,date_add,date_upd) VALUES ('

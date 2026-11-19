@@ -192,8 +192,11 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         // Handle comment submission
         $commentError = '';
         $commentSuccess = false;
-        if (Tools::isSubmit('submit_comment') && $nativeCommentsEnabled) {
-            [$commentSuccess, $commentError] = $this->handleCommentSubmit((int) $post['id_post'], (int) $post['allow_comments']);
+        $commentDraft = null;
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && Tools::isSubmit('submit_comment') && $nativeCommentsEnabled) {
+            $result = $this->handleCommentSubmit((int) $post['id_post'], (int) $post['allow_comments']);
+            [$commentSuccess, $commentError] = $result;
+            $commentDraft = $result[2] ?? null;
         }
 
         $gdprConsent = $nativeCommentsEnabled
@@ -219,11 +222,20 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         }
 
         $readerFeedbackEnabled = Configuration::get('CCB_READER_FEEDBACK_ENABLED') === false || (bool) Configuration::get('CCB_READER_FEEDBACK_ENABLED');
+        $captcha = !$this->isPreview && ($nativeCommentsEnabled || $readerFeedbackEnabled)
+            ? CciBlogCaptcha::publicConfig($shopId)
+            : null;
+        if ($captcha !== null) {
+            $this->registerJavascript('module-cci-blog-captcha', 'modules/cci_blog/views/js/cci-blog-captcha.js', [
+                'position' => 'bottom', 'priority' => 160,
+            ]);
+        }
         $this->context->smarty->assign([
+            'ccb_captcha' => $captcha,
             'ccb_reader_feedback_enabled' => $readerFeedbackEnabled,
             'ccb_reader_engagement' => $engagement,
             'ccb_reader_feedback_token' => $this->isPreview || !$readerFeedbackEnabled ? '' : CciBlogReaderFeedback::token((int) $post['id_post'], $this->context),
-            'ccb_reader_feedback_status' => in_array(Tools::getValue('feedback'), ['saved', 'error'], true) ? Tools::getValue('feedback') : '',
+            'ccb_reader_feedback_status' => in_array(Tools::getValue('feedback'), ['saved', 'error', 'captcha'], true) ? Tools::getValue('feedback') : '',
             'ccb_reader_feedback_message' => !$this->isPreview && $readerPro && method_exists($readerPro, 'canUseCciReaderEngagement') && $readerPro->canUseCciReaderEngagement($shopId),
             'ccb_post' => $post,
             'ccb_preview' => $this->isPreview,
@@ -256,6 +268,7 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             'ccb_tag_cloud' => $sidebarTagCloud,
             'ccb_feed_enabled' => !$this->isPreview && (bool) Configuration::get('CCB_FEED_ENABLED'),
             'ccb_comment_error' => $commentError,
+            'ccb_comment_draft' => $commentDraft,
             'ccb_comment_success' => $commentSuccess,
             'ccb_comment_token' => $this->commentFormToken((int) $post['id_post']),
             'ccb_comment_started_at' => $commentFormStartedAt,
@@ -480,6 +493,13 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         }
         if (CciBlogComment::isDuplicate($postId, $email, $content)) {
             return [false, $this->module->l('This comment has already been submitted.')];
+        }
+        if (!CciBlogCaptcha::verify($this->context, Tools::getValue('captchaToken'), 'comment')) {
+            return [
+                false,
+                $this->module->l('Complete the security check again. If it does not load, refresh the page.'),
+                ['name' => $name, 'email' => $email, 'content' => $content, 'parent' => $parent],
+            ];
         }
 
         $comment = new CciBlogComment();

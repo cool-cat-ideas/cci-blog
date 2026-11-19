@@ -12,10 +12,11 @@
         <p id="cci-blog-feedback-privacy" class="cci-blog-reader-feedback-privacy">{l s='Only the shop team can read this message. Do not include personal information or order details. Messages are available to the shop team for 90 days.' mod='cci_blog'}</p>
       </details>
     {/if}
+    {include file='module:cci_blog/views/templates/front/_captcha.tpl' captcha_operation='feedback'}
     <div class="cci-blog-reader-feedback-actions">
       <button class="btn btn-outline-primary" type="submit" name="helpful" value="1">{l s='Yes, it helped' mod='cci_blog'}</button>
       <button class="btn btn-outline-primary" type="submit" name="helpful" value="0">{l s='Not yet' mod='cci_blog'}</button>
     </div>
-    <p role="status" aria-live="polite" data-feedback-status data-success="{l s='Thank you. Your feedback has been saved.' mod='cci_blog'}" data-error="{l s='We could not save your feedback. Please try again.' mod='cci_blog'}" data-sending="{l s='Saving feedback...' mod='cci_blog'}">{if $ccb_reader_feedback_status == 'saved'}{l s='Thank you. Your feedback has been saved.' mod='cci_blog'}{elseif $ccb_reader_feedback_status == 'error'}{l s='We could not save your feedback. Please try again.' mod='cci_blog'}{/if}</p>
+    <p role="status" aria-live="polite" data-feedback-status data-success="{l s='Thank you. Your feedback has been saved.' mod='cci_blog'}" data-error="{l s='We could not save your feedback. Please try again.' mod='cci_blog'}" data-sending="{l s='Saving feedback...' mod='cci_blog'}">{if $ccb_reader_feedback_status == 'saved'}{l s='Thank you. Your feedback has been saved.' mod='cci_blog'}{elseif $ccb_reader_feedback_status == 'captcha'}{l s='Complete the security check again. If it does not load, refresh the page.' mod='cci_blog'}{elseif $ccb_reader_feedback_status == 'error'}{l s='We could not save your feedback. Please try again.' mod='cci_blog'}{/if}</p>
   </form>
 </section>

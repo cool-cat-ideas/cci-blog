@@ -182,3 +182,11 @@ $_MODULE['<{cci_blog}prestashop>cci_blog_10ba42315064e14dcde9c6e33af635a6'] = 'Z
 $_MODULE['<{cci_blog}prestashop>cci_blog_14f9b6b1b1866c4460d693125c3f3dc8'] = 'Zarządzanie seriami i polecanymi artykułami wymaga aktywnej licencji Pro.';
 
 $_MODULE['<{cci_blog}prestashop>cci_blog_50393e08770af6d362cb204d3c61a123'] = 'Wybierz poprawny status publikacji.';
+
+$_MODULE['<{cci_blog}prestashop>_captcha_00f26302f753ea4871b7634a6d025bf9'] = 'Weryfikacja zabezpieczeń';
+$_MODULE['<{cci_blog}prestashop>_captcha_63488967ba3392769a5d882db7868b18'] = 'Nie udało się wczytać weryfikacji. Sprawdź, czy inny moduł CAPTCHA lub blokada skryptów jej nie zakłóca, a potem odśwież stronę.';
+$_MODULE['<{cci_blog}prestashop>_captcha_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
+$_MODULE['<{cci_blog}prestashop>_reader_feedback_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
+$_MODULE['<{cci_blog}prestashop>post_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
+$_MODULE['<{cci_blog}prestashop>cci_blog_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
+$_MODULE['<{cci_blog}prestashop>_captcha_889ee071da8823239f5e9436b5c74db2'] = 'Włącz JavaScript, aby przejść weryfikację.';

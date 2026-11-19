@@ -9,9 +9,11 @@
   "scripts": {
     "build:admin:blocknote-css": "./node_modules/.bin/esbuild ./src/admin-v2/styles/blocknote.css --bundle --conditions=style --outfile=./tmp-cci-blog-blocknote.css --minify",
     "build:admin:tailwind": "node ./node_modules/tailwindcss/lib/cli.js -c tailwind.config.cjs -i ./src/admin-v2/styles/admin.css -o ./tmp-cci-blog-tailwind.css --minify",
-    "build:admin:css": "npm run build:admin:blocknote-css && npm run build:admin:tailwind && node -e \"const fs=require('fs');fs.writeFileSync('./views/css/cci_blog_admin.css',fs.readFileSync('./tmp-cci-blog-blocknote.css','utf8')+'\\n'+fs.readFileSync('./tmp-cci-blog-tailwind.css','utf8'));fs.unlinkSync('./tmp-cci-blog-blocknote.css');fs.unlinkSync('./tmp-cci-blog-tailwind.css');\"",
+    "build:admin:css": "npm run build:admin:blocknote-css && npm run build:admin:tailwind && node -e \"const fs=require('fs');fs.writeFileSync('./views/css/cci_blog_admin.css',fs.readFileSync('./tmp-cci-blog-blocknote.css','utf8')+'\\n'+fs.readFileSync('./tmp-cci-blog-tailwind.css','utf8')+'\\n'+fs.readFileSync(require.resolve('@cci/form-captcha/settings.css'),'utf8'));fs.unlinkSync('./tmp-cci-blog-blocknote.css');fs.unlinkSync('./tmp-cci-blog-tailwind.css');\"",
     "build:admin:js": "node scripts/build-admin.mjs",
     "build:admin": "npm run build:admin:css && npm run build:admin:js",
+    "build:front:captcha": "esbuild src/front/captcha.jsx --bundle --format=iife --target=es2018 --minify --outfile=views/js/cci-blog-captcha.js",
+    "build": "npm run build:admin && npm run build:front:captcha",
     "package:presta": "node scripts/build-release.mjs",
     "format": "node scripts/quality/format.mjs",
     "format:check": "node scripts/quality/format.mjs --check"
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@cci/admin-theme": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.3/cci-admin-theme-1.0.2-status.3.tgz",
+    "@cci/form-captcha": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.4/cci-form-captcha-1.0.2-status.4.tgz",
     "esbuild": "0.28.2",
     "prettier": "3.9.10",
     "tailwindcss": "^3.4.19"

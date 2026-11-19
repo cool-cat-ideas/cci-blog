@@ -172,6 +172,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
                 'engagement:report', 'engagement:options', 'engagement:series:save', 'engagement:series:order', 'engagement:feedback:delete' => $this->readerEngagementAction($action, is_array($payload) ? $payload : []),
                 'diagnostics:get' => ['success' => true, 'diagnostics' => $this->getDiagnosticsPayload()],
                 'settings:save' => $this->saveSettings(is_array($payload) ? $payload : []),
+                'captcha:save' => $this->saveCaptcha(is_array($payload) ? $payload : []),
                 'posts:list' => $this->getAdminPostsPayload(is_array($payload) ? $payload : []),
                 'redirects:list' => ['success' => true, 'redirects' => $this->getAdminSlugRedirects()],
                 'redirect:update' => $this->updateSlugRedirect(is_array($payload) ? $payload : []),
@@ -2037,8 +2038,20 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
         $settings['CCB_TABLE_OF_CONTENTS_STICKY_GAP'] = max(8, min(80, (int) ($settings['CCB_TABLE_OF_CONTENTS_STICKY_GAP'] ?: 16)));
         $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT'] = CciBlogArticleSidebar::normalizeContent($settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT']);
         $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK'] = $settings['CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK'] ?: 'displayCciBlogArticleSidebar';
+        $settings['captcha'] = CciBlogCaptcha::admin($shopId);
 
         return $settings;
+    }
+
+    private function saveCaptcha(array $payload): array
+    {
+        try {
+            return ['success' => true, 'captcha' => CciBlogCaptcha::save((int) $this->context->shop->id, $payload)];
+        } catch (InvalidArgumentException $error) {
+            return ['success' => false, 'error' => $error->getMessage()];
+        } catch (Throwable $error) {
+            return ['success' => false, 'error' => 'Could not save integration settings. Please try again.'];
+        }
     }
 
     private function saveSettings(array $payload): array

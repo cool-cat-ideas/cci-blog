@@ -341,14 +341,26 @@ document.addEventListener('submit', async function (event) {
   status.textContent = status.dataset.sending;
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), 15000);
+  let captchaRejected = false;
   try {
     const response = await fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: timeout.signal });
     const result = await response.json();
+    if (result.code === 'captcha') {
+      captchaRejected = true;
+      const captcha = form.querySelector('[data-cci-blog-captcha]');
+      status.textContent = captcha?.querySelector('[data-field="captcha"]') ? '' : (captcha?.dataset.validation || status.dataset.error);
+      return;
+    }
     if (!response.ok || !result.success) throw new Error('Feedback rejected');
     buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === submitter)));
     status.textContent = status.dataset.success;
     const details = form.querySelector('details');
     if (details) details.open = false;
   } catch (_) { status.textContent = status.dataset.error; }
-  finally { clearTimeout(timer); form.removeAttribute('aria-busy'); buttons.forEach((button) => { button.disabled = false; }); }
+  finally {
+    clearTimeout(timer);
+    form.removeAttribute('aria-busy');
+    buttons.forEach((button) => { button.disabled = false; });
+    form.dispatchEvent(new CustomEvent('cci-blog:captcha-reset', { detail: { invalid: captchaRejected } }));
+  }
 });

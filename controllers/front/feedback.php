@@ -35,9 +35,13 @@ class Cci_BlogFeedbackModuleFrontController extends ModuleFrontController
             $messageAllowed = $pro && method_exists($pro, 'canUseCciReaderEngagement') && $pro->canUseCciReaderEngagement((int) $this->context->shop->id);
             CciBlogReaderFeedback::submit($postId, $this->context, [
                 'token' => Tools::getValue('token'), 'helpful' => Tools::getValue('helpful'), 'message' => Tools::getValue('message', ''),
+                'captchaToken' => Tools::getValue('captchaToken'),
             ], (bool) $messageAllowed);
             $status = 'saved';
         } catch (DomainException $error) {
+            if ($error->getMessage() === 'captcha') {
+                $status = 'captcha';
+            }
             if ($json) {
                 http_response_code($error->getMessage() === 'rate_limited' ? 429 : 400);
             }
@@ -49,7 +53,7 @@ class Cci_BlogFeedbackModuleFrontController extends ModuleFrontController
         }
         if ($json) {
             header('Content-Type: application/json; charset=utf-8');
-            exit(json_encode(['success' => $status === 'saved']));
+            exit(json_encode(['success' => $status === 'saved', 'code' => $status === 'captcha' ? 'captcha' : null]));
         }
         $url = $post ? $this->context->link->getModuleLink('cci_blog', 'post', ['slug' => $post['slug'], 'feedback' => $status])
             : $this->context->link->getModuleLink('cci_blog', 'list');

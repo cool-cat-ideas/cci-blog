@@ -62,6 +62,12 @@ The base edition includes article versions and comparisons, publication checks, 
 
 [Explore CCI Blog and compare editions](https://coolcatideas.com/products/cci-blog/) · [Read the documentation](https://coolcatideas.com/docs/cci-blog/1.1.0/)
 
+### Protect comments and article feedback
+
+In **CCI Blog → Settings → Form protection**, choose **Google reCAPTCHA v2** or **Cloudflare Turnstile**. Add your shop domain in the provider's dashboard, then copy the site and secret keys into Blog and enable protection. Test a comment and an article rating on your shop.
+
+You can save keys for both services and use one at a time. Protection is off until you enable a provider. Disqus manages its own comment form.
+
 ### Help readers find the next useful guide
 
 Choose up to six recommended articles, set a heading and introduction, then drag

@@ -2281,6 +2281,14 @@ body[id^='module-cci_blog-'] #main .page-content {
 .cci-blog-reader-series [aria-current="page"] { font-weight: 700; }
 .cci-blog-reader-series-links,
 .cci-blog-reader-feedback-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 1rem; }
+.cci-blog-reader-feedback-actions > .btn {
+  min-height: 44px;
+  padding: 0.5rem 0.875rem;
+  font-weight: 600;
+  text-transform: none;
+}
+.cci-blog-captcha { margin-block: 1rem; }
+.cci-blog-captcha-error { margin: 0.5rem 0 0; color: var(--danger, #a52724); }
 .cci-blog-reader-series-links a { flex: 1 1 14rem; overflow-wrap: anywhere; }
 .cci-blog-reader-series a { text-decoration: underline; text-underline-offset: 0.2em; }
 .cci-blog-reader-series a:hover { text-decoration-thickness: 2px; }

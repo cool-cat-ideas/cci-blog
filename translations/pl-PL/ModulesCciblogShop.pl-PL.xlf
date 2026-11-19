@@ -142,6 +142,22 @@
         <source>Next page</source>
         <target state="final">Następna strona</target>
       </trans-unit>
+      <trans-unit id="captcha_00f26302f753ea4871b7634a6d025bf9" approved="yes">
+        <source>Security check</source>
+        <target state="final">Weryfikacja zabezpieczeń</target>
+      </trans-unit>
+      <trans-unit id="captcha_63488967ba3392769a5d882db7868b18" approved="yes">
+        <source>The security check could not load. Check for a conflicting CAPTCHA plugin or a blocked script, then refresh the page.</source>
+        <target state="final">Nie udało się wczytać weryfikacji. Sprawdź, czy inny moduł CAPTCHA lub blokada skryptów jej nie zakłóca, a potem odśwież stronę.</target>
+      </trans-unit>
+      <trans-unit id="captcha_e8bbd66c5b7a4064c44dbd7e363cd379" approved="yes">
+        <source>Complete the security check again. If it does not load, refresh the page.</source>
+        <target state="final">Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.</target>
+      </trans-unit>
+      <trans-unit id="captcha_889ee071da8823239f5e9436b5c74db2" approved="yes">
+        <source>Enable JavaScript to complete the security check.</source>
+        <target state="final">Włącz JavaScript, aby przejść weryfikację.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

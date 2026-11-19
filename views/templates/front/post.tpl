@@ -254,7 +254,7 @@
           </div>
         {/if}
         {if $ccb_comment_error}
-          <div class="cci-blog-alert cci-blog-alert-error">{$ccb_comment_error|escape:'html'}</div>
+          <div class="cci-blog-alert cci-blog-alert-error" role="alert">{$ccb_comment_error|escape:'html'}</div>
         {/if}
 
         {foreach from=$ccb_post.comments item=comment}
@@ -266,7 +266,7 @@
           <p class="cci-blog-comment-form-title">{l s='Leave a comment' mod='cci_blog'}</p>
           <form method="POST" action="{$smarty.server.REQUEST_URI|escape:'html'}">
             <input type="hidden" name="submit_comment" value="1">
-            <input type="hidden" name="id_parent" value="0" id="cci-blog-reply-parent">
+            <input type="hidden" name="id_parent" value="{if $ccb_comment_draft}{$ccb_comment_draft.parent|intval}{else}0{/if}" id="cci-blog-reply-parent">
             <input type="hidden" name="comment_token" value="{$ccb_comment_token|escape:'html'}">
             <input type="hidden" name="comment_started_at" value="{$ccb_comment_started_at|intval}">
             <input type="hidden" name="comment_form_signature" value="{$ccb_comment_form_signature|escape:'html'}">
@@ -277,23 +277,24 @@
               <div class="cci-blog-form-group">
                 <label for="cci-blog-author-name">{l s='Name' mod='cci_blog'} *</label>
                 <input type="text" id="cci-blog-author-name" name="author_name" required maxlength="128"
-                       value="{if $customer.firstname}{$customer.firstname|escape:'html'} {$customer.lastname|escape:'html'}{/if}">
+                       value="{if $ccb_comment_draft}{$ccb_comment_draft.name|escape:'html'}{elseif $customer.firstname}{$customer.firstname|escape:'html'} {$customer.lastname|escape:'html'}{/if}">
               </div>
               <div class="cci-blog-form-group">
                 <label for="cci-blog-author-email">{l s='Email (not published)' mod='cci_blog'} *</label>
                 <input type="email" id="cci-blog-author-email" name="author_email" required maxlength="255"
-                       value="{if $customer.email}{$customer.email|escape:'html'}{/if}">
+                       value="{if $ccb_comment_draft}{$ccb_comment_draft.email|escape:'html'}{elseif $customer.email}{$customer.email|escape:'html'}{/if}">
               </div>
             </div>
             <div class="cci-blog-form-group">
               <label for="cci-blog-content">{l s='Comment' mod='cci_blog'} *</label>
-              <textarea id="cci-blog-content" name="comment_content" rows="5" required maxlength="3000"></textarea>
+              <textarea id="cci-blog-content" name="comment_content" rows="5" required maxlength="3000">{if $ccb_comment_draft}{$ccb_comment_draft.content|escape:'html'}{/if}</textarea>
             </div>
             {if $ccb_gdpr_consent}
               <div class="cci-blog-comment-consent">
                 {$ccb_gdpr_consent nofilter}
               </div>
             {/if}
+            {include file='module:cci_blog/views/templates/front/_captcha.tpl' captcha_operation='comment'}
             <button type="submit" class="btn btn-primary">{l s='Post comment' mod='cci_blog'}</button>
           </form>
         </div>

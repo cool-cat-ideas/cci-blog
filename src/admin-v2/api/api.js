@@ -221,6 +221,7 @@ const actionMap = {
   '/dashboard/get': 'dashboard:get',
   '/diagnostics/get': 'diagnostics:get',
   '/settings/save': 'settings:save',
+  '/captcha/save': 'captcha:save',
   '/posts/list': 'posts:list',
   '/post/get': 'post:get',
   '/post/save': 'post:save',

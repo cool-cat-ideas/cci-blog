@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/classes/CciBlogPost.php';
 require_once __DIR__ . '/classes/CciBlogReaderFeedback.php';
+require_once __DIR__ . '/classes/CciBlogCaptcha.php';
 require_once __DIR__ . '/classes/CciBlogPostHistory.php';
 require_once __DIR__ . '/classes/CciBlogPostPreview.php';
 require_once __DIR__ . '/classes/CciBlogFeed.php';
@@ -714,7 +715,7 @@ class Cci_Blog extends Module
         $keys = [
             'CCB_POSTS_PER_PAGE', 'CCB_SHOW_AUTHOR', 'CCB_SHOW_DATE',
             'CCB_SHOW_VIEWS', 'CCB_SHOW_READ_TIME', 'CCB_COMMENTS_ENABLED', 'CCB_READER_FEEDBACK_ENABLED',
-            'CCB_COMMENTS_PROVIDER', 'CCB_COMMENTS_MODERATION',
+            'CCB_COMMENTS_PROVIDER', 'CCB_COMMENTS_MODERATION', CciBlogCaptcha::OPTION,
             'CCB_TABLE_OF_CONTENTS_ENABLED', 'CCB_TABLE_OF_CONTENTS_MIN_HEADINGS',
             'CCB_TABLE_OF_CONTENTS_LAYOUT', 'CCB_TABLE_OF_CONTENTS_STICKY_GAP',
             'CCB_TABLE_OF_CONTENTS_SIDEBAR_CONTENT', 'CCB_TABLE_OF_CONTENTS_SIDEBAR_HOOK',
