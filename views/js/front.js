@@ -330,7 +330,7 @@ document.addEventListener('submit', async function (event) {
   const form = event.target;
   if (!(form instanceof HTMLFormElement) || !form.matches('[data-cci-reader-feedback]') || !event.submitter) return;
   event.preventDefault();
-  if (form.getAttribute('aria-busy') === 'true') return;
+  if (form.hasAttribute('data-feedback-complete') || form.getAttribute('aria-busy') === 'true') return;
   const submitter = event.submitter;
   const data = new FormData(form);
   data.set('helpful', submitter.value);
@@ -352,15 +352,20 @@ document.addEventListener('submit', async function (event) {
       return;
     }
     if (!response.ok || !result.success) throw new Error('Feedback rejected');
-    buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === submitter)));
-    status.textContent = status.dataset.success;
+    form.setAttribute('data-feedback-complete', '');
+    buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.value === String(result.vote))));
+    status.textContent = result.code === 'already_voted' ? status.dataset.recorded : status.dataset.success;
     const details = form.querySelector('details');
-    if (details) details.open = false;
+    if (details) details.hidden = true;
   } catch (_) { status.textContent = status.dataset.error; }
   finally {
     clearTimeout(timer);
     form.removeAttribute('aria-busy');
-    buttons.forEach((button) => { button.disabled = false; });
-    form.dispatchEvent(new CustomEvent('cci-blog:captcha-reset', { detail: { invalid: captchaRejected } }));
+    if (form.hasAttribute('data-feedback-complete')) {
+      form.dispatchEvent(new CustomEvent('cci-blog:captcha-complete'));
+    } else {
+      buttons.forEach((button) => { button.disabled = false; });
+      form.dispatchEvent(new CustomEvent('cci-blog:captcha-reset', { detail: { invalid: captchaRejected } }));
+    }
   }
 });

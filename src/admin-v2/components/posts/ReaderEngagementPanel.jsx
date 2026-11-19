@@ -83,7 +83,7 @@ export default function ReaderEngagementPanel({ isPro }) {
     setError('');
     try {
       await apiFetch('/engagement/feedback/delete', {
-        body: JSON.stringify({ id_feedback: id, id_lang: languageId }),
+        body: JSON.stringify({ id_message: id, id_lang: languageId }),
       });
       setRefresh((value) => value + 1);
     } catch (failure) {
@@ -218,7 +218,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                       <h2 className={headingClass}>{__('What readers are missing', 'cci-blog')}</h2>
                       <p className={descriptionClass}>
                         {__(
-                          'Private messages from the last 90 days. Deleting text keeps the vote.',
+                          'Private messages stay here until someone on your team deletes them.',
                           'cci-blog',
                         )}
                       </p>
@@ -234,7 +234,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                         { id: 'message', label: __('Message', 'cci-blog') },
                         {
                           id: 'date',
-                          label: __('Updated', 'cci-blog'),
+                          label: __('Sent', 'cci-blog'),
                           className: 'tw-w-40 tw-whitespace-nowrap',
                         },
                       ]}
@@ -252,7 +252,7 @@ export default function ReaderEngagementPanel({ isPro }) {
                               label: __('Delete message text', 'cci-blog'),
                               tone: 'danger',
                               disabled: saving,
-                              onClick: () => clearMessage(item.id_feedback),
+                              onClick: () => clearMessage(item.id_message),
                             },
                           ]}
                         />,
@@ -262,9 +262,9 @@ export default function ReaderEngagementPanel({ isPro }) {
                         <time
                           key="date"
                           className="tw-text-xs tw-text-cci-blog-muted"
-                          dateTime={item.date_upd?.replace(' ', 'T')}
+                          dateTime={item.date_add?.replace(' ', 'T')}
                         >
-                          {readDate(item.date_upd)}
+                          {readDate(item.date_add)}
                         </time>,
                       ])}
                     />

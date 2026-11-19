@@ -143,7 +143,8 @@ try {
     CciBlogReaderFeedback::submit($ids[0], $context, ['token' => $token, 'helpful' => '0', 'message' => 'Please add a checklist.'], true);
     $count = (int) $db->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cci_blog_reader_feedback` WHERE id_post=' . $ids[0]);
     $assert($count === 1, 'A valid vote creates one record.');
-    $rejects(fn () => CciBlogReaderFeedback::submit($ids[0], $context, ['token' => $token, 'helpful' => '1'], true), 'Repeated submissions are throttled.');
+    $rejects(fn () => CciBlogReaderFeedback::submit($ids[0], $context, ['token' => $token, 'helpful' => '1'], true), 'A repeated vote is rejected even without an additional message.');
+    $assert(CciBlogReaderFeedback::currentVote($ids[0], $context) === 0, 'A duplicate cannot change the saved vote.');
     $report = CciBlogReaderFeedback::report($shop, $lang, 1, false);
     $assert($report['messages'] === [], 'The base report does not expose Pro text feedback.');
     $report = CciBlogReaderFeedback::report($shop, $lang, 1, true);
@@ -152,7 +153,22 @@ try {
     $assert(CciBlogReaderFeedback::report($shop, $lang + 999, 1, true)['rows'] === [], 'Ratings remain language-scoped.');
     $token2 = CciBlogReaderFeedback::token($ids[1], $context);
     CciBlogReaderFeedback::submit($ids[1], $context, ['token' => $token2, 'helpful' => '1', 'message' => 'This must not be retained without Pro.'], false);
-    $assert($db->getValue('SELECT message FROM `' . _DB_PREFIX_ . 'cci_blog_reader_feedback` WHERE id_post=' . $ids[1]) === '', 'Text collection stays disabled without Pro.');
+    $assert((int) $db->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cci_blog_reader_message` WHERE id_post=' . $ids[1], false) === 0, 'Text collection stays disabled without Pro.');
+
+    $db->update('cci_blog_reader_feedback', ['date_upd' => '2020-01-01 00:00:00'], 'id_post=' . $ids[0]);
+    $db->update('cci_blog_reader_message', ['date_add' => '2020-01-01 00:00:00'], 'id_post=' . $ids[0]);
+    CciBlogReaderFeedback::cleanup();
+    $assert(CciBlogReaderFeedback::currentVote($ids[0], $context) === null, 'Old votes expire independently.');
+    CciBlogReaderFeedback::submit($ids[0], $context, ['token' => $token, 'helpful' => '1', 'message' => 'A second suggestion.'], true);
+    $retained = $db->executeS('SELECT id_message,message,date_add FROM `' . _DB_PREFIX_ . 'cci_blog_reader_message` WHERE id_post=' . $ids[0] . ' ORDER BY date_add', true, false);
+    $assert(array_column($retained, 'message') === ['Please add a checklist.', 'A second suggestion.'], 'Vote expiry and a new submission preserve earlier private messages.');
+
+    $oldId = (int) $retained[0]['id_message'];
+    CciBlogReaderFeedback::deleteMessage($oldId, $shop + 999, $lang);
+    $assert((int) $db->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cci_blog_reader_message` WHERE id_message=' . $oldId, false) === 1, 'Another shop cannot remove a message.');
+    $assert(CciBlogReaderFeedback::deleteMessage($oldId, $shop, $lang), 'A scoped staff action can delete a private message.');
+    $assert((int) $db->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cci_blog_reader_message` WHERE id_message=' . $oldId, false) === 0, 'The selected message was removed.');
+    $assert(CciBlogReaderFeedback::currentVote($ids[0], $context) === 1, 'Staff deletion does not remove the current vote.');
     echo "Reader engagement native integration checks passed; all fixtures rolled back.\n";
 } finally {
     $db->execute('ROLLBACK');

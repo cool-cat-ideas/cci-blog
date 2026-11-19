@@ -222,7 +222,10 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
         }
 
         $readerFeedbackEnabled = Configuration::get('CCB_READER_FEEDBACK_ENABLED') === false || (bool) Configuration::get('CCB_READER_FEEDBACK_ENABLED');
-        $captcha = !$this->isPreview && ($nativeCommentsEnabled || $readerFeedbackEnabled)
+        $feedbackAvailable = !$this->isPreview && $readerFeedbackEnabled;
+        $vote = $feedbackAvailable ? CciBlogReaderFeedback::currentVote((int) $post['id_post'], $this->context) : null;
+        $canVote = $feedbackAvailable && $vote === null;
+        $captcha = $nativeCommentsEnabled || $canVote
             ? CciBlogCaptcha::publicConfig($shopId)
             : null;
         if ($captcha !== null) {
@@ -234,7 +237,8 @@ class Cci_BlogPostModuleFrontController extends CciBlogFrontController
             'ccb_captcha' => $captcha,
             'ccb_reader_feedback_enabled' => $readerFeedbackEnabled,
             'ccb_reader_engagement' => $engagement,
-            'ccb_reader_feedback_token' => $this->isPreview || !$readerFeedbackEnabled ? '' : CciBlogReaderFeedback::token((int) $post['id_post'], $this->context),
+            'ccb_reader_feedback_vote' => $vote,
+            'ccb_reader_feedback_token' => $canVote ? CciBlogReaderFeedback::token((int) $post['id_post'], $this->context) : '',
             'ccb_reader_feedback_status' => in_array(Tools::getValue('feedback'), ['saved', 'error', 'captcha'], true) ? Tools::getValue('feedback') : '',
             'ccb_reader_feedback_message' => !$this->isPreview && $readerPro && method_exists($readerPro, 'canUseCciReaderEngagement') && $readerPro->canUseCciReaderEngagement($shopId),
             'ccb_post' => $post,

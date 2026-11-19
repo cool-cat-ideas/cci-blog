@@ -95,12 +95,12 @@ submissions without deleting existing results.
 
 Feedback is scoped to the shop, article and language. It is not linked to a
 customer account. Storage contains keyed visitor and daily network digests,
-not raw IP addresses. A visitor can update their existing vote; it does not add
-another vote to that article in the same browser context.
+not raw IP addresses. Once a vote is saved, the same browser cannot submit
+another vote for that article while the existing vote is on record.
 
-Written messages and network digests are cleared after 90 days; vote records
-expire after one year. Cleanup runs during accepted submissions and report
-reads. For cleanup on days without traffic, schedule the following supported
+Private messages stay in the report until a staff member deletes them. Network
+digests are cleared after 90 days and votes expire after one year. Cleanup runs
+during accepted submissions and report reads. For cleanup on days without traffic, schedule the following supported
 CLI command once a day using your hosting provider's scheduler:
 
 ```sh

@@ -99,8 +99,8 @@
         <target state="final">Co warto wyjaśnić dokładniej?</target>
       </trans-unit>
       <trans-unit id="reader_a02d89ae611f7405e234e9e9e019eae0" approved="yes">
-        <source>Only the shop team can read this message. Do not include personal information or order details. Messages are available to the shop team for 90 days.</source>
-        <target state="final">Wiadomość zobaczy tylko obsługa sklepu. Nie podawaj danych osobowych ani szczegółów zamówienia. Treść jest dostępna dla obsługi przez 90 dni.</target>
+        <source>Only the shop team can read this message. Please leave out personal information and order details.</source>
+        <target state="final">Wiadomość zobaczy tylko obsługa sklepu. Nie podawaj danych osobowych ani szczegółów zamówienia.</target>
       </trans-unit>
       <trans-unit id="reader_e310db0374dc1ca0773220cf14897c42" approved="yes">
         <source>Yes, it helped</source>
@@ -157,6 +157,10 @@
       <trans-unit id="captcha_889ee071da8823239f5e9436b5c74db2" approved="yes">
         <source>Enable JavaScript to complete the security check.</source>
         <target state="final">Włącz JavaScript, aby przejść weryfikację.</target>
+      </trans-unit>
+      <trans-unit id="reader_cefc22fb73a1340e5df4bc19cb405363" approved="yes">
+        <source>Your vote is already saved.</source>
+        <target state="final">Twój głos jest już zapisany.</target>
       </trans-unit>
     </body>
   </file>

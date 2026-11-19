@@ -87,8 +87,8 @@ saves recommendations, membership and the complete series order together.
 
 Readers can vote on usefulness without an account. Pro adds an optional private
 message and reports by article and primary category. Shop staff can remove a
-message without deleting its anonymous vote. Text is kept for 90 days and votes
-for one year.
+message without deleting its anonymous vote. Messages stay until a staff member
+deletes them. Votes are kept for one year.
 
 ![Private reader messages and topic reports](docs/screenshots/cci-blog-pro-reader-feedback-20261112.png)
 

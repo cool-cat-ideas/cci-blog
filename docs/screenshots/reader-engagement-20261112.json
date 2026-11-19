@@ -18,7 +18,7 @@
     },
     {
       "filename": "cci-blog-pro-reader-feedback-20261112.png",
-      "sha256": "3b098256a1aa00d259f06126ce6dc93f433cbaca7c801bac49f51cfd4fb92a2d",
+      "sha256": "83fba8bbf48642016986b243b226e88bb04cc45b346735afb3bdf468907ea647",
       "width": 1920,
       "height": 1080,
       "edition": "Pro 1.0.0",
@@ -34,9 +34,9 @@
     },
     {
       "filename": "cci-blog-reader-usefulness-20261112.png",
-      "sha256": "4b23b26c4c75bcb760d0ff6c67bfc7496bf29a2a89f60580f5fa512b52bdddae",
-      "width": 917,
-      "height": 403,
+      "sha256": "4d74409d483076a2280002807d04bbbb72c423ea6249114d7a2043a7c572a90b",
+      "width": 916,
+      "height": 484,
       "edition": "Pro 1.0.0",
       "baseVersion": "1.1.1"
     }

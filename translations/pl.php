@@ -164,7 +164,7 @@ $_MODULE['<{cci_blog}prestashop>_reader_feedback_085c90f05da249a7074be56f9480435
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_abbaf2f9d19f93744c7be1b58a324ec3'] = 'Dzięki Twojej opinii możemy poprawiać nasze poradniki.';
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_9fae84b4d8e707e4dad52fd37322dc4d'] = 'Napisz, czego zabrakło (opcjonalnie)';
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_d4abe708ed62a4fb09e58184e79a8857'] = 'Co warto wyjaśnić dokładniej?';
-$_MODULE['<{cci_blog}prestashop>_reader_feedback_a02d89ae611f7405e234e9e9e019eae0'] = 'Wiadomość zobaczy tylko obsługa sklepu. Nie podawaj danych osobowych ani szczegółów zamówienia. Treść jest dostępna dla obsługi przez 90 dni.';
+$_MODULE['<{cci_blog}prestashop>_reader_feedback_2757e042f4a8524355ad27eece033454'] = 'Wiadomość zobaczy tylko obsługa sklepu. Nie podawaj danych osobowych ani szczegółów zamówienia.';
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_e310db0374dc1ca0773220cf14897c42'] = 'Tak, pomógł';
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_9d76aca60838d896fb7754d4a890eb9d'] = 'Nie';
 $_MODULE['<{cci_blog}prestashop>_reader_feedback_e1e4a95e6abb446ef383a390ef50a8fe'] = 'Dziękujemy. Twoja opinia została zapisana.';
@@ -190,3 +190,5 @@ $_MODULE['<{cci_blog}prestashop>_reader_feedback_e8bbd66c5b7a4064c44dbd7e363cd37
 $_MODULE['<{cci_blog}prestashop>post_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
 $_MODULE['<{cci_blog}prestashop>cci_blog_e8bbd66c5b7a4064c44dbd7e363cd379'] = 'Ponownie wykonaj sprawdzenie zabezpieczenia. Jeśli się nie ładuje, odśwież stronę.';
 $_MODULE['<{cci_blog}prestashop>_captcha_889ee071da8823239f5e9436b5c74db2'] = 'Włącz JavaScript, aby przejść weryfikację.';
+
+$_MODULE['<{cci_blog}prestashop>_reader_feedback_cefc22fb73a1340e5df4bc19cb405363'] = 'Twój głos jest już zapisany.';

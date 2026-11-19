@@ -2310,3 +2310,5 @@ body[id^='module-cci_blog-'] #main .page-content {
 .cci-blog-reader-series-archive .cci-blog-posts-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
+
+.cci-blog-reader-feedback-actions .btn[aria-pressed="true"]:disabled { opacity: 1; }

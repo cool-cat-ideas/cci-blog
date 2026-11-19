@@ -253,10 +253,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
             if (!$detailed) {
                 return ['success' => false, 'error' => $this->module->l('An active Pro license is required.')];
             }
-            $ok = Db::getInstance()->update('cci_blog_reader_feedback', ['message' => ''],
-                'id_feedback=' . (int) ($input['id_feedback'] ?? 0) . ' AND id_shop=' . $shopId . ' AND id_lang=' . $langId);
-
-            return ['success' => (bool) $ok];
+            return ['success' => CciBlogReaderFeedback::deleteMessage((int) ($input['id_message'] ?? 0), $shopId, $langId)];
         }
         if (!$pro || !method_exists($pro, 'handleCciReaderEngagementAction')) {
             return ['success' => false, 'error' => $this->module->l('Install CCI Blog Pro to manage series and recommendations.')];
@@ -1406,6 +1403,7 @@ class AdminCciBlogConfigurationController extends ModuleAdminController
 
         $this->deleteFromTableIfExists('cci_blog_post_revision', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_reader_feedback', 'id_post = ' . $postId);
+        $this->deleteFromTableIfExists('cci_blog_reader_message', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_pro_post_engagement', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_comment', 'id_post = ' . $postId);
         $this->deleteFromTableIfExists('cci_blog_post_image', 'id_post = ' . $postId);

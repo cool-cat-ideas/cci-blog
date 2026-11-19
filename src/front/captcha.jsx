@@ -40,6 +40,10 @@ function mount() {
       render();
       host.querySelector('[data-field="captcha"]')?.focus();
     }, true);
+    form.addEventListener('cci-blog:captcha-complete', () => {
+      root.unmount();
+      section.hidden = true;
+    }, { once: true });
     form.addEventListener('cci-blog:captcha-reset', (event) => {
       token.value = '';
       invalid = Boolean(event.detail?.invalid);

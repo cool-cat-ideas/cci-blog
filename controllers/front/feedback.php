@@ -17,6 +17,7 @@ class Cci_BlogFeedbackModuleFrontController extends ModuleFrontController
         $status = 'error';
         $json = (string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
         $post = [];
+        $vote = null;
 
         try {
             if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -37,12 +38,17 @@ class Cci_BlogFeedbackModuleFrontController extends ModuleFrontController
                 'token' => Tools::getValue('token'), 'helpful' => Tools::getValue('helpful'), 'message' => Tools::getValue('message', ''),
                 'captchaToken' => Tools::getValue('captchaToken'),
             ], (bool) $messageAllowed);
+            $vote = (int) Tools::getValue('helpful');
             $status = 'saved';
         } catch (DomainException $error) {
             if ($error->getMessage() === 'captcha') {
                 $status = 'captcha';
             }
-            if ($json) {
+            if ($error->getMessage() === 'already_voted') {
+                $vote = CciBlogReaderFeedback::currentVote($postId, $this->context);
+                $status = $vote === null ? 'error' : 'already_voted';
+            }
+            if ($json && $status !== 'already_voted') {
                 http_response_code($error->getMessage() === 'rate_limited' ? 429 : 400);
             }
         } catch (Throwable $error) {
@@ -53,7 +59,7 @@ class Cci_BlogFeedbackModuleFrontController extends ModuleFrontController
         }
         if ($json) {
             header('Content-Type: application/json; charset=utf-8');
-            exit(json_encode(['success' => $status === 'saved', 'code' => $status === 'captcha' ? 'captcha' : null]));
+            exit(json_encode(['success' => $vote !== null, 'code' => $status, 'vote' => $vote]));
         }
         $url = $post ? $this->context->link->getModuleLink('cci_blog', 'post', ['slug' => $post['slug'], 'feedback' => $status])
             : $this->context->link->getModuleLink('cci_blog', 'list');
