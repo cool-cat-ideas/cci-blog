@@ -86,9 +86,9 @@
         <source>Was this article helpful?</source>
         <target state="final">Czy ten artykuł Ci pomógł?</target>
       </trans-unit>
-      <trans-unit id="reader_abbaf2f9d19f93744c7be1b58a324ec3" approved="yes">
-        <source>Your feedback helps us improve our guides.</source>
-        <target state="final">Dzięki Twojej opinii możemy poprawiać nasze poradniki.</target>
+      <trans-unit id="reader_dea03319fe1ef71259ca85573f87b3f5" approved="yes">
+        <source>Your feedback helps us improve our articles.</source>
+        <target state="final">Dzięki Twojej opinii możemy poprawiać nasze artykuły.</target>
       </trans-unit>
       <trans-unit id="reader_9fae84b4d8e707e4dad52fd37322dc4d" approved="yes">
         <source>Tell us what was missing (optional)</source>
