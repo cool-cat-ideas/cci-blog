@@ -51,6 +51,7 @@ export default function App() {
       ? section
       : 'dashboard';
   });
+  const [captcha, setCaptcha] = useState(() => pluginData.settings?.captcha);
   const [license, setLicense] = useState(() => normalizeLicense(pluginData.license));
   const [notices, setNotices] = useState([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarCollapsed);
@@ -189,6 +190,8 @@ export default function App() {
             onLicenseChange={handleLicenseChange}
             onOpenSettings={handleOpenSettings}
             onSelectSection={handleSidebarSelect}
+            captcha={captcha}
+            onCaptchaChange={setCaptcha}
           />
         </AdminWorkspace>
       </AdminShell>
@@ -220,9 +223,9 @@ function getPageHeader(activeSection) {
       ),
     },
     extensions: {
-      title: __('Blog extensions', 'cci-blog'),
+      title: __('Extensions', 'cci-blog'),
       description: __(
-        'Manage installed blog extensions and browse add-ons from your store.',
+        'Manage add-ons and form protection for your blog.',
         'cci-blog',
       ),
     },
@@ -246,6 +249,8 @@ function DashboardSection({
   onLicenseChange,
   onOpenSettings,
   onSelectSection,
+  captcha,
+  onCaptchaChange,
 }) {
   const [editorActive, setEditorActive] = useState(false);
 
@@ -272,6 +277,8 @@ function DashboardSection({
   if (activeSection === 'extensions') {
     return (
       <BlogExtensionsPanel
+        captcha={captcha}
+        onCaptchaChange={onCaptchaChange}
         license={license}
         onLicenseChange={onLicenseChange}
         onOpenSettings={onOpenSettings}

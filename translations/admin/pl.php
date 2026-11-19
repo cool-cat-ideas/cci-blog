@@ -258,6 +258,8 @@ return [
     'Back to categories' => 'Wróć do kategorii',
     'Blog base URL slug' => 'Slug bazowego adresu bloga',
     'Blog editor extension.' => 'Rozszerzenie edytora bloga.',
+    'Manage add-ons and form protection for your blog.' => 'Zarządzaj dodatkami i ochroną formularzy bloga.',
+    'Built-in providers and installed add-ons' => 'Wbudowane usługi i zainstalowane dodatki',
     'Blog extensions' => 'Rozszerzenia bloga',
     'Blog settings' => 'Ustawienia bloga',
     'Cancel' => 'Anuluj',

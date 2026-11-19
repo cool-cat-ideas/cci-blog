@@ -12,7 +12,6 @@ import { Input, Textarea } from '../ui/input';
 import { Select } from '../ui/select';
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from '../ui/tabs';
 import ProBadge from '../licensing/ProBadge';
-import BlogCaptchaSettings from './BlogCaptchaSettings';
 
 export default function BlogSettingsPanel({ setNotice }) {
   const [activeTab, setActiveTab] = React.useState('settings');
@@ -422,7 +421,6 @@ export default function BlogSettingsPanel({ setNotice }) {
             </Field>
           </div>
         </div>
-        <BlogCaptchaSettings initial={settings.captcha} setNotice={setNotice} />
       </TabsPanel>
 
       <TabsPanel value="diagnostics">

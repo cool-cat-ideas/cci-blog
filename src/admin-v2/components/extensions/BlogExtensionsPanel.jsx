@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { CaptchaSettingsDialog } from '@cci/form-captcha/settings';
+import { InfoCallout } from '@cci/admin-ui/blog';
 import { CountBadge as Counter, reconcileCatalogItems } from '@cci/admin-ui';
-import { BadgeCheck, ShoppingBag } from 'lucide-react';
-import { pluginData } from '../../api/api';
+import { BadgeCheck, Plug, Settings, ShoppingBag } from 'lucide-react';
+import { apiFetch, pluginData } from '../../api/api';
 import { __ } from '../../i18n/i18n';
 import {
   collectionFromResponse,
@@ -20,12 +22,21 @@ import MetricCard from '../feedback/MetricCard';
 import ProUpgradeModal from '../licensing/ProUpgradeModal';
 import ReviewPrompt from '../feedback/ReviewPrompt';
 import { Card } from '../ui/card';
+import { Button } from '../ui/button';
+import { CheckboxField } from '../ui/checkbox';
+import { Field } from '../ui/field';
+import { Input } from '../ui/input';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 const installedTab = 'installed';
 const storeTab = 'store';
+const captchaControls = { Button, CheckboxField, Field, Input, InfoCallout };
+const t = (text) => __(text, 'cci-blog');
+const dialogPortal = () => document.querySelector('.cci-blog-admin-root') || document.body;
 
 export default function BlogExtensionsPanel({
+  captcha,
+  onCaptchaChange,
   license,
   onLicenseChange,
   onOpenSettings,
@@ -34,6 +45,36 @@ export default function BlogExtensionsPanel({
   const [activeTab, setActiveTab] = useState(installedTab);
   const [storeExtensions, setStoreExtensions] = useState([]);
   const [proFeature, setProFeature] = useState(null);
+  const [captchaDraft, setCaptchaDraft] = useState(null);
+  const [captchaBusy, setCaptchaBusy] = useState(false);
+  const [captchaError, setCaptchaError] = useState('');
+  const siteKeyInput = useRef(null);
+  const configureButton = useRef(null);
+  const providers = captcha?.items ?? [];
+  const currentProvider = providers.find(({ id }) => id === captchaDraft?.id);
+  const closeCaptcha = () => {
+    setCaptchaDraft(null);
+    setCaptchaError('');
+  };
+  const saveCaptcha = async (event) => {
+    event.preventDefault();
+    if (!currentProvider || !captchaDraft || captchaBusy) return;
+    setCaptchaBusy(true);
+    setCaptchaError('');
+    try {
+      const result = await apiFetch('/captcha/save', {
+        method: 'POST',
+        body: JSON.stringify({ ...captchaDraft, revision: captcha.revision }),
+      });
+      onCaptchaChange(result.captcha);
+      closeCaptcha();
+      setNotice({ type: 'success', message: t('Integration settings saved.') });
+    } catch (error) {
+      setCaptchaError(t(error.message));
+    } finally {
+      setCaptchaBusy(false);
+    }
+  };
   const installedExtensions = useMemo(() => normalizeInstalledExtensions(pluginData), []);
   const extensionStoreEndpoint = pluginData.extensionStoreEndpoint || '';
   const storeFeed = useMarketplaceJson(extensionStoreEndpoint, {
@@ -62,7 +103,7 @@ export default function BlogExtensionsPanel({
     () => reconcileCatalogItems(storeExtensions, installedExtensions),
     [installedExtensions, storeExtensions],
   );
-  const installedCount = installedExtensions.length;
+  const installedCount = installedExtensions.length + providers.length;
   const storeLoading = activeTab === storeTab && storeFeed.loading;
   const storeCount = reconciledStoreExtensions.length;
   const activeExtensions =
@@ -88,7 +129,7 @@ export default function BlogExtensionsPanel({
             icon={BadgeCheck}
             label={__('Installed', 'cci-blog')}
             value={installedCount}
-            description={__('Registered through installed modules', 'cci-blog')}
+            description={__('Built-in providers and installed add-ons', 'cci-blog')}
             tone="primary"
           />
           <MetricCard
@@ -134,7 +175,42 @@ export default function BlogExtensionsPanel({
                 hasStoreEndpoint={Boolean(extensionStoreEndpoint)}
                 onGoToStore={() => setActiveTab(storeTab)}
                 onLockedExtension={setProFeature}
-              />
+              >
+                {activeTab === installedTab && providers.map((provider) => (
+                  <CatalogProductCard
+                    key={provider.id}
+                    item={{
+                      title: provider.title,
+                      description: t(provider.description),
+                      installed: true,
+                    }}
+                    mode="installed"
+                    fallbackIcon={Plug}
+                    installedLabel={t(provider.enabled ? 'Enabled' : 'Disabled')}
+                    installedTone={provider.enabled ? 'success' : 'neutral'}
+                    actions={(
+                      <Button
+                        type="button"
+                        variant="outlineAccent"
+                        aria-label={`${t('Configure')} ${provider.title}`}
+                        disabled={captchaBusy}
+                        onClick={(event) => {
+                          configureButton.current = event.currentTarget;
+                          setCaptchaDraft({
+                            id: provider.id,
+                            enabled: provider.enabled,
+                            siteKey: provider.siteKey,
+                            secret: '',
+                          });
+                        }}
+                      >
+                        <Settings aria-hidden="true" />
+                        {t('Configure')}
+                      </Button>
+                    )}
+                  />
+                ))}
+              </ExtensionGrid>
             )}
           </Card>
         </Tabs>
@@ -143,6 +219,23 @@ export default function BlogExtensionsPanel({
       <aside className="tw-grid tw-content-start tw-gap-4 tw-self-start">
         <LicensePanel license={license} />
       </aside>
+      {currentProvider && captchaDraft && (
+        <CaptchaSettingsDialog
+          controls={captchaControls}
+          current={currentProvider}
+          draft={captchaDraft}
+          setDraft={setCaptchaDraft}
+          busy={captchaBusy}
+          error={captchaError}
+          onClose={closeCaptcha}
+          onSave={saveCaptcha}
+          portal={dialogPortal}
+          initialFocusRef={siteKeyInput}
+          returnFocusRef={configureButton}
+          setupUrl={currentProvider.setupUrl}
+          t={t}
+        />
+      )}
       <ProUpgradeModal
         open={Boolean(proFeature)}
         featureName={proFeature?.featureName || ''}
@@ -169,10 +262,12 @@ function ExtensionGrid({
   hasStoreEndpoint,
   onGoToStore,
   onLockedExtension,
+  children,
 }) {
   return (
     <CatalogGrid notice={notice}>
-      {!extensions.length ? (
+      {children}
+      {!extensions.length && !React.Children.toArray(children).length ? (
         <CatalogEmptyState
           embedded
           icon={ShoppingBag}
