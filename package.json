@@ -20,7 +20,7 @@
     "@blocknote/core": "^0.57.0",
     "@blocknote/mantine": "^0.57.0",
     "@blocknote/react": "^0.57.0",
-    "@cci/admin-ui": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.2/cci-admin-ui-1.0.2-status.2.tgz",
+    "@cci/admin-ui": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.3/cci-admin-ui-1.0.2-status.3.tgz",
     "@mantine/core": "^9.7.5",
     "@mantine/hooks": "^9.7.5",
     "@mantine/utils": "^6.0.22",
@@ -39,7 +39,7 @@
     "tailwind-merge": "^2.6.1"
   },
   "devDependencies": {
-    "@cci/admin-theme": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.2/cci-admin-theme-1.0.2-status.2.tgz",
+    "@cci/admin-theme": "https://github.com/cool-cat-ideas/cci-admin-ui/releases/download/v1.0.2-status.3/cci-admin-theme-1.0.2-status.3.tgz",
     "esbuild": "0.28.2",
     "prettier": "3.9.10",
     "tailwindcss": "^3.4.19"

@@ -20,7 +20,7 @@ Show a featured article and more guides alongside your store. Readers can open a
 
 Review publication dates and article titles in a month grid, then open an article directly. The selected day shows its full article list. Dashboard also keeps recent work and the last recorded editors together.
 
-![CCI Blog dashboard with recent articles and the publication plan](docs/screenshots/cci-blog-publication-planning-20261112.png)
+![CCI Blog Dashboard with the publication plan and version numbers for both editions](docs/screenshots/cci-blog-publication-planning-20261119.png)
 
 ### Review saved article versions
 
