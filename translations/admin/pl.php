@@ -702,6 +702,7 @@ return [
     'Edit content and SEO for each shop language separately' => 'Edytuj treść i SEO osobno dla każdego języka sklepu',
     'Yes' => 'Tak',
     'You are up to date' => 'Masz aktualną wersję',
+    'Congratulations, you are using the latest version.' => 'Gratulacje, używasz najnowszej wersji.',
     'Your Pro license is active for this site.' => 'Twoja licencja Pro jest aktywna dla tego sklepu.',
     'A post can belong to many categories, but the primary category is selected in the post editor.' => 'Wpis może należeć do wielu kategorii, ale kategorię główną wybierasz w edytorze wpisu.',
     'Add ' => 'Dodaj ',
