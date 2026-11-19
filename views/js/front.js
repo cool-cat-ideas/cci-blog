@@ -354,6 +354,7 @@ document.addEventListener('submit', async function (event) {
     if (!response.ok || !result.success) throw new Error('Feedback rejected');
     form.setAttribute('data-feedback-complete', '');
     buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.value === String(result.vote))));
+    status.classList.add('alert', 'alert-success');
     status.textContent = result.code === 'already_voted' ? status.dataset.recorded : status.dataset.success;
     const details = form.querySelector('details');
     if (details) details.hidden = true;
