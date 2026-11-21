@@ -52,6 +52,21 @@ a safe public HTTP(S) URL.
 `gsitemap` writes static XML files. Regenerate them after publishing, moving or
 unpublishing blog content, or configure its normal scheduled generation.
 
+### Example from the demo
+
+In a generated child sitemap, an article has its own `<url>` entry. This example
+uses the canonical address and modification date of a published demo article:
+
+```xml
+<url>
+  <loc>https://prestashop-demo.coolcatideas.com/blog/cci-demo-print-on-demand-collection</loc>
+  <lastmod>2026-07-22T00:29:27+02:00</lastmod>
+</url>
+```
+
+Open the [demo article](https://prestashop-demo.coolcatideas.com/blog/cci-demo-print-on-demand-collection)
+or find it under Blog in the [demo's HTML sitemap](https://prestashop-demo.coolcatideas.com/Sitemap).
+
 ## Multistore And Language Isolation
 
 Both hooks use the current PrestaShop shop context and the language being
